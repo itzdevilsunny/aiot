@@ -1,0 +1,136 @@
+version: '3.8'
+
+services:
+  # ─── Database Layer ─────────────────────────────────────────
+  
+  # MongoDB (Anomaly logs, Edge Node registry)
+  mongodb:
+    image: mongo:7
+    container_name: visionaiot-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - vision-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Primary Relational Database (Users, Roles, Camera Configs, Settings)
+  postgres:
+    image: postgres:15-alpine
+    container_name: visionaiot-postgres
+    environment:
+      POSTGRES_USER: aiotadmin
+      POSTGRES_PASSWORD: aiotsecurepassword
+      POSTGRES_DB: visionaiot
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - vision-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aiotadmin -d visionaiot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Time-Series Database (Alerts History, Camera Telemetry, Trends)
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    container_name: visionaiot-timescale
+    environment:
+      POSTGRES_USER: timescaleadmin
+      POSTGRES_PASSWORD: timescalesecurepassword
+      POSTGRES_DB: visionaiot_ts
+    ports:
+      - "5433:5432"
+    volumes:
+      - timescale-data:/var/lib/postgresql/data
+    networks:
+      - vision-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U timescaleadmin -d visionaiot_ts"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # In-Memory Cache & Message Broker (WebSocket Pub/Sub, Real-time Queues)
+  redis:
+    image: redis:7-alpine
+    container_name: visionaiot-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - vision-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Application Layer ──────────────────────────────────────
+
+  # Backend (Node.js + Socket.io + Gemini SDK)
+  backend:
+    build: ./backend
+    container_name: visionaiot-backend
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - MONGO_URI=mongodb://mongodb:27017/command_center
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - JWT_SECRET=${JWT_SECRET:-hackops-crew-secret-2026}
+      - DATABASE_URL=postgresql://aiotadmin:aiotsecurepassword@postgres:5432/visionaiot
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - vision-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # Frontend + Nginx Reverse Proxy (Entry Point for the entire system)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: visionaiot-nginx
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - vision-network
+    restart: unless-stopped
+
+networks:
+  vision-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
+  postgres-data:
+  timescale-data:
+  redis-data:
