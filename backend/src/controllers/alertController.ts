@@ -25,7 +25,7 @@ export const alertStore = new Map<string, AnomalyAlert>();
 
 // Zod Schema for strict payload validation from the Python AI Engine
 const createAlertSchema = z.object({
-    camera_id: z.string().uuid(),
+    camera_id: z.string().min(1).max(100),
     type: z.string().min(1).max(100),
     severity: z.enum(['Low', 'Medium', 'Critical']),
     confidence: z.number().min(0).max(1),

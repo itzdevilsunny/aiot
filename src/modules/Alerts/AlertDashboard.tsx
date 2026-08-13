@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAlertStore } from '../../store/useAlertStore';
 import type { AnomalyAlert, AlertStatus } from '../../store/useAlertStore';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -36,11 +36,17 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 export default function AlertDashboard() {
-    const { alerts, updateAlertStatus } = useAlertStore();
+    const { alerts, updateAlertStatus, fetchLiveAlerts, subscribeToLiveAlerts } = useAlertStore();
     const [selectedAlert, setSelectedAlert] = useState<AnomalyAlert | null>(null);
     const [editNotes, setEditNotes] = useState('');
     const [editStatus, setEditStatus] = useState<AlertStatus>('Investigating');
     const [saving, setSaving] = useState(false);
+
+    useEffect(() => {
+        fetchLiveAlerts();
+        const unsubscribe = subscribeToLiveAlerts();
+        return () => unsubscribe();
+    }, [fetchLiveAlerts, subscribeToLiveAlerts]);
 
     // Filters
     const [severityFilter, setSeverityFilter] = useState<string>('All');
