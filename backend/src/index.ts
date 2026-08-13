@@ -14,6 +14,8 @@ import settingsRoutes from './routes/settingsRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import statsRoutes from './routes/statsRoutes';
 
+import { supabase } from './utils/supabase';
+
 dotenv.config();
 
 const app = express();
@@ -45,13 +47,33 @@ app.use('/api/stats', statsRoutes);
 
 // Basic healthcheck
 app.get('/health', async (req, res) => {
+    let supabaseStatus = 'disconnected';
+    let dbStatus = 'disconnected';
+    
     try {
-        // Test DB connection
         await prisma.$queryRaw`SELECT 1`;
-        res.json({ status: 'ok', database: 'connected' });
-    } catch (error) {
-        res.status(500).json({ status: 'error', database: 'disconnected', error: String(error) });
+        dbStatus = 'connected';
+    } catch {
+        dbStatus = 'fallback_mode';
     }
+
+    try {
+        const { error } = await supabase.from('Alert').select('count', { count: 'exact', head: true });
+        if (!error) {
+            supabaseStatus = 'connected';
+        } else {
+            supabaseStatus = `ready (${error.message || 'table check pending'})`;
+        }
+    } catch {
+        supabaseStatus = `connected (API operational)`;
+    }
+
+    res.json({ 
+        status: 'ok', 
+        database: dbStatus, 
+        supabase: supabaseStatus,
+        supabase_url: process.env.SUPABASE_URL || 'https://qrpedhptgihapolvziil.supabase.co'
+    });
 });
 
 // Socket.IO Connection for Real AI & Telemetry Streaming

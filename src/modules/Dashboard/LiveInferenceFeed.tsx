@@ -18,9 +18,7 @@ export default function LiveInferenceFeed({ camera }: Props) {
 
     useEffect(() => {
         setStreamError(false);
-        if (window.location.hostname.includes('vercel.app')) return;
-
-        const SOCKET_URL = import.meta.env.VITE_WS_URL || 'http://localhost:4000';
+        const SOCKET_URL = import.meta.env.VITE_WS_URL || 'https://defence-survillance-system.onrender.com';
         const socket = io(SOCKET_URL, { reconnectionAttempts: 2 });
 
         const eventName = `boxes_${camera.id}`;

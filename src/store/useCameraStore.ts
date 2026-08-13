@@ -107,7 +107,7 @@ export const useCameraStore = create<CameraState>((set) => ({
 
     fetchCameras: async () => {
         try {
-            const { data } = await axios.get(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/cameras`);
+            const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'https://defence-survillance-system.onrender.com'}/api/cameras`);
             if (Array.isArray(data) && data.length >= 100) {
                 set({ cameras: data });
             } else {
@@ -130,7 +130,7 @@ export const useCameraStore = create<CameraState>((set) => ({
                 model: 'YOLO11 Nano'
             };
             set((state) => ({ cameras: [mockResult, ...state.cameras] }));
-            await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/cameras`, newCam).catch(console.warn);
+            await axios.post(`${import.meta.env.VITE_API_URL || 'https://defence-survillance-system.onrender.com'}/api/cameras`, newCam).catch(console.warn);
         } catch (error) {
             console.error("Failed to register new camera node", error);
         }
@@ -139,7 +139,7 @@ export const useCameraStore = create<CameraState>((set) => ({
     removeCamera: async (id) => {
         try {
             set((state) => ({ cameras: state.cameras.filter(c => c.id !== id) }));
-            await axios.delete(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/cameras/${id}`).catch(console.warn);
+            await axios.delete(`${import.meta.env.VITE_API_URL || 'https://defence-survillance-system.onrender.com'}/api/cameras/${id}`).catch(console.warn);
         } catch (error) {
             console.error("Failed to remove camera", error);
         }

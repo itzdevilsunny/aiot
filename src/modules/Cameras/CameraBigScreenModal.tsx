@@ -9,7 +9,7 @@ import { useCameraStore } from '../../store/useCameraStore';
 import { io } from 'socket.io-client';
 import axios from 'axios';
 
-const SOCKET_URL = import.meta.env.VITE_WS_URL || 'http://localhost:4000';
+const SOCKET_URL = import.meta.env.VITE_WS_URL || 'https://defence-survillance-system.onrender.com';
 
 interface CameraBigScreenModalProps {
     camera: CameraNode | null;

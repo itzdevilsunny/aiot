@@ -10,7 +10,7 @@ import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts';
 import LiveInferenceFeed from './LiveInferenceFeed';
 
 // WebSocket connection for live terminal logs
-const socket = io(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/system`);
+const socket = io(`${import.meta.env.VITE_WS_URL || import.meta.env.VITE_API_URL || 'https://defence-survillance-system.onrender.com'}/system`);
 
 export default function CommandCenter() {
     const { alerts } = useAlertStore();

@@ -5,7 +5,7 @@ import { useAlertStore } from '../store/useAlertStore';
 import { useEdgeStore } from '../store/useEdgeStore';
 import { useNotificationStore } from '../store/useNotificationStore';
 
-const SOCKET_URL = import.meta.env.VITE_WS_URL || 'http://localhost:4000';
+const SOCKET_URL = import.meta.env.VITE_WS_URL || 'https://defence-survillance-system.onrender.com';
 
 export const useSocket = () => {
     const { addAlert, setCameras, updateCameraStatus } = useVisionStore();
@@ -14,9 +14,6 @@ export const useSocket = () => {
     const addLiveNotification = useNotificationStore((s) => s.addLiveNotification);
 
     useEffect(() => {
-        // Prevent localhost connection errors on Vercel demo
-        if (window.location.hostname.includes('vercel.app')) return;
-
         // Connect to the Node.js API Gateway
         const socket = io(SOCKET_URL, {
             reconnectionAttempts: 5,
