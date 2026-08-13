@@ -129,9 +129,20 @@ export default function CrossCameraReID() {
     const { setSelectedCameraId } = useCameraStore();
     const [selectedTarget, setSelectedTarget] = useState<TargetProfile>(MOCK_TARGETS[0]);
     const [activeStep, setActiveStep] = useState<TrajectoryStep>(MOCK_TARGETS[0].trajectory[0]);
+    const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+    const showToast = (msg: string) => {
+        setToastMessage(msg);
+        setTimeout(() => setToastMessage(null), 3000);
+    };
 
     return (
-        <div className="p-4 sm:p-6 bg-[#0B0F19] min-h-screen text-white flex flex-col space-y-6">
+        <div className="p-4 sm:p-6 bg-[#0B0F19] min-h-screen text-white flex flex-col space-y-6 relative">
+            {toastMessage && (
+                <div className="fixed bottom-6 right-6 z-50 bg-purple-600 text-white font-bold text-xs px-4 py-3 rounded-xl shadow-2xl border border-purple-400/40 flex items-center gap-2 animate-bounce">
+                    <span>⚡ {toastMessage}</span>
+                </div>
+            )}
 
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#111623] p-5 rounded-2xl border border-slate-800 shadow-xl gap-4">
@@ -260,14 +271,14 @@ export default function CrossCameraReID() {
                             <button
                                 onClick={() => {
                                     setSelectedCameraId(activeStep.cameraId);
-                                    alert(`Overview camera feed updated to stream ${activeStep.cameraId} (${activeStep.cameraName})`);
+                                    showToast(`Overview camera feed updated to stream ${activeStep.cameraId} (${activeStep.cameraName})`);
                                 }}
                                 className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-purple-600/20"
                             >
                                 <Play size={14} /> Stream Live Feed ({activeStep.cameraId})
                             </button>
                             <button
-                                onClick={() => alert(`Re-ID tracking reset for ${selectedTarget.name}`)}
+                                onClick={() => showToast(`Re-ID tracking reset for ${selectedTarget.name}`)}
                                 className="py-2.5 px-4 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-semibold rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer"
                             >
                                 <RefreshCw size={14} /> Refresh Trajectory

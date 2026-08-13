@@ -52,7 +52,12 @@ export default function AiChatAssistant() {
     // Speech Recognition setup
     const toggleSpeechRecognition = () => {
         if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-            alert('Speech Recognition is not supported in this browser. Please type your query.');
+            setMessages(prev => [...prev, {
+                id: Date.now().toString(),
+                sender: 'ai',
+                text: '⚠️ Speech Recognition is not supported in this browser. Please type your query.',
+                timestamp: new Date(),
+            }]);
             return;
         }
 

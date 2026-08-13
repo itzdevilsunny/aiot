@@ -94,6 +94,12 @@ export default function PlateSearch() {
     const [selectedZone, setSelectedZone] = useState('ALL');
     const [onlyFlagged, setOnlyFlagged] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState<PlateRecord | null>(MOCK_PLATES[0]);
+    const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+    const showToast = (msg: string) => {
+        setToastMessage(msg);
+        setTimeout(() => setToastMessage(null), 3000);
+    };
 
     const filteredRecords = MOCK_PLATES.filter(rec => {
         const matchesQuery = rec.plateNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -105,7 +111,12 @@ export default function PlateSearch() {
     });
 
     return (
-        <div className="p-4 sm:p-6 bg-[#0B0F19] min-h-screen text-white flex flex-col space-y-6">
+        <div className="p-4 sm:p-6 bg-[#0B0F19] min-h-screen text-white flex flex-col space-y-6 relative">
+            {toastMessage && (
+                <div className="fixed bottom-6 right-6 z-50 bg-blue-600 text-white font-bold text-xs px-4 py-3 rounded-xl shadow-2xl border border-blue-400/40 flex items-center gap-2 animate-bounce">
+                    <span>✨ {toastMessage}</span>
+                </div>
+            )}
 
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#111623] p-5 rounded-2xl border border-slate-800 shadow-xl gap-4">
@@ -266,13 +277,13 @@ export default function PlateSearch() {
                         {/* Actions */}
                         <div className="space-y-2 pt-2">
                             <button
-                                onClick={() => alert(`Vehicle ${selectedRecord.plateNumber} added to Watchlist!`)}
+                                onClick={() => showToast(`Vehicle ${selectedRecord.plateNumber} added to Watchlist!`)}
                                 className="w-full py-2.5 bg-red-600/20 hover:bg-red-600/30 border border-red-500/40 text-red-400 text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all"
                             >
                                 🚨 Add Plate to Blacklist / Watchlist
                             </button>
                             <button
-                                onClick={() => alert(`Exported ALPR Evidence Record for ${selectedRecord.plateNumber}`)}
+                                onClick={() => showToast(`Exported ALPR Evidence Record for ${selectedRecord.plateNumber}`)}
                                 className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all"
                             >
                                 <Download size={14} /> Download Evidence Snapshot
