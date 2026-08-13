@@ -152,12 +152,22 @@ export default function AiChatAssistant() {
                 const geminiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
                 if (geminiKey) {
                     try {
+                        const systemPrompt = `
+You are the trained AI Security Command Assistant for VisionAIoT Defense Platform.
+Knowledge Base:
+- 108 Smart Cameras monitored across 8 Municipal Sectors.
+- Hardware: YOLO11 Nano Real-Time Inference + Gemini Multimodal Vision Engine + NVIDIA Jetson Orin AGX Cluster.
+- Blacklist Watchlist: Vehicle MH-12-AB-1234 (Stolen Black Sedan), KA-05-MN-4321 (Restricted Hours Heavy Hauler).
+- Re-ID Tracking: Suspect #8902 tracked moving through CAM-04 -> CAM-12 -> CAM-22 -> CAM-45.
+- Drone Protocol: Autonomous Drone Unit standby at Base (28.6139°N, 77.2090°E), ETA 90s.
+Answer this operator query concisely in 2 sentences: "${query}"`;
+
                         const response = await axios.post(
                             `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
                             {
                                 contents: [{
                                     parts: [{
-                                        text: `You are an AI Security Command Assistant for VisionAIoT smart city defense platform (108 cameras, YOLO11, Gemini). Answer this operator question concisely in 2 sentences: "${query}"`
+                                        text: systemPrompt
                                     }]
                                 }]
                             }
