@@ -163,7 +163,7 @@ function SidebarItem({ icon, label, active, badge, badgeColor = "bg-blue-500", p
             }`}>
             <div className="flex items-center gap-3">
                 <div className={`transition-colors ${active ? 'text-blue-400' : 'text-slate-500'}`}>
-                    {React.cloneElement(icon as React.ReactElement<any>, { className: 'w-5 h-5' })}
+                    {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-5 h-5' })}
                 </div>
                 <span className={`text-sm font-medium ${active ? 'text-white' : ''}`}>{label}</span>
             </div>

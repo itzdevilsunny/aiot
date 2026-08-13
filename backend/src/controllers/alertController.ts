@@ -94,7 +94,7 @@ export const handleAiDetection = async (req: Request, res: Response): Promise<vo
         }
     } catch (error) {
         if (error instanceof z.ZodError) {
-            res.status(400).json({ error: 'Payload Validation Failed', details: (error as any).errors });
+            res.status(400).json({ error: 'Payload Validation Failed', details: error.issues });
         } else {
             res.status(500).json({ error: 'Internal Server Error' });
         }
@@ -110,7 +110,7 @@ export const getAlerts = async (_req: Request, res: Response): Promise<void> => 
             include: { camera: true }
         });
         res.json(dbAlerts);
-    } catch (dbError) {
+    } catch {
         // Fallback to memory
         const alerts = Array.from(alertStore.values()).sort(
             (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
@@ -134,7 +134,7 @@ export const updateAlert = async (req: Request, res: Response): Promise<void> =>
         });
         console.log(`[Alert Updated DB] ${id} → ${status}`);
         res.json(updated);
-    } catch (dbError) {
+    } catch {
         // Fallback
         const alert = alertStore.get(id);
         if (!alert) {

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import {
     MousePointer, Trash2, CheckCircle2,
     Volume2, VolumeX, Lock
@@ -28,14 +28,23 @@ function isPointInPolygon(point: Point, polygon: Point[]): boolean {
     return inside;
 }
 
+interface GeofenceBox {
+    id: string;
+    label: string;
+    confidence: number;
+    color: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
 export default function PerimeterGeofence() {
     const { cameras, updateGeofence } = useCameraStore();
     const [selectedCamId, setSelectedCamId] = useState<string>('CAM-04');
-    const [points, setPoints] = useState<Point[]>([]);
-    const [isDrawing, setIsDrawing] = useState(true);
-    const [isBreached, setIsBreached] = useState(false);
+    const [isDrawing, setIsDrawing] = useState(false);
     const [soundEnabled, setSoundEnabled] = useState(true);
-    const [boxes, setBoxes] = useState<any[]>([]);
+    const [boxes, setBoxes] = useState<GeofenceBox[]>([]);
     const [statusMsg, setStatusMsg] = useState('Click on canvas to draw boundary points');
 
     const imageRef = useRef<HTMLImageElement>(null);
@@ -43,29 +52,18 @@ export default function PerimeterGeofence() {
 
     const activeCamera = cameras.find(c => c.id === selectedCamId) || cameras[0];
 
-    // Load saved geofence polygon for camera
-    useEffect(() => {
-        if (activeCamera?.geofencePolygon && activeCamera.geofencePolygon.length > 0) {
-            setPoints(activeCamera.geofencePolygon);
-            setIsDrawing(false);
-        } else {
-            // Default preset restricted box
-            setPoints([
-                { x: 20, y: 20 },
-                { x: 80, y: 20 },
-                { x: 80, y: 80 },
-                { x: 20, y: 80 }
-            ]);
-            setIsDrawing(false);
-        }
-    }, [selectedCamId, activeCamera]);
+    const [points, setPoints] = useState<Point[]>(() => {
+        return activeCamera?.geofencePolygon && activeCamera.geofencePolygon.length > 0
+            ? activeCamera.geofencePolygon
+            : [{ x: 20, y: 20 }, { x: 80, y: 20 }, { x: 80, y: 80 }, { x: 20, y: 80 }];
+    });
 
     // Socket.io bounding boxes stream
     useEffect(() => {
         const socket = io(SOCKET_URL, { reconnectionAttempts: 3 });
         const eventName = `boxes_${selectedCamId}`;
 
-        socket.on(eventName, (incoming: any[]) => {
+        socket.on(eventName, (incoming: GeofenceBox[]) => {
             setBoxes(incoming || []);
         });
 
@@ -74,37 +72,31 @@ export default function PerimeterGeofence() {
         };
     }, [selectedCamId]);
 
-    // Check breach status against YOLO11 boxes
-    useEffect(() => {
-        if (points.length < 3 || boxes.length === 0) {
-            setIsBreached(false);
-            return;
-        }
-
-        let breachFound = false;
+    // Derived breach status against YOLO11 boxes using useMemo
+    const isBreached = useMemo(() => {
+        if (points.length < 3 || boxes.length === 0) return false;
         for (const box of boxes) {
             const centerX = box.x + (box.width / 2);
             const centerY = box.y + (box.height / 2);
             if (isPointInPolygon({ x: centerX, y: centerY }, points)) {
-                breachFound = true;
-                break;
+                return true;
             }
         }
+        return false;
+    }, [boxes, points]);
 
-        if (breachFound && !isBreached) {
-            setIsBreached(true);
-            // Trigger automatic webhook incident dispatch
-            axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/alerts/webhook`, {
+    // Webhook trigger effect
+    useEffect(() => {
+        if (isBreached) {
+            axios.post(`${import.meta.env.VITE_API_URL || 'https://defence-survillance-system.onrender.com'}/api/alerts/webhook`, {
                 camera_id: activeCamera.id,
                 type: 'PERIMETER_BREACH',
                 severity: 'Critical',
                 confidence: 0.98,
                 image_url: activeCamera.thumbnailUrl
             }).catch(console.warn);
-        } else if (!breachFound) {
-            setIsBreached(false);
         }
-    }, [boxes, points, isBreached, activeCamera]);
+    }, [isBreached, activeCamera]);
 
     // Handle Canvas Click to add vertex
     const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {

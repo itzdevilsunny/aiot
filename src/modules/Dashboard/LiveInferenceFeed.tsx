@@ -8,8 +8,19 @@ interface Props {
     camera: CameraNode;
 }
 
+interface FeedBox {
+    id: string;
+    label: string;
+    confidence: number;
+    color: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
 export default function LiveInferenceFeed({ camera }: Props) {
-    const [boxes, setBoxes] = useState<any[]>([]);
+    const [boxes, setBoxes] = useState<FeedBox[]>([]);
     const [streamError, setStreamError] = useState(false);
     const setSelectedCameraId = useCameraStore((s) => s.setSelectedCameraId);
 
@@ -17,17 +28,16 @@ export default function LiveInferenceFeed({ camera }: Props) {
     const previewUrl = camera.thumbnailUrl || 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800';
 
     useEffect(() => {
-        setStreamError(false);
         const SOCKET_URL = import.meta.env.VITE_WS_URL || 'https://defence-survillance-system.onrender.com';
         const socket = io(SOCKET_URL, { reconnectionAttempts: 2 });
 
         const eventName = `boxes_${camera.id}`;
-        socket.on(eventName, (incoming: any[]) => {
+        socket.on(eventName, (incoming: FeedBox[]) => {
             setBoxes(incoming || []);
         });
 
         // Simulated bounding box fallback for smooth UX if Python AI engine is waiting for frames
-        let interval: any = null;
+        let interval: ReturnType<typeof setInterval> | null = null;
         if (camera.status === 'online' && camera.id !== 'CAM-04') {
             interval = setInterval(() => {
                 setBoxes([

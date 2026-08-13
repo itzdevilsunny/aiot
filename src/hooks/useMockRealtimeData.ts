@@ -23,7 +23,7 @@ export interface DetectionBox {
 export interface MockDataState {
     inferenceMs: number;
     anomalies: number;
-    trendData: any[];
+    trendData: { time: string; value: number }[];
     detections: DetectionBox[];
     alerts: Alert[];
 }

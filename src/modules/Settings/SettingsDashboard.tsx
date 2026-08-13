@@ -53,6 +53,7 @@ export default function SettingsDashboard() {
     };
 
     const thresholdValue = watch('aiConfidenceThreshold');
+    const activeModelValue = watch('activeModel');
 
     if (isLoading) {
         return (
@@ -134,7 +135,7 @@ export default function SettingsDashboard() {
                                                         <label
                                                             key={m.value}
                                                             className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all
-                                ${watch('activeModel') === m.value
+                                ${activeModelValue === m.value
                                                                     ? 'bg-blue-500/10 border-blue-500/30'
                                                                     : 'bg-slate-900/50 border-slate-800 hover:border-slate-700'
                                                                 }`}
@@ -371,7 +372,7 @@ function ToggleField({
     label: string;
     description: string;
     icon: React.ReactNode;
-    register: ReturnType<typeof import('react-hook-form').useForm>['register'] extends (...args: any[]) => infer R ? R : never;
+    register: Record<string, unknown>;
 }) {
     return (
         <label className="flex items-start gap-3.5 p-4 rounded-xl border border-slate-800 bg-slate-900/50 hover:border-slate-700 transition-colors cursor-pointer">

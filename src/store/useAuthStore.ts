@@ -47,7 +47,7 @@ export const setupAxiosInterceptors = () => {
             if (typeof response.data === 'string' && response.data.trim().startsWith('<')) {
                 console.warn('Backend unavailable (Vercel). Returning mock data for demo.', response.config.url);
                 const url = response.config.url || '';
-                let mockData: any = [];
+                let mockData: unknown = [];
 
                 if (url.includes('/api/stats')) mockData = { totalAnomalies24h: 221, avgInferenceTimeMs: 10.8, systemHealthPercent: 99.2, storageUsedGB: 43.9, totalStorageGB: 100, activeModels: 3, alertsResolvedToday: 91, totalFramesProcessed: '14.2M' };
                 if (url.includes('/api/analytics')) mockData = { trends: Array.from({ length: 10 }, (_, i) => ({ time_bucket: new Date(Date.now() - i * 3600000).toISOString(), anomaly_count: Math.floor(Math.random() * 20) })).reverse(), zoneMetrics: [], accuracyMetrics: { avg_confidence: 0.88, false_positive_rate: 0.02 } };

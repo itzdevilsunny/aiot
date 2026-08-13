@@ -90,14 +90,14 @@ io.on('connection', (socket) => {
     socket.emit('init_cameras', initialCameras);
 
     // Relaying bounding boxes from Python AI Vision Engine to React Frontend
-    socket.on('ai_boxes', (data: { camera_id: string; boxes: any[] }) => {
+    socket.on('ai_boxes', (data: { camera_id: string; boxes: unknown[] }) => {
         if (data && data.camera_id) {
             io.emit(`boxes_${data.camera_id}`, data.boxes);
         }
     });
 
     // Relaying real edge node heartbeats from edge devices
-    socket.on('edge_telemetry', (telemetry: any) => {
+    socket.on('edge_telemetry', (telemetry: Record<string, unknown>) => {
         io.emit('edge_heartbeat', telemetry);
     });
 

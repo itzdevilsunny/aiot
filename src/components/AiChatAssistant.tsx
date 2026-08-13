@@ -56,7 +56,18 @@ export default function AiChatAssistant() {
             return;
         }
 
-        const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+        const windowObj = window as unknown as Record<string, unknown>;
+        const SpeechRecognition = (windowObj.webkitSpeechRecognition || windowObj.SpeechRecognition) as new () => {
+            continuous: boolean;
+            interimResults: boolean;
+            lang: string;
+            start: () => void;
+            stop: () => void;
+            onerror: () => void;
+            onend: () => void;
+            onresult: (event: { results: Array<Array<{ transcript: string }>> }) => void;
+        };
+
         const recognition = new SpeechRecognition();
         recognition.continuous = false;
         recognition.interimResults = false;
@@ -66,7 +77,7 @@ export default function AiChatAssistant() {
             setIsListening(true);
             recognition.start();
 
-            recognition.onresult = (event: any) => {
+            recognition.onresult = (event) => {
                 const transcript = event.results[0][0].transcript;
                 setInput(transcript);
                 setIsListening(false);

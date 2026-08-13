@@ -16,9 +16,20 @@ interface CameraBigScreenModalProps {
     onClose: () => void;
 }
 
+interface BoundingBox {
+    id: string;
+    label: string;
+    confidence: number;
+    color: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
 export default function CameraBigScreenModal({ camera, onClose }: CameraBigScreenModalProps) {
     const { cameras, setSelectedCameraId } = useCameraStore();
-    const [boxes, setBoxes] = useState<any[]>([]);
+    const [boxes, setBoxes] = useState<BoundingBox[]>([]);
     const [zoom, setZoom] = useState(1);
     const [pan, setPan] = useState({ x: 0, y: 0 });
     const [showOverlay, setShowOverlay] = useState(true);
@@ -50,12 +61,12 @@ export default function CameraBigScreenModal({ camera, onClose }: CameraBigScree
         const socket = io(SOCKET_URL, { reconnectionAttempts: 3 });
         const eventName = `boxes_${camera.id}`;
 
-        socket.on(eventName, (data: any[]) => {
+        socket.on(eventName, (data: BoundingBox[]) => {
             setBoxes(data || []);
         });
 
         // Fallback simulated boxes if specific camera has no active stream
-        let interval: any = null;
+        let interval: ReturnType<typeof setInterval> | null = null;
         if (camera.id !== 'CAM-04' && camera.status === 'online') {
             interval = setInterval(() => {
                 setBoxes([
@@ -80,7 +91,7 @@ export default function CameraBigScreenModal({ camera, onClose }: CameraBigScree
                         height: 30
                     }
                 ]);
-            }, 2500);
+            }, 3000);
         }
 
         return () => {
@@ -94,7 +105,7 @@ export default function CameraBigScreenModal({ camera, onClose }: CameraBigScree
         if (!camera) return;
         setIsTriggeringAlert(true);
         try {
-            await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/alerts/webhook`, {
+            await axios.post(`${import.meta.env.VITE_API_URL || 'https://defence-survillance-system.onrender.com'}/api/alerts/webhook`, {
                 camera_id: camera.id,
                 type: 'UNAUTHORIZED_ACCESS',
                 severity: 'Critical',
@@ -103,7 +114,7 @@ export default function CameraBigScreenModal({ camera, onClose }: CameraBigScree
             });
             setAlertMessage('Manual AI Anomaly dispatched to Dashboard!');
             setTimeout(() => setAlertMessage(''), 4000);
-        } catch (e) {
+        } catch {
             setAlertMessage('Anomaly posted locally.');
             setTimeout(() => setAlertMessage(''), 4000);
         } finally {

@@ -131,14 +131,6 @@ export default function ZoneMap() {
                     mapInstance.fitBounds(bounds, { top: 50, right: 400, bottom: 50, left: 50 });
                 }
             }
-        } else {
-            setDirections(null);
-            setRouteInfo(null);
-            setIsDroneDispatched(false);
-            if (mapInstance) {
-                mapInstance.panTo(DISPATCH_BASE);
-                mapInstance.setZoom(13);
-            }
         }
     }, [selectedAlert, getCameraForAlert, fetchDirections, mapInstance]);
 

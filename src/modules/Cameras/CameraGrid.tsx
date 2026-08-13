@@ -9,7 +9,7 @@ const fetchCameras = async () => {
     try {
         const { data } = await axios.get(`${API_BASE}/api/cameras`);
         return data;
-    } catch (err) {
+    } catch {
         console.warn("Real API offline, falling back to module mock array.");
         return [
             { id: '1', name: 'Main Gate', status: 'online', lat: 28.6139, lng: 77.2090 },
@@ -32,7 +32,7 @@ export default function CameraGrid() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {cameras?.map((cam: any) => (
+                {cameras?.map((cam: { id: string; name: string; status: string }) => (
                     <div key={cam.id} className="relative bg-black rounded-lg overflow-hidden group border border-slate-800 aspect-video flex items-center justify-center">
                         {/* Standalone WebRTC/RTSP fallback placeholder */}
                         <div className="absolute inset-0 bg-slate-900/50 flex flex-col items-center justify-center opacity-80 group-hover:opacity-40 transition-opacity">

@@ -113,7 +113,7 @@ export const useCameraStore = create<CameraState>((set) => ({
             } else {
                 set({ cameras: generate108Cameras() });
             }
-        } catch (error) {
+        } catch {
             set({ cameras: generate108Cameras() });
         }
     },

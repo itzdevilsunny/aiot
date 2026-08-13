@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useAlertStore } from '../../store/useAlertStore';
 import type { AnomalyAlert, AlertStatus } from '../../store/useAlertStore';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -40,23 +40,12 @@ export default function AlertDashboard() {
     const [statusFilter, setStatusFilter] = useState<string>('All');
     const [searchQuery, setSearchQuery] = useState('');
 
-    // When selecting an alert, pre-fill the form
-    useEffect(() => {
-        if (selectedAlert) {
-            setEditNotes(selectedAlert.operator_notes || '');
-            setEditStatus(selectedAlert.status === 'Pending' ? 'Investigating' : selectedAlert.status);
-        }
-    }, [selectedAlert]);
-
-    // Keep selected alert in sync with live updates
-    useEffect(() => {
-        if (selectedAlert) {
-            const updated = alerts.find((a) => a.id === selectedAlert.id);
-            if (updated && updated.status !== selectedAlert.status) {
-                setSelectedAlert(updated);
-            }
-        }
-    }, [alerts, selectedAlert]);
+    // Handler for selecting an alert to inspect / update notes
+    const handleSelectAlert = (alert: AnomalyAlert) => {
+        setSelectedAlert(alert);
+        setEditNotes(alert.operator_notes || '');
+        setEditStatus(alert.status === 'Pending' ? 'Investigating' : alert.status);
+    };
 
     // Filter logic
     const filteredAlerts = useMemo(() => {
@@ -207,7 +196,7 @@ export default function AlertDashboard() {
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, scale: 0.95 }}
                                     transition={{ duration: 0.25 }}
-                                    onClick={() => setSelectedAlert(alert)}
+                                    onClick={() => handleSelectAlert(alert)}
                                     className={`p-4 rounded-xl cursor-pointer flex items-center gap-4 border transition-all duration-200 group
                     ${isSelected
                                             ? 'bg-blue-600/10 border-blue-500/40 shadow-[0_0_20px_rgba(37,99,235,0.08)]'

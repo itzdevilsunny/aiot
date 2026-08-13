@@ -36,8 +36,9 @@ export async function dispatchEmergencyNotification(payload: AlertNotificationPa
                 disable_web_page_preview: false
             });
             console.log(`[Alert Notifier] Emergency alert dispatched to Telegram Chat ${telegramChatId}`);
-        } catch (err: any) {
-            console.warn('[Alert Notifier] Telegram dispatch error:', err.message);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            console.warn('[Alert Notifier] Emergency dispatch error:', message);
         }
     }
 
@@ -50,8 +51,9 @@ export async function dispatchEmergencyNotification(payload: AlertNotificationPa
                 data: payload
             });
             console.log(`[Alert Notifier] Dispatched to Webhook URL: ${customWebhookUrl}`);
-        } catch (err: any) {
-            console.warn('[Alert Notifier] Webhook dispatch error:', err.message);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            console.warn('[Alert Notifier] Webhook dispatch error:', message);
         }
     }
 }

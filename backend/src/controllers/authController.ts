@@ -32,7 +32,7 @@ export const register = async (req: Request, res: Response) => {
         const token = jwt.encode({ id: user.id, role: user.role }, JWT_SECRET);
         res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
 
-    } catch (error) {
+    } catch {
         res.status(500).json({ error: 'Server error during registration' });
     }
 };
@@ -56,7 +56,7 @@ export const login = async (req: Request, res: Response) => {
         const token = jwt.encode({ id: mockAdminUser.id, role: mockAdminUser.role }, JWT_SECRET);
         return res.json({ token, user: mockAdminUser });
 
-    } catch (error) {
+    } catch {
         res.status(500).json({ error: 'Server error during login' });
     }
 };

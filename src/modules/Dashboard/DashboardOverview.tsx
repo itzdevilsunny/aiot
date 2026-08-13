@@ -43,7 +43,7 @@ export default function CommandCenter() {
             try {
                 const { data } = await axios.get(`${import.meta.env.VITE_BACKEND_URL || ''}/api/stats/overview`);
                 return data;
-            } catch (e) {
+            } catch {
                 // Fallback demo data
                 return {
                     activeNodes: 3, totalNodes: 3,
