@@ -22,9 +22,16 @@ const STATUS_STYLES: Record<AlertStatus, { bg: string; text: string; icon: React
 };
 
 const TYPE_LABELS: Record<string, string> = {
+    CROWD_GATHERING: 'Crowd Gathering (5+ People)',
+    SHARP_OBJECT: 'Sharp Object / Knife',
+    WEAPON_GUN: 'Firearm / Gun Weapon',
+    FIRE_HAZARD: 'Fire & Smoke Hazard',
+    WATER_CHEMICAL_LEAK: 'Water / Chemical Hazard',
+    UNAUTHORIZED_VEHICLE: 'Unauthorized Vehicle',
+    SUSPECT_MATCH: 'Suspect / Criminal Face Match',
+    PERIMETER_BREACH: 'Perimeter Geofence Breach',
     PARKING_VIOLATION: 'Parking Violation',
     CAPACITY_EXCEEDED: 'Capacity Exceeded',
-    UNAUTHORIZED_VEHICLE: 'Unauthorized Vehicle',
     SUSPICIOUS_BEHAVIOR: 'Suspicious Behavior',
 };
 

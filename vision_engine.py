@@ -127,25 +127,39 @@ async def process_video_stream():
 
         frame_height, frame_width = frame.shape[:2]
 
-        # Stage 1: Run YOLOv8 Inference
-        results = model.predict(frame, conf=0.45, verbose=False)
+        # Stage 1: Run YOLOv11 Inference
+        results = model.predict(frame, conf=0.40, verbose=False)
         boxes_payload = []
         detected_labels = []
+
+        person_count = 0
+        has_weapon = False
+        has_sharp = False
+        has_fire = False
 
         for r in results:
             for box in r.boxes:
                 x1, y1, x2, y2 = box.xyxy[0].tolist()
                 conf = float(box.conf[0])
                 cls = int(box.cls[0])
-                label = model.names[cls]
+                label = model.names[cls].lower()
                 detected_labels.append(label)
+
+                if label == 'person':
+                    person_count += 1
+                if label in ['knife', 'scissors']:
+                    has_sharp = True
+                if label in ['gun', 'firearm', 'rifle']:
+                    has_weapon = True
+                if label in ['fire', 'smoke']:
+                    has_fire = True
 
                 x_pct = (x1 / frame_width) * 100
                 y_pct = (y1 / frame_height) * 100
                 w_pct = ((x2 - x1) / frame_width) * 100
                 h_pct = ((y2 - y1) / frame_height) * 100
 
-                color = '#EF4444' if label in ['person', 'car', 'truck'] else '#3B82F6'
+                color = '#EF4444' if label in ['person', 'knife', 'scissors', 'gun', 'fire'] else '#3B82F6'
 
                 boxes_payload.append({
                     'id': f"box_{cls}_{int(x_pct)}_{int(y_pct)}",
@@ -163,18 +177,49 @@ async def process_video_stream():
             await sio_client.emit('ai_boxes', {'camera_id': CAMERA_ID, 'boxes': boxes_payload})
         await sio.emit(f'boxes_{CAMERA_ID}', boxes_payload)
 
+        # Direct Heuristic Rules for Instant Anomaly Triggers
+        direct_alert_type = None
+        if person_count >= 5:
+            direct_alert_type = 'CROWD_GATHERING'
+            notes = f"Crowd Gathering Alert: {person_count} people detected in camera sector."
+        elif has_weapon:
+            direct_alert_type = 'WEAPON_GUN'
+            notes = "WEAPON ALERT: Firearm / weapon detected by vision engine."
+        elif has_sharp:
+            direct_alert_type = 'SHARP_OBJECT'
+            notes = "HAZARD ALERT: Sharp object / knife detected."
+        elif has_fire:
+            direct_alert_type = 'FIRE_HAZARD'
+            notes = "FIRE HAZARD ALERT: Thermal fire/smoke emissions detected."
+
+        if direct_alert_type:
+            base64_img = encode_frame_base64(frame)
+            alert_payload = {
+                "camera_id": CAMERA_ID,
+                "type": direct_alert_type,
+                "severity": "Critical",
+                "confidence": 0.96,
+                "image_url": f"data:image/jpeg;base64,{base64_img}",
+                "operator_notes": notes
+            }
+            print(f"[LIVE AI ALERT DISPATCHED] {direct_alert_type} ({CAMERA_ID})")
+            try:
+                await asyncio.to_thread(requests.post, f"{BACKEND_URL}/api/alerts/webhook", json=alert_payload, timeout=5)
+            except Exception as post_err:
+                print(f"[Webhook Error] Failed to dispatch alert: {post_err}")
+
         # Stage 2: Trigger Gemini Multimodal Anomaly Check when key targets are present
-        if detected_labels and any(k in detected_labels for k in ['person', 'car', 'truck', 'motorcycle']):
+        elif detected_labels and any(k in detected_labels for k in ['person', 'car', 'truck', 'motorcycle']):
             anomaly_data = await analyze_frame_with_gemini(frame, list(set(detected_labels)))
             if anomaly_data:
                 alert_payload = {
                     "camera_id": CAMERA_ID,
-                    "type": anomaly_data.get("type", "UNAUTHORIZED_ACCESS"),
+                    "type": anomaly_data.get("type", "UNAUTHORIZED_VEHICLE"),
                     "severity": anomaly_data.get("severity", "Critical"),
                     "confidence": anomaly_data.get("confidence", 0.9),
                     "image_url": anomaly_data.get("image_url", "")
                 }
-                print(f"[REAL ANOMALY DETECTED] {alert_payload['type']} - {alert_payload['severity']}")
+                print(f"[GEMINI VISION ANOMALY] {alert_payload['type']} - {alert_payload['severity']}")
                 try:
                     await asyncio.to_thread(requests.post, f"{BACKEND_URL}/api/alerts/webhook", json=alert_payload, timeout=5)
                 except Exception as post_err:

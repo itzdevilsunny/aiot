@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import type { CameraNode } from '../../store/useCameraStore';
 import { useCameraStore } from '../../store/useCameraStore';
+import { useAlertStore } from '../../store/useAlertStore';
 import { io } from 'socket.io-client';
 import axios from 'axios';
 
@@ -321,11 +322,30 @@ export default function CameraBigScreenModal({ camera, onClose }: CameraBigScree
                                     )}
 
                                     <button
+                                        onClick={() => {
+                                            setAlertMessage(`📸 Snapshot Captured & Pushed to Supabase Alerts!`);
+                                            useAlertStore.getState().createAlert({
+                                                camera_id: camera.id,
+                                                type: 'SUSPECT_MATCH',
+                                                severity: 'Critical',
+                                                confidence: 0.98,
+                                                image_url: camera.thumbnailUrl || 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800',
+                                                operator_notes: `Manual Camera Snapshot taken by Operator on ${camera.name} (${camera.zone}).`,
+                                                location: camera.zone
+                                            });
+                                            setTimeout(() => setAlertMessage(''), 4000);
+                                        }}
+                                        className="w-full py-2.5 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-400 text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all"
+                                    >
+                                        <CameraIcon size={14} /> 📸 Capture Snapshot & Flag Suspect
+                                    </button>
+
+                                    <button
                                         onClick={handleTriggerTestAnomaly}
                                         disabled={isTriggeringAlert}
-                                        className="w-full py-2.5 bg-red-600/20 hover:bg-red-600/30 border border-red-500/40 text-red-400 font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
+                                        className="w-full py-2.5 bg-red-600/20 hover:bg-red-600/30 border border-red-500/40 text-red-400 text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50"
                                     >
-                                        <AlertTriangle size={16} /> Trigger Simulated Incident
+                                        <AlertTriangle size={14} /> {isTriggeringAlert ? 'Dispatching...' : '🚨 Trigger Manual AI Anomaly'}
                                     </button>
                                 </div>
                             </div>
