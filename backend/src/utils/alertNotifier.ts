@@ -21,21 +21,30 @@ export async function dispatchEmergencyNotification(payload: AlertNotificationPa
     // 1. Telegram Mobile Alert Dispatch
     if (telegramToken && telegramChatId) {
         try {
-            const text = `🚨 *VISION AIoT EMERGENCY ALERT*\n\n` +
-                `*Incident:* ${payload.type.replace('_', ' ')}\n` +
+            const caption = `🚨 *VISION AIoT DEFENSE ALERT*\n\n` +
+                `*Incident:* ${payload.type.replace(/_/g, ' ')}\n` +
                 `*Severity:* ${payload.severity.toUpperCase()}\n` +
                 `*Camera Node:* \`${payload.camera_id}\`\n` +
                 `*AI Confidence:* ${Math.round(payload.confidence * 100)}%\n` +
-                `*Time:* ${new Date(payload.timestamp).toLocaleString()}\n\n` +
-                `🔗 [View Live Stream Dashboard](${process.env.FRONTEND_URL || 'http://localhost:5174'})`;
+                `*Timestamp:* ${new Date(payload.timestamp).toLocaleString()}\n\n` +
+                `🔗 [Open Live Dashboard](${process.env.FRONTEND_URL || 'https://defence-surveillance-system-snowy.vercel.app'})`;
 
-            await axios.post(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
-                chat_id: telegramChatId,
-                text,
-                parse_mode: 'Markdown',
-                disable_web_page_preview: false
-            });
-            console.log(`[Alert Notifier] Emergency alert dispatched to Telegram Chat ${telegramChatId}`);
+            if (payload.image_url && payload.image_url.startsWith('http')) {
+                await axios.post(`https://api.telegram.org/bot${telegramToken}/sendPhoto`, {
+                    chat_id: telegramChatId,
+                    photo: payload.image_url,
+                    caption,
+                    parse_mode: 'Markdown'
+                });
+            } else {
+                await axios.post(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+                    chat_id: telegramChatId,
+                    text: caption,
+                    parse_mode: 'Markdown',
+                    disable_web_page_preview: false
+                });
+            }
+            console.log(`[Alert Notifier] Emergency alert photo dispatched to Telegram Chat ${telegramChatId}`);
         } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
             console.warn('[Alert Notifier] Emergency dispatch error:', message);

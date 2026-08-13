@@ -41,6 +41,28 @@ interface AlertState {
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://defence-survillance-system.onrender.com';
 
+// Web Audio API Synthesizer for Operator Emergency Alert Sound
+const playAlertAudioBeep = () => {
+    try {
+        const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(880, ctx.currentTime); // A5 note
+        osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.3);
+    } catch {
+        // AudioContext autoplay restrictions handled silently
+    }
+};
+
 export const useAlertStore = create<AlertState>((set, get) => ({
     alerts: [],
 
@@ -104,10 +126,12 @@ export const useAlertStore = create<AlertState>((set, get) => ({
     },
 
     // Triggered by Socket.io or Supabase Realtime when detection is pushed
-    addLiveAlert: (alert) =>
+    addLiveAlert: (alert) => {
+        playAlertAudioBeep();
         set((state) => ({
             alerts: [alert, ...state.alerts.filter(a => a.id !== alert.id)].slice(0, 500),
-        })),
+        }));
+    },
 
     // Create a new anomaly alert in Supabase & Backend
     createAlert: async (newAlert) => {
