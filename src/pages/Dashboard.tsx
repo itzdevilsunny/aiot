@@ -14,6 +14,7 @@ const MODULE_ORDER = [
     { path: '/dashboard/cameras', title: 'Live Cameras' },
     { path: '/dashboard/geofence', title: 'AI Geofence Zone' },
     { path: '/dashboard/alpr', title: 'ALPR Engine' },
+    { path: '/dashboard/reid', title: 'Cross-Camera Re-ID' },
     { path: '/dashboard/alerts', title: 'Anomaly Alerts' },
     { path: '/dashboard/analytics', title: 'Analytics' },
     { path: '/dashboard/map', title: 'Zone Map' },
