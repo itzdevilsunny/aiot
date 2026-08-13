@@ -12,7 +12,6 @@ export default function LandingPage() {
 
     return (
         <div className="min-h-screen bg-[#0B0F19] text-white selection:bg-blue-500/30 font-sans overflow-x-hidden">
-
             {/* Navigation Bar */}
             <nav className="fixed w-full z-50 bg-[#0B0F19]/80 backdrop-blur-md border-b border-gray-800">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -24,9 +23,9 @@ export default function LandingPage() {
                     </div>
                     <Link
                         to="/dashboard"
-                        className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)]"
+                        className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] text-sm"
                     >
-                        Access System
+                        Access Dashboard
                     </Link>
                 </div>
             </nav>

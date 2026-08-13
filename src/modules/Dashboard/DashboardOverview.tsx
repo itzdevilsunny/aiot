@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAlertStore } from '../../store/useAlertStore';
+import { useCameraStore } from '../../store/useCameraStore';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { io } from 'socket.io-client';
@@ -13,7 +14,25 @@ const socket = io(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'
 
 export default function CommandCenter() {
     const { alerts } = useAlertStore();
+    const { cameras, fetchCameras } = useCameraStore();
+    const [selectedOverviewCameraId, setSelectedOverviewCameraId] = useState<string>('CAM-04');
     const [systemLogs, setSystemLogs] = useState<{ time: string, msg: string, type: string }[]>([]);
+
+    useEffect(() => {
+        fetchCameras();
+    }, [fetchCameras]);
+
+    const activeOverviewCamera = cameras.find(c => c.id === selectedOverviewCameraId) || cameras[0] || {
+        id: 'CAM-04',
+        name: 'CAM-04 (Perimeter Security)',
+        ip_url: 'http://192.168.0.4:8080',
+        zone: 'Perimeter Security',
+        status: 'online',
+        fps: 60,
+        latencyMs: 12,
+        resolution: '4K Ultra HD',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800'
+    };
 
     // 1. Real API Fetching for KPIs
     const { data: stats } = useQuery({
@@ -154,20 +173,34 @@ export default function CommandCenter() {
                 <div className="xl:col-span-2 flex flex-col gap-6">
 
                     {/* Live Edge Inference Widget */}
-                    <div className="bg-[#151923] rounded-xl border border-gray-800 shadow-xl overflow-hidden flex flex-col h-[500px]">
-                        <div className="p-3 border-b border-gray-800 flex justify-between items-center bg-[#1A1D27]">
-                            <h3 className="font-bold flex items-center gap-2">
-                                <Activity size={18} className="text-blue-500" /> Live Edge Inference
-                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-500 uppercase tracking-wider ml-2">Rec</span>
-                            </h3>
-                            <div className="flex gap-2">
-                                <span className="bg-gray-800 px-2 py-1 rounded text-xs font-mono text-gray-400 border border-gray-700">CAM-04</span>
-                                <span className="bg-gray-800 px-2 py-1 rounded text-xs font-mono text-gray-400 border border-gray-700">30 FPS</span>
+                    <div className="bg-[#151923] rounded-xl border border-gray-800 shadow-xl overflow-hidden flex flex-col h-[520px]">
+                        <div className="p-3 border-b border-gray-800 flex flex-wrap justify-between items-center bg-[#1A1D27] gap-2">
+                            <div className="flex items-center gap-2">
+                                <Activity size={18} className="text-blue-500" />
+                                <h3 className="font-bold text-sm">Live Edge Inference</h3>
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 uppercase tracking-wider">REC • YOLO11</span>
+                            </div>
+
+                            {/* Dynamic 108 Camera Selector Dropdown */}
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-slate-400 font-medium hidden sm:inline">Select Node:</span>
+                                <select
+                                    value={activeOverviewCamera.id}
+                                    onChange={(e) => setSelectedOverviewCameraId(e.target.value)}
+                                    className="bg-[#0B0F19] border border-slate-700 text-xs font-mono text-white rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500 cursor-pointer max-w-[220px] truncate"
+                                >
+                                    {cameras.map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.id}: {c.name} ({c.zone})
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
+
                         <div className="flex-grow bg-black relative">
-                            {/* Uses your actual IP Webcam */}
-                            <LiveInferenceFeed streamUrl="http://192.168.0.4:8080/video" cameraId="CAM-04" />
+                            {/* Uses the dynamically selected camera */}
+                            <LiveInferenceFeed camera={activeOverviewCamera} />
                         </div>
                     </div>
 

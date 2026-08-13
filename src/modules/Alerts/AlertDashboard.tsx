@@ -100,13 +100,32 @@ export default function AlertDashboard() {
                             </div>
                             <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-3">
                                 <Siren className="w-6 h-6 text-red-400" />
-                                Anomaly Alerts
+                                Anomaly Alerts & PDF Audit Generator
                             </h1>
                             <p className="text-slate-400 text-sm mt-1">
-                                Real-time anomaly detection events from edge inference nodes.
+                                Real-time anomaly events with law enforcement PDF report export.
                             </p>
                         </div>
                         <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => {
+                                    const csvRows = [
+                                        ['ID', 'Camera ID', 'Type', 'Severity', 'Status', 'Confidence', 'Timestamp', 'Notes'],
+                                        ...filteredAlerts.map(a => [
+                                            a.id, a.camera_id, a.type, a.severity, a.status, `${a.confidence}%`, new Date(a.timestamp).toISOString(), `"${a.operator_notes || ''}"`
+                                        ])
+                                    ];
+                                    const blob = new Blob([csvRows.map(r => r.join(',')).join('\n')], { type: 'text/csv' });
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = `VisionAIoT_Alerts_Export_${Date.now()}.csv`;
+                                    a.click();
+                                }}
+                                className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-bold text-slate-300 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+                            >
+                                Export CSV Log
+                            </button>
                             <div className="px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20">
                                 <span className="text-xs font-bold text-red-400">{criticalCount} Critical</span>
                             </div>
@@ -341,20 +360,86 @@ export default function AlertDashboard() {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="p-4 border-t border-slate-800 flex gap-3">
+                        <div className="p-4 border-t border-slate-800 flex flex-col gap-2">
                             <button
-                                onClick={() => setSelectedAlert(null)}
-                                className="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium py-2.5 rounded-xl transition-colors border border-slate-700"
+                                onClick={() => {
+                                    if (!selectedAlert) return;
+                                    const printWindow = window.open('', '_blank');
+                                    if (!printWindow) return;
+                                    printWindow.document.write(`
+                                        <html>
+                                            <head>
+                                                <title>VisionAIoT Security Incident Report - ${selectedAlert.id}</title>
+                                                <style>
+                                                    body { font-family: Arial, sans-serif; padding: 40px; color: #1e293b; }
+                                                    .header { border-bottom: 2px solid #2563eb; padding-bottom: 15px; margin-bottom: 20px; }
+                                                    .title { font-size: 24px; font-weight: bold; color: #0f172a; }
+                                                    .subtitle { font-size: 12px; color: #64748b; margin-top: 4px; }
+                                                    .section { margin-bottom: 20px; }
+                                                    .section-title { font-size: 14px; font-weight: bold; text-transform: uppercase; color: #475569; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 10px; }
+                                                    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+                                                    .field { font-size: 12px; }
+                                                    .label { font-weight: bold; color: #64748b; }
+                                                    .val { margin-top: 2px; }
+                                                    .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; background: #fee2e2; color: #991b1b; }
+                                                    .img-container { margin-top: 15px; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; max-width: 500px; }
+                                                    .img-container img { width: 100%; display: block; }
+                                                </style>
+                                            </head>
+                                            <body>
+                                                <div class="header">
+                                                    <div class="title">OFFICIAL SECURITY INCIDENT AUDIT REPORT</div>
+                                                    <div class="subtitle">VisionAIoT Smart City & Enterprise Security Platform • Generated ${new Date().toLocaleString()}</div>
+                                                </div>
+                                                <div class="section">
+                                                    <div class="section-title">Incident Details</div>
+                                                    <div class="grid">
+                                                        <div class="field"><div class="label">Incident ID</div><div class="val">${selectedAlert.id}</div></div>
+                                                        <div class="field"><div class="label">Classification</div><div class="val"><span class="badge">${selectedAlert.type}</span></div></div>
+                                                        <div class="field"><div class="label">Camera Node</div><div class="val">${selectedAlert.camera_id}</div></div>
+                                                        <div class="field"><div class="label">Severity Level</div><div class="val">${selectedAlert.severity}</div></div>
+                                                        <div class="field"><div class="label">AI Confidence Score</div><div class="val">${selectedAlert.confidence.toFixed(2)}% (YOLO11 + Gemini 2.5)</div></div>
+                                                        <div class="field"><div class="label">Detected Timestamp</div><div class="val">${new Date(selectedAlert.timestamp).toLocaleString()}</div></div>
+                                                    </div>
+                                                </div>
+                                                <div class="section">
+                                                    <div class="section-title">AI Vision Snapshot Evidence</div>
+                                                    <div class="img-container">
+                                                        <img src="${selectedAlert.image_url}" alt="Incident Snapshot" />
+                                                    </div>
+                                                </div>
+                                                <div class="section">
+                                                    <div class="section-title">Operator Audit Notes & Resolution History</div>
+                                                    <p style="font-size: 13px; background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                                                        ${selectedAlert.operator_notes || 'No operator notes entered.'}
+                                                    </p>
+                                                </div>
+                                                <script>window.onload = function() { window.print(); }</script>
+                                            </body>
+                                        </html>
+                                    `);
+                                    printWindow.document.close();
+                                }}
+                                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold py-2.5 rounded-xl transition border border-slate-700 cursor-pointer flex items-center justify-center gap-1.5"
                             >
-                                Cancel
+                                📄 Export PDF Incident Audit Report
                             </button>
-                            <button
-                                onClick={handleSave}
-                                disabled={saving}
-                                className="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold py-2.5 rounded-xl transition-colors shadow-[0_0_15px_rgba(37,99,235,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {saving ? 'Saving...' : 'Save Changes'}
-                            </button>
+
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setSelectedAlert(null)}
+                                    className="flex-1 bg-slate-900 hover:bg-slate-800 text-slate-400 text-xs font-medium py-2.5 rounded-xl transition border border-slate-800 cursor-pointer"
+                                >
+                                    Close
+                                </button>
+                                <button
+                                    onClick={handleSave}
+                                    disabled={saving}
+                                    className="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2.5 rounded-xl transition shadow-[0_0_15px_rgba(37,99,235,0.3)] disabled:opacity-50 cursor-pointer"
+                                >
+                                    {saving ? 'Saving...' : 'Save & Resolve'}
+                                </button>
+                            </div>
                         </div>
                     </motion.div>
                 )}

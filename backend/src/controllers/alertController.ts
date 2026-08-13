@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { Server } from 'socket.io';
 import z from 'zod';
+import { dispatchEmergencyNotification } from '../utils/alertNotifier';
 
 const prisma = new PrismaClient();
 
@@ -81,8 +82,13 @@ export const handleAiDetection = async (req: Request, res: Response): Promise<vo
             };
 
             alertStore.set(fallbackAlert.id, fallbackAlert);
+
+            // 3. Broadcast Alert to React via WebSockets & Emergency Mobile Notifier
             const io = req.app.get('io') as Server;
             if (io) io.emit('new_anomaly', fallbackAlert);
+
+            // Dispatch Telegram & Enterprise Webhooks asynchronously
+            dispatchEmergencyNotification(fallbackAlert).catch(console.warn);
 
             res.status(201).json(fallbackAlert);
         }

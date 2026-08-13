@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Maximize2, ZoomIn, ZoomOut, Zap, ZapOff, WifiOff, Trash2 } from 'lucide-react';
+import { Maximize2, ZoomIn, ZoomOut, Zap, ZapOff, Trash2 } from 'lucide-react';
 import type { CameraNode } from '../../store/useCameraStore';
 import { useCameraStore } from '../../store/useCameraStore';
 
@@ -7,7 +7,7 @@ export default function IPWebcamPlayer({ camera }: { camera: CameraNode }) {
     const [hasError, setHasError] = useState(false);
     const [isFlashlightOn, setIsFlashlightOn] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
-    const { removeCamera, updateStatus } = useCameraStore();
+    const { removeCamera } = useCameraStore();
 
     // IP Webcam specific endpoints
     const streamUrl = `${camera.ip_url}/video`;
@@ -59,31 +59,28 @@ export default function IPWebcamPlayer({ camera }: { camera: CameraNode }) {
 
             {/* Video Feed Area */}
             <div className="flex-grow bg-black relative flex items-center justify-center pointer-events-none">
-                {hasError ? (
-                    <div className="flex flex-col items-center text-gray-500 pointer-events-auto">
-                        <WifiOff size={32} className="mb-2 text-red-900" />
-                        <p className="text-sm font-semibold">Connection Lost</p>
-                        <p className="text-xs">{camera.ip_url}</p>
-                        <button
-                            onClick={() => setHasError(false)}
-                            className="mt-3 px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs text-white transition cursor-pointer"
-                        >
-                            Attempt Reconnect
-                        </button>
+                <img
+                    src={hasError ? (camera.thumbnailUrl || 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800') : streamUrl}
+                    alt={camera.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    crossOrigin="anonymous"
+                    onError={() => {
+                        setHasError(true);
+                    }}
+                />
+
+                {/* Overlaid Camera Specs */}
+                <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm border border-slate-700/60 rounded-md px-2 py-0.5 text-[10px] text-white font-mono flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>{camera.resolution || '1080p'}</span>
+                </div>
+
+                {/* Enlarge Click Hint */}
+                <div className="absolute inset-0 bg-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold shadow-lg flex items-center gap-1.5">
+                        <Maximize2 size={14} /> Open Big Screen
                     </div>
-                ) : (
-                    <img
-                        src={streamUrl}
-                        alt={camera.name}
-                        className="w-full h-full object-cover"
-                        crossOrigin="anonymous"
-                        onError={() => {
-                            setHasError(true);
-                            updateStatus(camera.id, 'offline');
-                        }}
-                        onLoad={() => updateStatus(camera.id, 'online')}
-                    />
-                )}
+                </div>
             </div>
 
             {/* Bottom PTZ Control Bar */}

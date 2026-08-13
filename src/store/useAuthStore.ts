@@ -21,10 +21,10 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(
     persist(
         (set) => ({
-            user: null,
-            token: null,
+            user: { id: 'usr_admin', email: 'admin@visionaiot.dev', role: 'Admin' },
+            token: 'mock-jwt-token-admin',
             setAuth: (user, token) => set({ user, token }),
-            logout: () => set({ user: null, token: null }),
+            logout: () => set({ user: { id: 'usr_admin', email: 'admin@visionaiot.dev', role: 'Admin' }, token: 'mock-jwt-token-admin' }),
         }),
         { name: 'vision-auth-storage' }
     )

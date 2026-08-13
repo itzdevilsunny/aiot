@@ -104,8 +104,8 @@ export default function EdgeNodeCard({ node }: { node: EdgeNode }) {
             <div className="px-5 py-4 border-t border-slate-800/50 bg-slate-900/20 flex items-center justify-between">
                 <div className="min-w-0">
                     <div className="flex items-center gap-1.5 text-[10px] text-slate-500 mb-0.5">
-                        <span className="text-blue-400 font-semibold">YOLOv8</span>
-                        <span>v{node.model_version}</span>
+                        <span className="text-blue-400 font-bold">YOLO11 Nano</span>
+                        <span>v{node.model_version || '11.0'}</span>
                     </div>
                     <div className="flex items-center gap-1 text-[10px] text-slate-600">
                         <Clock className="w-3 h-3" />
@@ -116,16 +116,21 @@ export default function EdgeNodeCard({ node }: { node: EdgeNode }) {
                 <div className="flex gap-1.5">
                     <button
                         disabled={isBusy || isOffline}
-                        onClick={() => sendDeviceCommand(node.id, 'update_model')}
-                        className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-blue-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors border border-slate-700/50"
-                        title="Push Latest Model"
+                        onClick={() => {
+                            const newModel = prompt(`Select OTA Model to deploy on ${node.name}:\n1: yolo11n.pt (YOLO11 Nano)\n2: yolo11m.pt (YOLO11 Medium)\n3: ppe_yolo11.pt (PPE & Safety)\n4: fire_hazard_yolo11.pt (Fire & Smoke)`, 'yolo11n.pt');
+                            if (newModel) {
+                                sendDeviceCommand(node.id, 'update_model');
+                            }
+                        }}
+                        className="px-2.5 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-blue-500/30 text-xs font-bold flex items-center gap-1 cursor-pointer"
+                        title="OTA Model Deployment"
                     >
-                        <UploadCloud className="w-3.5 h-3.5" />
+                        <UploadCloud className="w-3.5 h-3.5" /> Deploy Model
                     </button>
                     <button
                         disabled={isBusy}
                         onClick={() => sendDeviceCommand(node.id, 'restart')}
-                        className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors border border-red-500/20"
+                        className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors border border-red-500/20 cursor-pointer"
                         title="Hard Restart Node"
                     >
                         <RefreshCw className={`w-3.5 h-3.5 ${isBusy ? 'animate-spin' : ''}`} />

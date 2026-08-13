@@ -1,17 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Camera, AlertTriangle, Activity, Shield, Database,
-    LayoutDashboard, Video, Settings, Search, Menu, X,
-    MapPin, Server as ServerIcon, ChevronLeft, ChevronRight
+    LayoutDashboard, Video, Settings, Search, Menu,
+    MapPin, Server as ServerIcon, ChevronLeft, ChevronRight, CheckCircle2, Lock, Car
 } from 'lucide-react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAlertStore } from '../store/useAlertStore';
-import { useAuthStore } from '../store/useAuthStore';
 import NotificationDropdown from '../components/NotificationDropdown';
+import AiChatAssistant from '../components/AiChatAssistant';
 
 const MODULE_ORDER = [
     { path: '/dashboard', title: 'Overview' },
     { path: '/dashboard/cameras', title: 'Live Cameras' },
+    { path: '/dashboard/geofence', title: 'AI Geofence Zone' },
+    { path: '/dashboard/alpr', title: 'ALPR Engine' },
     { path: '/dashboard/alerts', title: 'Anomaly Alerts' },
     { path: '/dashboard/analytics', title: 'Analytics' },
     { path: '/dashboard/map', title: 'Zone Map' },
@@ -22,7 +24,7 @@ const MODULE_ORDER = [
 ];
 
 export default function DashboardLayout() {
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
     const pendingAlertCount = useAlertStore((s) => s.alerts.filter(a => a.status === 'Pending').length);
@@ -63,6 +65,9 @@ export default function DashboardLayout() {
                     <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Main Menu</p>
                     <SidebarItem icon={<LayoutDashboard />} label="Overview" active={location.pathname === '/dashboard'} path="/dashboard" />
                     <SidebarItem icon={<Video />} label="Live Cameras" active={location.pathname === '/dashboard/cameras'} badge="4" path="/dashboard/cameras" />
+                    <SidebarItem icon={<Lock />} label="AI Geofence" active={location.pathname === '/dashboard/geofence'} path="/dashboard/geofence" />
+                    <SidebarItem icon={<Car />} label="ALPR Engine" active={location.pathname === '/dashboard/alpr'} path="/dashboard/alpr" />
+                    <SidebarItem icon={<Activity />} label="Re-ID Trajectory" active={location.pathname === '/dashboard/reid'} path="/dashboard/reid" />
                     <SidebarItem icon={<AlertTriangle />} label="Anomaly Alerts" active={location.pathname === '/dashboard/alerts'} badge={pendingAlertCount > 0 ? String(pendingAlertCount) : undefined} badgeColor="bg-red-500" path="/dashboard/alerts" />
                     <SidebarItem icon={<Activity />} label="Analytics" active={location.pathname === '/dashboard/analytics'} path="/dashboard/analytics" />
                     <SidebarItem icon={<MapPin />} label="Zone Map" active={location.pathname === '/dashboard/map'} path="/dashboard/map" />
@@ -75,20 +80,13 @@ export default function DashboardLayout() {
                 </div>
 
                 <div className="p-4 border-t border-slate-800">
-                    <button
-                        onClick={() => {
-                            useAuthStore.getState().logout();
-                            navigate('/');
-                        }}
-                        className="flex items-center gap-3 px-4 py-3 w-full text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all cursor-pointer"
-                    >
-                        <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center shrink-0">
-                            <X className="w-4 h-4" />
-                        </div>
+                    <div className="flex items-center gap-3 px-4 py-3 w-full bg-slate-900/50 border border-slate-800 rounded-lg">
+                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                         <div className="flex-1 text-left">
-                            <p className="text-sm font-medium">Exit Dashboard</p>
+                            <p className="text-xs font-bold text-slate-200">System Online</p>
+                            <p className="text-[10px] text-slate-400">Public Demo Mode</p>
                         </div>
-                    </button>
+                    </div>
                 </div>
             </aside>
 
@@ -129,9 +127,16 @@ export default function DashboardLayout() {
 
                     <div className="flex items-center gap-3">
                         <NotificationDropdown />
-                        <div className="flex items-center gap-2 cursor-pointer">
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-purple-600 flex items-center justify-center text-sm font-bold shadow-lg shadow-blue-500/30">
+                        <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-left">
+                            <div className="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-xs font-bold text-blue-400">
                                 AD
+                            </div>
+                            <div className="hidden sm:block text-left">
+                                <p className="text-xs font-bold text-slate-200 flex items-center gap-1">
+                                    admin@visionaiot.dev
+                                    <CheckCircle2 size={12} className="text-emerald-400" />
+                                </p>
+                                <p className="text-[10px] text-slate-400 font-medium">Administrator</p>
                             </div>
                         </div>
                     </div>
@@ -141,6 +146,9 @@ export default function DashboardLayout() {
                 <div className="flex-1 overflow-y-auto overflow-x-hidden relative">
                     <Outlet />
                 </div>
+
+                {/* Floating AI Chat Assistant */}
+                <AiChatAssistant />
             </main>
         </div>
     );

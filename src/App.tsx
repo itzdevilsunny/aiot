@@ -1,5 +1,4 @@
 import React from 'react';
-import LandingPage from './pages/LandingPage';
 import DashboardLayout from './pages/Dashboard';
 import DashboardOverview from './modules/Dashboard/DashboardOverview';
 import LiveCameras from './modules/Cameras/LiveCameras';
@@ -10,6 +9,9 @@ import EdgeDashboard from './modules/EdgeNodes/EdgeDashboard';
 import SecurityDashboard from './modules/Security/SecurityDashboard';
 import StorageDashboard from './modules/Storage/StorageDashboard';
 import SettingsDashboard from './modules/Settings/SettingsDashboard';
+import PerimeterGeofence from './modules/Geofence/PerimeterGeofence';
+import PlateSearch from './modules/ALPR/PlateSearch';
+import CrossCameraReID from './modules/ReID/CrossCameraReID';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useSocket } from './hooks/useSocket';
 import { setupAxiosInterceptors } from './store/useAuthStore';
@@ -29,7 +31,8 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        {/* Direct Auto Login to Dashboard Page */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
         {/* Secure Dashboard Route */}
         <Route
@@ -42,6 +45,9 @@ export default function App() {
         >
           <Route index element={<DashboardOverview />} />
           <Route path="cameras" element={<LiveCameras />} />
+          <Route path="geofence" element={<PerimeterGeofence />} />
+          <Route path="alpr" element={<PlateSearch />} />
+          <Route path="reid" element={<CrossCameraReID />} />
           <Route path="map" element={<ZoneMap />} />
           <Route path="alerts" element={<AlertDashboard />} />
           <Route path="analytics" element={<AnalyticsDashboard />} />

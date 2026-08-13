@@ -182,6 +182,41 @@ export default function SettingsDashboard() {
                                                 {errors.aiConfidenceThreshold && <ErrorText>{errors.aiConfidenceThreshold.message}</ErrorText>}
                                             </div>
 
+                                            {/* Gemini Vision API Key & Camera Source Config */}
+                                            <div className="p-4 rounded-xl border border-blue-500/30 bg-blue-500/5 space-y-4">
+                                                <div className="flex items-center gap-2 text-xs font-bold text-blue-400 uppercase tracking-wider">
+                                                    <BrainCircuit className="w-4 h-4" /> Real AI Multimodal Engine (Google Gemini)
+                                                </div>
+
+                                                <div>
+                                                    <FieldLabel>Google Gemini API Key</FieldLabel>
+                                                    <input
+                                                        type="password"
+                                                        placeholder="AIzaSy..."
+                                                        defaultValue={localStorage.getItem('GEMINI_API_KEY') || ''}
+                                                        onChange={(e) => localStorage.setItem('GEMINI_API_KEY', e.target.value)}
+                                                        className="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors font-mono"
+                                                    />
+                                                    <p className="text-[10px] text-slate-500 mt-1">
+                                                        Required for Stage 2 scene-level anomaly detection (perimeter breach, safety gear missing, unauthorized vehicles).
+                                                    </p>
+                                                </div>
+
+                                                <div>
+                                                    <FieldLabel>Camera Stream Source</FieldLabel>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="0 (Webcam) or http://192.168.1.5:8080/video"
+                                                        defaultValue={localStorage.getItem('CAMERA_SRC') || '0'}
+                                                        onChange={(e) => localStorage.setItem('CAMERA_SRC', e.target.value)}
+                                                        className="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors font-mono"
+                                                    />
+                                                    <p className="text-[10px] text-slate-500 mt-1">
+                                                        Enter device index <code className="text-blue-400">0</code> for integrated webcam, or an RTSP/HTTP video stream URL.
+                                                    </p>
+                                                </div>
+                                            </div>
+
                                             {/* Auto-acknowledge */}
                                             <ToggleField
                                                 label="Auto-Acknowledge Low Severity"
@@ -195,7 +230,47 @@ export default function SettingsDashboard() {
                                     {/* ─── Notifications Tab ────────────────── */}
                                     {activeTab === 'notifications' && (
                                         <div className="space-y-6">
-                                            <SectionHeader icon={<Bell className="w-4 h-4 text-amber-400" />} title="Alert Routing" />
+                                            <SectionHeader icon={<Bell className="w-4 h-4 text-amber-400" />} title="Alert Routing & Mobile Webhook Dispatcher" />
+
+                                            {/* Telegram Mobile Dispatcher Config */}
+                                            <div className="p-4 rounded-xl border border-blue-500/30 bg-blue-500/5 space-y-4">
+                                                <div className="flex items-center gap-2 text-xs font-bold text-blue-400 uppercase tracking-wider">
+                                                    <Smartphone className="w-4 h-4" /> Real-time Telegram Mobile Dispatcher
+                                                </div>
+
+                                                <div>
+                                                    <FieldLabel>Telegram Bot Token</FieldLabel>
+                                                    <input
+                                                        type="password"
+                                                        placeholder="123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ..."
+                                                        defaultValue={localStorage.getItem('TELEGRAM_BOT_TOKEN') || ''}
+                                                        onChange={(e) => localStorage.setItem('TELEGRAM_BOT_TOKEN', e.target.value)}
+                                                        className="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors font-mono"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <FieldLabel>Telegram Target Chat ID</FieldLabel>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="-100123456789 or @security_ops_channel"
+                                                        defaultValue={localStorage.getItem('TELEGRAM_CHAT_ID') || ''}
+                                                        onChange={(e) => localStorage.setItem('TELEGRAM_CHAT_ID', e.target.value)}
+                                                        className="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors font-mono"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <FieldLabel>Enterprise Webhook Endpoint (Slack / Discord / Custom API)</FieldLabel>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="https://hooks.slack.com/services/..."
+                                                        defaultValue={localStorage.getItem('WEBHOOK_DISPATCH_URL') || ''}
+                                                        onChange={(e) => localStorage.setItem('WEBHOOK_DISPATCH_URL', e.target.value)}
+                                                        className="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors font-mono"
+                                                    />
+                                                </div>
+                                            </div>
 
                                             <ToggleField
                                                 label="Critical Email Alerts"
