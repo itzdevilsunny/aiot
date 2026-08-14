@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, memo } from 'react';
 import { io } from 'socket.io-client';
 import { Maximize2, Camera as CameraIcon } from 'lucide-react';
 import type { CameraNode } from '../../store/useCameraStore';
@@ -19,11 +19,12 @@ interface FeedBox {
     height: number;
 }
 
-export default function LiveInferenceFeed({ camera }: Props) {
+const LiveInferenceFeed = memo(function LiveInferenceFeed({ camera }: Props) {
     const [boxes, setBoxes] = useState<FeedBox[]>([]);
     const [streamError, setStreamError] = useState(false);
     const setSelectedCameraId = useCameraStore((s) => s.setSelectedCameraId);
 
+    const isLocalIp = camera.ip_url && (camera.ip_url.includes('192.168.') || camera.ip_url.includes('127.0.0.1') || camera.ip_url.includes('localhost'));
     const streamUrl = `${camera.ip_url}/video`;
     const previewUrl = camera.thumbnailUrl || 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800';
 
@@ -75,7 +76,7 @@ export default function LiveInferenceFeed({ camera }: Props) {
         <div className="relative w-full h-full min-h-[380px] bg-black overflow-hidden flex items-center justify-center group">
             {/* Live Camera Stream or Fallback Thumbnail */}
             <img
-                src={streamError ? previewUrl : streamUrl}
+                src={(streamError || (isLocalIp && typeof window !== 'undefined' && window.location.protocol === 'https:')) ? previewUrl : streamUrl}
                 alt={`Live Feed ${camera.name}`}
                 className="object-cover w-full h-full z-0 group-hover:scale-102 transition-transform duration-300"
                 crossOrigin="anonymous"
@@ -139,4 +140,6 @@ export default function LiveInferenceFeed({ camera }: Props) {
             ))}
         </div>
     );
-}
+});
+
+export default LiveInferenceFeed;

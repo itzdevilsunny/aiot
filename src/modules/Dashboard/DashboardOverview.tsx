@@ -85,7 +85,8 @@ export default function CommandCenter() {
         queryKey: ['command_center_stats'],
         queryFn: async () => {
             try {
-                const { data } = await axios.get(`${import.meta.env.VITE_BACKEND_URL || ''}/api/stats/overview`);
+                const apiBase = import.meta.env.VITE_API_URL || import.meta.env.VITE_WS_URL || 'https://defence-survillance-system.onrender.com';
+                const { data } = await axios.get(`${apiBase}/api/stats/overview`, { timeout: 3000 });
                 return data;
             } catch {
                 return {
@@ -97,7 +98,8 @@ export default function CommandCenter() {
                 };
             }
         },
-        refetchInterval: 5000,
+        refetchInterval: 10000,
+        staleTime: 5000,
     });
 
     // 2. Listen for Live Terminal Logs
