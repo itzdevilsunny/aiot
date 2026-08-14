@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useAlertStore } from '../../store/useAlertStore';
 import type { AnomalyAlert, AlertStatus } from '../../store/useAlertStore';
+import { exportVideoExcerpt } from '../../utils/evidenceExporter';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     AlertTriangle, Shield, Clock, CheckCircle, XCircle,
@@ -363,6 +364,21 @@ export default function AlertDashboard() {
 
                         {/* Action Buttons */}
                         <div className="p-4 border-t border-slate-800 flex flex-col gap-2">
+                            <button
+                                onClick={() => {
+                                    if (!selectedAlert) return;
+                                    exportVideoExcerpt({
+                                        cameraId: selectedAlert.camera_id,
+                                        anomalyType: selectedAlert.type,
+                                        timestamp: selectedAlert.timestamp,
+                                        imageUrl: selectedAlert.image_url
+                                    });
+                                }}
+                                className="w-full bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-bold py-2.5 rounded-xl transition border border-purple-500/40 cursor-pointer flex items-center justify-center gap-1.5 mb-1"
+                            >
+                                🎬 Download 5s Legal Video Evidence Clip (.webm)
+                            </button>
+
                             <button
                                 onClick={() => {
                                     if (!selectedAlert) return;

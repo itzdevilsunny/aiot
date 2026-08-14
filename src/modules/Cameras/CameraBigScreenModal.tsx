@@ -7,6 +7,7 @@ import {
 import type { CameraNode } from '../../store/useCameraStore';
 import { useCameraStore } from '../../store/useCameraStore';
 import { useAlertStore } from '../../store/useAlertStore';
+import { exportVideoExcerpt } from '../../utils/evidenceExporter';
 import { io } from 'socket.io-client';
 import axios from 'axios';
 
@@ -338,6 +339,22 @@ export default function CameraBigScreenModal({ camera, onClose }: CameraBigScree
                                         className="w-full py-2.5 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-400 text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all"
                                     >
                                         <CameraIcon size={14} /> 📸 Capture Snapshot & Flag Suspect
+                                    </button>
+
+                                    <button
+                                        onClick={() => {
+                                            setAlertMessage(`🎥 Recording 5s Video Excerpt Clip...`);
+                                            exportVideoExcerpt({
+                                                cameraId: camera.id,
+                                                anomalyType: 'PERIMETER_BREACH',
+                                                timestamp: new Date().toISOString(),
+                                                imageUrl: camera.thumbnailUrl
+                                            });
+                                            setTimeout(() => setAlertMessage(''), 6000);
+                                        }}
+                                        className="w-full py-2.5 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 text-purple-300 text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all"
+                                    >
+                                        🎥 Record 5s Evidence Clip (.webm)
                                     </button>
 
                                     <button
