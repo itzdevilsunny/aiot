@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, startTransition } from 'react';
 import { useAlertStore } from '../../store/useAlertStore';
 import { useCameraStore } from '../../store/useCameraStore';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { io } from 'socket.io-client';
-import { Activity, Server, Zap, CheckCircle, AlertTriangle, Terminal, FileText, Plus, Shield, MapPin } from 'lucide-react';
+import { Activity, Server, Zap, CheckCircle, AlertTriangle, Terminal, FileText, Plus, Shield, MapPin, Play, Pause, ShieldAlert } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts';
 import LiveInferenceFeed from './LiveInferenceFeed';
@@ -23,12 +23,70 @@ export default function CommandCenter() {
     const [isMatching, setIsMatching] = useState(false);
     const [matchResult, setMatchResult] = useState<{ name: string; confidence: number; camera: string; location: string } | null>(null);
 
+    // Auto Patrol Tour Engine State
+    const [isPatrolActive, setIsPatrolActive] = useState<boolean>(false);
+    const [patrolIntervalSec, setPatrolIntervalSec] = useState<number>(8);
+    const [patrolProgress, setPatrolProgress] = useState<number>(0);
+    const [threatLockedCamera, setThreatLockedCamera] = useState<string | null>(null);
+    const lastAlertCountRef = useRef<number>(alerts.length);
+
     useEffect(() => {
         fetchCameras();
         fetchLiveAlerts();
         const unsubscribe = subscribeToLiveAlerts();
         return () => unsubscribe();
     }, [fetchCameras, fetchLiveAlerts, subscribeToLiveAlerts]);
+
+    // Auto Threat Override: When a Critical Alert arrives, lock patrol onto the threat camera!
+    useEffect(() => {
+        if (alerts.length > lastAlertCountRef.current) {
+            const latestCritical = alerts.find(a => a.severity === 'Critical' && a.status === 'Pending');
+            if (latestCritical) {
+                startTransition(() => {
+                    setSelectedOverviewCameraId(latestCritical.camera_id);
+                    setThreatLockedCamera(latestCritical.camera_id);
+                    setSystemLogs(prev => [{
+                        time: new Date().toLocaleTimeString(),
+                        msg: `🚨 PATROL OVERRIDE: Locked onto ${latestCritical.camera_id} (${latestCritical.type.replace(/_/g, ' ')})`,
+                        type: 'error'
+                    }, ...prev]);
+                });
+            }
+        }
+        lastAlertCountRef.current = alerts.length;
+    }, [alerts]);
+
+    // Auto Patrol Tour Timer
+    useEffect(() => {
+        if (!isPatrolActive || cameras.length === 0) {
+            startTransition(() => {
+                setPatrolProgress(0);
+            });
+            return;
+        }
+
+        const stepMs = 200;
+        const totalMs = patrolIntervalSec * 1000;
+        let elapsedMs = 0;
+
+        const interval = setInterval(() => {
+            elapsedMs += stepMs;
+            const pct = Math.min(100, (elapsedMs / totalMs) * 100);
+            setPatrolProgress(pct);
+
+            if (elapsedMs >= totalMs) {
+                elapsedMs = 0;
+                setPatrolProgress(0);
+                setSelectedOverviewCameraId((currentId) => {
+                    const currentIndex = cameras.findIndex(c => c.id === currentId);
+                    const nextIndex = (currentIndex + 1) % cameras.length;
+                    return cameras[nextIndex].id;
+                });
+            }
+        }, stepMs);
+
+        return () => clearInterval(interval);
+    }, [isPatrolActive, patrolIntervalSec, cameras]);
 
     const activeOverviewCamera = cameras.find(c => c.id === selectedOverviewCameraId) || cameras[0] || {
         id: 'CAM-04',
@@ -252,7 +310,7 @@ export default function CommandCenter() {
                 <div className="xl:col-span-2 flex flex-col gap-6">
 
                     {/* Live Edge Inference Widget */}
-                    <div className="bg-[#151923] rounded-xl border border-gray-800 shadow-xl overflow-hidden flex flex-col h-[520px]">
+                    <div className="bg-[#151923] rounded-xl border border-gray-800 shadow-xl overflow-hidden flex flex-col h-[535px]">
                         <div className="p-3 border-b border-gray-800 flex flex-wrap justify-between items-center bg-[#1A1D27] gap-2">
                             <div className="flex items-center gap-2">
                                 <Activity size={18} className="text-blue-500" />
@@ -260,13 +318,39 @@ export default function CommandCenter() {
                                 <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 uppercase tracking-wider">REC • YOLO11</span>
                             </div>
 
-                            {/* Dynamic 108 Camera Selector Dropdown */}
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs text-slate-400 font-medium hidden sm:inline">Select Node:</span>
+                            {/* Patrol Tour Controls & Dynamic 108 Camera Selector */}
+                            <div className="flex flex-wrap items-center gap-2">
+                                <div className="flex items-center gap-2 bg-[#0B0F19] px-2 py-1 rounded-lg border border-slate-700">
+                                    <button
+                                        onClick={() => {
+                                            setIsPatrolActive(!isPatrolActive);
+                                            setThreatLockedCamera(null);
+                                        }}
+                                        className={`flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded transition cursor-pointer ${isPatrolActive ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' : 'bg-blue-600 hover:bg-blue-500 text-white'}`}
+                                    >
+                                        {isPatrolActive ? <Pause size={12} /> : <Play size={12} />}
+                                        <span>{isPatrolActive ? 'Pause Patrol' : 'Start Patrol'}</span>
+                                    </button>
+                                    {isPatrolActive && (
+                                        <select
+                                            value={patrolIntervalSec}
+                                            onChange={(e) => setPatrolIntervalSec(Number(e.target.value))}
+                                            className="bg-[#151923] text-[10px] font-mono text-slate-300 border border-slate-700 rounded px-1 py-0.5 focus:outline-none"
+                                        >
+                                            <option value={5}>5s</option>
+                                            <option value={8}>8s</option>
+                                            <option value={12}>12s</option>
+                                        </select>
+                                    )}
+                                </div>
+
                                 <select
                                     value={activeOverviewCamera.id}
-                                    onChange={(e) => setSelectedOverviewCameraId(e.target.value)}
-                                    className="bg-[#0B0F19] border border-slate-700 text-xs font-mono text-white rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500 cursor-pointer max-w-[220px] truncate"
+                                    onChange={(e) => {
+                                        setSelectedOverviewCameraId(e.target.value);
+                                        setThreatLockedCamera(null);
+                                    }}
+                                    className="bg-[#0B0F19] border border-slate-700 text-xs font-mono text-white rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500 cursor-pointer max-w-[200px] truncate"
                                 >
                                     {cameras.map((c) => (
                                         <option key={c.id} value={c.id}>
@@ -276,6 +360,26 @@ export default function CommandCenter() {
                                 </select>
                             </div>
                         </div>
+
+                        {/* Patrol Tour Animated Progress Bar */}
+                        {isPatrolActive && (
+                            <div className="w-full bg-slate-900 h-1 overflow-hidden">
+                                <div className="bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-400 h-full transition-all duration-200" style={{ width: `${patrolProgress}%` }} />
+                            </div>
+                        )}
+
+                        {/* Automated Threat Lock Override Banner */}
+                        {threatLockedCamera && (
+                            <div className="p-2 bg-red-950/80 border-b border-red-500/50 flex items-center justify-between text-xs text-red-200 px-4 font-mono">
+                                <span className="flex items-center gap-2">
+                                    <ShieldAlert size={14} className="text-red-400 animate-pulse" />
+                                    <strong>AUTOMATED PATROL THREAT LOCK:</strong> Locked onto camera {threatLockedCamera}
+                                </span>
+                                <button onClick={() => setThreatLockedCamera(null)} className="text-red-400 hover:text-white text-[10px] font-bold underline cursor-pointer">
+                                    Unlock Patrol
+                                </button>
+                            </div>
+                        )}
 
                         <div className="flex-grow bg-black relative">
                             {/* Uses the dynamically selected camera */}
