@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "start": "cd backend && node dist/index.js",
+    "dist": "cd backend && node dist/index.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },
