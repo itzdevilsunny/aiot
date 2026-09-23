@@ -7,6 +7,7 @@ import { RiskItem, StatusLevel } from '../../types/risk';
 import { useRiskContext } from '../../context/RiskContext';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
+import { JiraTicketModal } from './JiraTicketModal';
 import { 
   ArrowLeft, 
   CheckCircle2, 
@@ -18,7 +19,8 @@ import {
   CheckSquare, 
   Square,
   TrendingUp,
-  FileText
+  FileText,
+  Code2
 } from 'lucide-react';
 
 interface RiskDetailProps {
@@ -30,6 +32,7 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
   const { updateRiskStatus, toggleChecklistItem, deleteRisk, addToast, updateRisk } = useRiskContext();
 
   const [isEditing, setIsEditing] = useState(false);
+  const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [titleInput, setTitleInput] = useState(risk.title);
   const [descInput, setDescInput] = useState(risk.description);
   const [mitigationInput, setMitigationInput] = useState(risk.mitigationPlan);
@@ -54,41 +57,56 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      {/* Top Navigation */}
-      <div className="flex items-center justify-between">
-        <Link
-          href="/register"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Risk Register</span>
-        </Link>
-
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsEditing(!isEditing)}
+    <>
+      <JiraTicketModal
+        isOpen={isJiraModalOpen}
+        onClose={() => setIsJiraModalOpen(false)}
+        risk={risk}
+      />
+      <div className="max-w-5xl mx-auto space-y-6">
+        {/* Top Navigation */}
+        <div className="flex items-center justify-between">
+          <Link
+            href="/register"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
           >
-            {isEditing ? 'Cancel Editing' : 'Edit Risk Record'}
-          </Button>
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Risk Register</span>
+          </Link>
 
-          <Button
-            variant="danger"
-            size="sm"
-            icon={<Trash2 className="w-3.5 h-3.5" />}
-            onClick={() => {
-              if (confirm(`Delete risk item ${risk.id}?`)) {
-                deleteRisk(risk.id);
-                router.push('/register');
-              }
-            }}
-          >
-            Delete
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<Code2 className="w-3.5 h-3.5 text-indigo-600" />}
+              onClick={() => setIsJiraModalOpen(true)}
+            >
+              Jira / GitHub Ticket
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditing(!isEditing)}
+            >
+              {isEditing ? 'Cancel Editing' : 'Edit Risk Record'}
+            </Button>
+
+            <Button
+              variant="danger"
+              size="sm"
+              icon={<Trash2 className="w-3.5 h-3.5" />}
+              onClick={() => {
+                if (confirm(`Delete risk item ${risk.id}?`)) {
+                  deleteRisk(risk.id);
+                  router.push('/register');
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </div>
         </div>
-      </div>
 
       {/* Main Header Card */}
       <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-card space-y-4">
@@ -383,5 +401,6 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
         </div>
       </div>
     </div>
+    </>
   );
 };
