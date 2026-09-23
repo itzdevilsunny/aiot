@@ -81,19 +81,19 @@ export default function SettingsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Full Name</label>
-                <input type="text" defaultValue="Sunny P." className="w-full p-2.5 rounded-lg border border-slate-300 font-medium" />
+                <input type="text" defaultValue="Sunny Prasad" className="w-full p-2.5 rounded-lg border border-slate-300 font-medium" />
               </div>
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Role Title</label>
-                <input type="text" defaultValue="Lead Risk Officer & PM" className="w-full p-2.5 rounded-lg border border-slate-300 font-medium" />
+                <input type="text" defaultValue="Business Operations Intern" className="w-full p-2.5 rounded-lg border border-slate-300 font-medium" />
               </div>
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Email Address</label>
-                <input type="email" defaultValue="sunny@acme-cloud.io" className="w-full p-2.5 rounded-lg border border-slate-300 font-medium" />
+                <input type="email" defaultValue="sunny.prasad@mnbresearch.com" className="w-full p-2.5 rounded-lg border border-slate-300 font-medium" />
               </div>
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Department</label>
-                <input type="text" defaultValue="Enterprise Core Ops" className="w-full p-2.5 rounded-lg border border-slate-300 font-medium" />
+                <input type="text" defaultValue="MNB Research · Business Operations" className="w-full p-2.5 rounded-lg border border-slate-300 font-medium" />
               </div>
             </div>
           </div>
@@ -104,7 +104,7 @@ export default function SettingsPage() {
             <h3 className="text-sm font-bold text-slate-900">Enterprise Workspace</h3>
             <div>
               <label className="block font-semibold text-slate-700 mb-1">Workspace Name</label>
-              <input type="text" defaultValue="Enterprise Core Ops Workspace" className="w-full p-2.5 rounded-lg border border-slate-300 font-medium" />
+              <input type="text" defaultValue="MNB Research Business Operations" className="w-full p-2.5 rounded-lg border border-slate-300 font-medium" />
             </div>
             <div>
               <label className="block font-semibold text-slate-700 mb-1">Default Risk ID Prefix</label>

@@ -51,6 +51,7 @@ interface RiskContextType {
   addProject: (projectData: Omit<Project, 'id' | 'totalRisks' | 'criticalRisks' | 'mitigationProgress' | 'lastUpdated'>) => Project;
   addToast: (title: string, message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
   removeToast: (id: string) => void;
+  analyzeRiskWithGemini: (naturalLanguagePrompt: string) => Promise<AIRiskAnalysisResult>;
   simulateAIRiskAnalysis: (naturalLanguagePrompt: string) => Promise<AIRiskAnalysisResult>;
   getFilteredRisks: () => RiskItem[];
 }
@@ -493,6 +494,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addProject,
       addToast,
       removeToast,
+      analyzeRiskWithGemini: simulateAIRiskAnalysis,
       simulateAIRiskAnalysis,
       getFilteredRisks
     }}>
