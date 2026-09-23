@@ -264,12 +264,27 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
             </div>
           </div>
 
-          {/* Section 5: Contingency Plan */}
+          {/* Section 5: Contingency Plan & AI Simulator */}
           <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-card space-y-3">
-            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 text-amber-600" />
-              <span>5. Contingency Fallback Plan</span>
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-amber-600" />
+                <span>5. Contingency Fallback Plan</span>
+              </h3>
+              <Button
+                variant="copilot"
+                size="sm"
+                icon={<Sparkles className="w-3.5 h-3.5 text-indigo-200" />}
+                onClick={() => {
+                  addToast('Gemini Fallback Simulation', 'Synthesizing contingency execution protocol...', 'info');
+                  setTimeout(() => {
+                    addToast('Contingency Protocol Generated', 'Simulated 15-minute SLA failover workflow.', 'success');
+                  }, 800);
+                }}
+              >
+                AI Simulate Fallback
+              </Button>
+            </div>
             {!isEditing ? (
               <p className="text-xs text-slate-700 leading-relaxed p-3.5 rounded-xl bg-amber-50/50 border border-amber-200/60 font-medium">
                 {risk.contingencyPlan}
