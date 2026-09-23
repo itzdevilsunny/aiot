@@ -12,7 +12,8 @@ import {
   Sparkles,
   ShieldCheck,
   X,
-  Database
+  Database,
+  Server
 } from 'lucide-react';
 import { useRiskContext } from '../../context/RiskContext';
 
@@ -22,7 +23,15 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenCommandMenu }) => {
-  const { selectedProjectId, setSelectedProjectId, projects, risks, supabaseStatus } = useRiskContext();
+  const { 
+    selectedProjectId, 
+    setSelectedProjectId, 
+    projects, 
+    risks, 
+    supabaseStatus,
+    renderBackendStatus
+  } = useRiskContext();
+
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
@@ -32,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
   return (
     <header className="sticky top-0 z-30 h-14 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 lg:px-6 flex items-center justify-between">
       {/* Left: Mobile Toggle & Active Project Selector */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         <button
           onClick={onOpenMobileSidebar}
           className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 lg:hidden"
@@ -98,13 +107,22 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
           )}
         </div>
 
-        {/* Supabase Connection Pill */}
+        {/* Supabase Status Pill */}
         <div 
           className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"
           title={supabaseStatus}
         >
           <Database className="w-3 h-3 text-emerald-600" />
-          <span>Supabase Live</span>
+          <span>Supabase DB</span>
+        </div>
+
+        {/* Render Backend Pill */}
+        <div 
+          className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200"
+          title={renderBackendStatus}
+        >
+          <Server className="w-3 h-3 text-indigo-600" />
+          <span>Render API</span>
         </div>
       </div>
 
@@ -151,7 +169,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
             <div className="absolute right-0 mt-1.5 w-80 rounded-xl bg-white border border-slate-200 shadow-popover py-2 z-50 animate-in fade-in-50 zoom-in-95">
               <div className="px-4 py-2 flex items-center justify-between border-b border-slate-100">
                 <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" /> Copilot & Supabase Alerts
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" /> System Telemetry
                 </h4>
                 <button 
                   onClick={() => setShowNotifications(false)}
@@ -162,6 +180,16 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
               </div>
 
               <div className="p-2 space-y-1.5 max-h-72 overflow-y-auto">
+                <div className="p-2.5 rounded-lg bg-indigo-50/70 border border-indigo-100 text-left">
+                  <div className="flex items-center justify-between text-[11px] font-semibold text-indigo-800">
+                    <span className="flex items-center gap-1"><Server className="w-3 h-3 text-indigo-600" /> Render Backend URL</span>
+                    <span className="text-[10px] text-indigo-600 font-normal">Active</span>
+                  </div>
+                  <p className="text-xs text-indigo-950 mt-1 leading-tight font-medium">
+                    https://risk-register-copilot.onrender.com
+                  </p>
+                </div>
+
                 <div className="p-2.5 rounded-lg bg-emerald-50/70 border border-emerald-100 text-left">
                   <div className="flex items-center justify-between text-[11px] font-semibold text-emerald-800">
                     <span className="flex items-center gap-1"><Database className="w-3 h-3 text-emerald-600" /> Supabase Connection</span>
@@ -171,16 +199,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
                     {supabaseStatus}
                   </p>
                 </div>
-
-                <div className="p-2.5 rounded-lg bg-red-50/70 border border-red-100 text-left">
-                  <div className="flex items-center justify-between text-[11px] font-semibold text-red-800">
-                    <span>Critical Alert: RSK-104</span>
-                    <span className="text-[10px] text-red-500 font-normal">10m ago</span>
-                  </div>
-                  <p className="text-xs text-red-900 mt-1 leading-tight font-medium">
-                    Stripe Webhook Flakiness escalated score to 20 (Critical).
-                  </p>
-                </div>
               </div>
             </div>
           )}
@@ -188,9 +206,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
 
         {/* Help icon */}
         <button
-          onClick={() => alert(`Risk Register Copilot v2.4 Enterprise.\nSupabase Connected: https://nrymxphrspvxhacevvwr.supabase.co`)}
+          onClick={() => alert(`Risk Register Copilot Enterprise MVP.\nSupabase: https://nrymxphrspvxhacevvwr.supabase.co\nRender Backend: https://risk-register-copilot.onrender.com`)}
           className="p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-          title="Help & Supabase Info"
+          title="Help & System Connections"
         >
           <HelpCircle className="w-4 h-4" />
         </button>

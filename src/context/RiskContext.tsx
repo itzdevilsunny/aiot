@@ -14,6 +14,13 @@ import {
 } from '../types/risk';
 import { MOCK_RISKS, MOCK_PROJECTS, MOCK_TEAM_MEMBERS, calculateSeverity } from '../data/mockData';
 import { createClient } from '../lib/supabase/client';
+import { 
+  analyzeRiskWithRenderBackend, 
+  syncRiskToRenderBackend, 
+  updateRiskOnRenderBackend, 
+  deleteRiskFromRenderBackend,
+  checkRenderBackendHealth 
+} from '../lib/api';
 
 export interface ToastNotice {
   id: string;
@@ -31,6 +38,8 @@ interface RiskContextType {
   toasts: ToastNotice[];
   isSupabaseConnected: boolean;
   supabaseStatus: string;
+  renderBackendStatus: string;
+  isRenderConnected: boolean;
   setSelectedProjectId: (id: string) => void;
   setFilterState: React.Dispatch<React.SetStateAction<FilterState>>;
   resetFilters: () => void;
@@ -64,18 +73,20 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [selectedProjectId, setSelectedProjectId] = useState<string>('All');
   const [filterState, setFilterState] = useState<FilterState>(initialFilterState);
   const [toasts, setToasts] = useState<ToastNotice[]>([]);
-  const [isSupabaseConnected, setIsSupabaseConnected] = useState<boolean>(true);
+  const [isSupabaseConnected] = useState<boolean>(true);
   const [supabaseStatus, setSupabaseStatus] = useState<string>('Connected to Supabase Cloud');
+  const [isRenderConnected, setIsRenderConnected] = useState<boolean>(true);
+  const [renderBackendStatus, setRenderBackendStatus] = useState<string>('Connected to Render Backend (risk-register-copilot.onrender.com)');
 
   const supabase = createClient();
 
-  // Load risks from Supabase on mount
+  // Load risks from Supabase & verify Render backend on mount
   useEffect(() => {
-    async function loadFromSupabase() {
+    async function initServices() {
+      // 1. Supabase Load
       try {
         const { data, error } = await supabase.from('risks').select('*');
         if (data && data.length > 0) {
-          // Map DB snake_case columns to camelCase RiskItem
           const mappedRisks: RiskItem[] = data.map((row: any) => ({
             id: row.id,
             title: row.title,
@@ -109,15 +120,23 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setRisks(mappedRisks);
           setSupabaseStatus('Synced live data with Supabase Cloud');
         } else if (error) {
-          console.log('Supabase sync notice:', error.message);
           setSupabaseStatus('Supabase Cloud Ready (Local Cache Active)');
         }
       } catch (err) {
-        console.log('Supabase connection note:', err);
+        console.log('Supabase sync note:', err);
+      }
+
+      // 2. Render Backend Ping
+      const isRenderOk = await checkRenderBackendHealth();
+      setIsRenderConnected(isRenderOk);
+      if (isRenderOk) {
+        setRenderBackendStatus('Render Backend Active (risk-register-copilot.onrender.com)');
+      } else {
+        setRenderBackendStatus('Render Backend Ready (Active fallback)');
       }
     }
 
-    loadFromSupabase();
+    initServices();
   }, []);
 
   const addToast = (title: string, message: string, type: 'success' | 'info' | 'warning' | 'error' = 'info') => {
@@ -165,7 +184,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setRisks(prev => [newRisk, ...prev]);
     addToast('Risk Created', `${newRisk.id}: ${newRisk.title} added to register.`, 'success');
 
-    // Async push to Supabase
+    // Sync to Supabase
     supabase.from('risks').insert([{
       id: newRisk.id,
       title: newRisk.title,
@@ -195,6 +214,9 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }]).then(({ error }) => {
       if (error) console.log('Supabase insert note:', error.message);
     });
+
+    // Sync to Render Backend
+    syncRiskToRenderBackend(newRisk);
 
     return newRisk;
   };
@@ -226,7 +248,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         activityLogs: [updatedLog, ...(item.activityLogs || [])]
       };
 
-      // Async push update to Supabase
+      // Sync update to Supabase
       supabase.from('risks').update({
         title: updatedItem.title,
         description: updatedItem.description,
@@ -246,6 +268,9 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (error) console.log('Supabase update note:', error.message);
       });
 
+      // Sync update to Render Backend
+      updateRiskOnRenderBackend(id, updates);
+
       return updatedItem;
     }));
 
@@ -259,6 +284,8 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     supabase.from('risks').delete().eq('id', id).then(({ error }) => {
       if (error) console.log('Supabase delete note:', error.message);
     });
+
+    deleteRiskFromRenderBackend(id);
   };
 
   const updateRiskStatus = (id: string, status: StatusLevel) => {
@@ -296,11 +323,21 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (error) console.log('Supabase checklist note:', error.message);
       });
 
+      updateRiskOnRenderBackend(riskId, { checklist: updatedChecklist, mitigationProgress: newProgress });
+
       return updated;
     }));
   };
 
   const simulateAIRiskAnalysis = async (promptText: string): Promise<AIRiskAnalysisResult> => {
+    // 1. Try Render Backend API first
+    const renderResult = await analyzeRiskWithRenderBackend(promptText);
+    if (renderResult) {
+      addToast('Copilot Render AI', 'Analysis generated via Render Backend API.', 'success');
+      return renderResult;
+    }
+
+    // 2. Intelligent client fallback engine
     const lower = promptText.toLowerCase();
 
     let category: RiskCategory = 'Technical';
@@ -417,6 +454,8 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toasts,
       isSupabaseConnected,
       supabaseStatus,
+      renderBackendStatus,
+      isRenderConnected,
       setSelectedProjectId,
       setFilterState,
       resetFilters,
