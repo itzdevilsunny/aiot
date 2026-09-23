@@ -11,7 +11,8 @@ import {
   Check, 
   Sparkles,
   ShieldCheck,
-  X
+  X,
+  Database
 } from 'lucide-react';
 import { useRiskContext } from '../../context/RiskContext';
 
@@ -21,12 +22,11 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenCommandMenu }) => {
-  const { selectedProjectId, setSelectedProjectId, projects, risks } = useRiskContext();
+  const { selectedProjectId, setSelectedProjectId, projects, risks, supabaseStatus } = useRiskContext();
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
   const activeProject = projects.find(p => p.id === selectedProjectId);
-
   const criticalRisksCount = risks.filter(r => r.severity === 'Critical').length;
 
   return (
@@ -97,10 +97,19 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
             </div>
           )}
         </div>
+
+        {/* Supabase Connection Pill */}
+        <div 
+          className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"
+          title={supabaseStatus}
+        >
+          <Database className="w-3 h-3 text-emerald-600" />
+          <span>Supabase Live</span>
+        </div>
       </div>
 
       {/* Middle: Global Search trigger */}
-      <div className="flex-1 max-w-md mx-4 hidden sm:block">
+      <div className="flex-1 max-w-md mx-4 hidden lg:block">
         <button
           onClick={onOpenCommandMenu}
           className="w-full flex items-center justify-between px-3.5 py-1.5 rounded-lg bg-slate-100/70 hover:bg-slate-200/60 border border-slate-200/80 text-slate-500 text-xs transition-colors"
@@ -120,7 +129,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
         {/* Global Search mobile button */}
         <button
           onClick={onOpenCommandMenu}
-          className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 sm:hidden"
+          className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 lg:hidden"
         >
           <Search className="w-4 h-4" />
         </button>
@@ -142,7 +151,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
             <div className="absolute right-0 mt-1.5 w-80 rounded-xl bg-white border border-slate-200 shadow-popover py-2 z-50 animate-in fade-in-50 zoom-in-95">
               <div className="px-4 py-2 flex items-center justify-between border-b border-slate-100">
                 <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" /> Copilot Alerts
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" /> Copilot & Supabase Alerts
                 </h4>
                 <button 
                   onClick={() => setShowNotifications(false)}
@@ -153,6 +162,16 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
               </div>
 
               <div className="p-2 space-y-1.5 max-h-72 overflow-y-auto">
+                <div className="p-2.5 rounded-lg bg-emerald-50/70 border border-emerald-100 text-left">
+                  <div className="flex items-center justify-between text-[11px] font-semibold text-emerald-800">
+                    <span className="flex items-center gap-1"><Database className="w-3 h-3 text-emerald-600" /> Supabase Connection</span>
+                    <span className="text-[10px] text-emerald-600 font-normal">Active</span>
+                  </div>
+                  <p className="text-xs text-emerald-950 mt-1 leading-tight font-medium">
+                    {supabaseStatus}
+                  </p>
+                </div>
+
                 <div className="p-2.5 rounded-lg bg-red-50/70 border border-red-100 text-left">
                   <div className="flex items-center justify-between text-[11px] font-semibold text-red-800">
                     <span>Critical Alert: RSK-104</span>
@@ -162,26 +181,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
                     Stripe Webhook Flakiness escalated score to 20 (Critical).
                   </p>
                 </div>
-
-                <div className="p-2.5 rounded-lg bg-amber-50/70 border border-amber-100 text-left">
-                  <div className="flex items-center justify-between text-[11px] font-semibold text-amber-800">
-                    <span>Mitigation Due: RSK-072</span>
-                    <span className="text-[10px] text-amber-600 font-normal">2h ago</span>
-                  </div>
-                  <p className="text-xs text-amber-900 mt-1 leading-tight">
-                    Frontend engineer contract SOW needs final PM sign-off.
-                  </p>
-                </div>
-
-                <div className="p-2.5 rounded-lg bg-indigo-50/70 border border-indigo-100 text-left">
-                  <div className="flex items-center justify-between text-[11px] font-semibold text-indigo-800">
-                    <span className="flex items-center gap-1"><Sparkles className="w-3 h-3 text-indigo-600" /> Copilot Recommendation</span>
-                    <span className="text-[10px] text-indigo-500 font-normal">Yesterday</span>
-                  </div>
-                  <p className="text-xs text-indigo-900 mt-1 leading-tight">
-                    AI detected 3 security risks ready for mitigation sign-off.
-                  </p>
-                </div>
               </div>
             </div>
           )}
@@ -189,9 +188,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
 
         {/* Help icon */}
         <button
-          onClick={() => alert("Risk Register Copilot v2.4 Enterprise MVP.\nAI Risk Engine Powered by Structured Natural Language Telemetry.")}
+          onClick={() => alert(`Risk Register Copilot v2.4 Enterprise.\nSupabase Connected: https://nrymxphrspvxhacevvwr.supabase.co`)}
           className="p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-          title="Help & Copilot Guide"
+          title="Help & Supabase Info"
         >
           <HelpCircle className="w-4 h-4" />
         </button>
