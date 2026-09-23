@@ -15,7 +15,7 @@ import {
 import { MOCK_RISKS, MOCK_PROJECTS, MOCK_TEAM_MEMBERS, calculateSeverity } from '../data/mockData';
 import { createClient } from '../lib/supabase/client';
 import { 
-  analyzeRiskWithRenderBackend, 
+  analyzeRiskWithAI, 
   syncRiskToRenderBackend, 
   updateRiskOnRenderBackend, 
   deleteRiskFromRenderBackend,
@@ -98,10 +98,10 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
             severity: row.severity,
             status: row.status,
             projectId: row.project_id || 'proj-1',
-            projectName: row.project_name || 'Website Redesign v2',
+            projectName: row.project_name || 'AI Implementation',
             ownerId: row.owner_id || 'usr-1',
-            ownerName: row.owner_name || 'Sunny P.',
-            ownerRole: row.owner_role || 'Lead Risk Officer',
+            ownerName: row.owner_name || 'Sunny Prasad',
+            ownerRole: row.owner_role || 'Business Operations Intern',
             ownerAvatar: row.owner_avatar,
             coOwnerName: row.co_owner_name,
             coOwnerRole: row.co_owner_role,
@@ -173,7 +173,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         {
           id: `act-${Date.now()}`,
           timestamp: 'Just now',
-          author: 'Sunny P.',
+          author: 'Sunny Prasad',
           action: 'Created new risk entry in register.',
           type: 'creation'
         },
@@ -232,7 +232,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const updatedLog = {
         id: `act-${Date.now()}`,
         timestamp: 'Just now',
-        author: 'Sunny P.',
+        author: 'Sunny Prasad',
         action: 'Updated risk configuration or mitigation status.',
         type: 'mitigation_update' as const
       };
@@ -330,14 +330,14 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const simulateAIRiskAnalysis = async (promptText: string): Promise<AIRiskAnalysisResult> => {
-    // 1. Try Render Backend API first
-    const renderResult = await analyzeRiskWithRenderBackend(promptText);
-    if (renderResult) {
-      addToast('Copilot Render AI', 'Analysis generated via Render Backend API.', 'success');
-      return renderResult;
+    // 1. Try Gemini API / Render Backend first
+    const aiResult = await analyzeRiskWithAI(promptText);
+    if (aiResult) {
+      addToast('Gemini AI Analysis', 'Generated threat structure using Gemini API.', 'success');
+      return aiResult;
     }
 
-    // 2. Intelligent client fallback engine
+    // 2. Client fallback engine
     const lower = promptText.toLowerCase();
 
     let category: RiskCategory = 'Technical';
@@ -345,7 +345,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let impact: ImpactLevel = 4;
     let title = 'Identified Project Operational Risk';
     let ownerName = 'Yash Raj';
-    let ownerRole = 'Senior Backend Architect';
+    let ownerRole = 'Operations Lead';
     let mitigationPlan = 'Conduct technical discovery spike, isolate root dependencies, and deploy automated monitoring safeguards.';
     let contingencyPlan = 'Activate backup server pool and apply feature flags to isolate failing code path.';
 
@@ -354,8 +354,8 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       probability = 4;
       impact = 4;
       title = 'Key Personnel Unavailability during Critical Delivery Window';
-      ownerName = 'Ritika Sharma';
-      ownerRole = 'Lead Product Manager';
+      ownerName = 'Ritika';
+      ownerRole = 'Product Manager';
       mitigationPlan = 'Cross-train senior secondary engineer on deployment scripts and document release checklist by Wednesday.';
       contingencyPlan = 'Engage on-call DevOps contractor and implement an approved release freeze fallback window.';
     } else if (lower.includes('database') || lower.includes('sql') || lower.includes('migration') || lower.includes('lock')) {
@@ -363,17 +363,17 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       probability = 4;
       impact = 5;
       title = 'Database Locks & Query Execution Timeout during Migration';
-      ownerName = 'Marcus Vance';
-      ownerRole = 'Principal DevOps Engineer';
+      ownerName = 'Sunny Prasad';
+      ownerRole = 'Business Operations Intern';
       mitigationPlan = 'Execute migration in batch chunks during off-peak window (2 AM EST) with read-only replica fallback.';
-      contingencyPlan = 'Automate instant pg_dump point-in-time restore procedure within 5 minutes of failure detection.';
+      contingencyPlan = 'Automate instant point-in-time restore procedure within 5 minutes of failure detection.';
     } else if (lower.includes('cost') || lower.includes('budget') || lower.includes('billing') || lower.includes('price')) {
       category = 'Financial';
       probability = 3;
       impact = 4;
       title = 'Cloud Consumption & Budget Variance Overrun';
-      ownerName = 'David Chen';
-      ownerRole = 'FinOps & Cloud Lead';
+      ownerName = 'Sumit';
+      ownerRole = 'Resource Manager';
       mitigationPlan = 'Set up real-time billing anomaly alerts at 80% threshold and cap non-prod cluster autoscaling.';
       contingencyPlan = 'Transfer non-critical staging workloads to reserved instances and request cloud credits.';
     } else if (lower.includes('audit') || lower.includes('soc2') || lower.includes('compliance') || lower.includes('gdpr')) {
@@ -381,8 +381,8 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       probability = 2;
       impact = 4;
       title = 'Third-Party Compliance Audit Evidence Gap';
-      ownerName = 'Elena Rostova';
-      ownerRole = 'Head of Legal & Security';
+      ownerName = 'Devyash';
+      ownerRole = 'Data Quality Analyst';
       mitigationPlan = 'Automate continuous evidence collection scripts and enforce immutable S3 log storage policies.';
       contingencyPlan = 'Engage auditor for 1-week extension window with preliminary mitigation memo.';
     } else if (lower.includes('auth') || lower.includes('security') || lower.includes('vulnerability') || lower.includes('breach')) {
@@ -390,8 +390,8 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       probability = 3;
       impact = 5;
       title = 'Security Authentication Subsystem Vulnerability';
-      ownerName = 'Elena Rostova';
-      ownerRole = 'Head of Legal & Security';
+      ownerName = 'Devyash';
+      ownerRole = 'Data Quality Analyst';
       mitigationPlan = 'Enforce mandatory MFA, patch authentication SDK, and execute automated penetration testing.';
       contingencyPlan = 'Initiate immediate session token rotation and lock suspicious API keys.';
     }
