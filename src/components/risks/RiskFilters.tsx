@@ -1,12 +1,14 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useRiskContext } from '../../context/RiskContext';
-import { Search, Download, Filter, RefreshCw } from 'lucide-react';
+import { Search, Download, Filter, RefreshCw, FileText } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { ExecutivePDFModal } from './ExecutivePDFModal';
 
 export const RiskFilters: React.FC = () => {
   const { filterState, setFilterState, resetFilters, teamMembers, risks, addToast } = useRiskContext();
+  const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
 
   const handleExportCSV = () => {
     const headers = ['ID', 'Title', 'Category', 'Probability', 'Impact', 'Score', 'Severity', 'Status', 'Owner', 'Mitigation Plan', 'Due Date'];
@@ -41,64 +43,79 @@ export const RiskFilters: React.FC = () => {
   const statuses = ['All', 'Open', 'Monitoring', 'Mitigated', 'Closed'];
 
   return (
-    <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-card space-y-3.5">
-      {/* Search & Top Action Bar */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-        {/* Search */}
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={filterState.searchQuery}
-            onChange={(e) => setFilterState(prev => ({ ...prev, searchQuery: e.target.value }))}
-            placeholder="Search risks by title, ID, category, or owner..."
-            className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:bg-white text-slate-900 font-medium"
-          />
-          {filterState.searchQuery && (
-            <button
-              onClick={() => setFilterState(prev => ({ ...prev, searchQuery: '' }))}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 font-bold"
+    <>
+      <ExecutivePDFModal
+        isOpen={isPDFModalOpen}
+        onClose={() => setIsPDFModalOpen(false)}
+        risks={risks}
+      />
+      <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-card space-y-3.5">
+        {/* Search & Top Action Bar */}
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          {/* Search */}
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={filterState.searchQuery}
+              onChange={(e) => setFilterState(prev => ({ ...prev, searchQuery: e.target.value }))}
+              placeholder="Search risks by title, ID, category, or owner..."
+              className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:bg-white text-slate-900 font-medium"
+            />
+            {filterState.searchQuery && (
+              <button
+                onClick={() => setFilterState(prev => ({ ...prev, searchQuery: '' }))}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 font-bold"
+              >
+                ×
+              </button>
+            )}
+          </div>
+
+          {/* Sort & Export Buttons */}
+          <div className="flex items-center gap-2">
+            {/* Sort By */}
+            <select
+              value={filterState.sortBy}
+              onChange={(e) => setFilterState(prev => ({ ...prev, sortBy: e.target.value as any }))}
+              className="px-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 cursor-pointer"
             >
-              ×
-            </button>
-          )}
+              <option value="score_desc">Sort: Risk Score (High → Low)</option>
+              <option value="score_asc">Sort: Risk Score (Low → High)</option>
+              <option value="date_desc">Sort: Recently Created</option>
+              <option value="title_asc">Sort: Title (A → Z)</option>
+              <option value="probability_desc">Sort: Probability (High → Low)</option>
+            </select>
+
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<FileText className="w-3.5 h-3.5 text-indigo-600" />}
+              onClick={() => setIsPDFModalOpen(true)}
+            >
+              PDF Report
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<Download className="w-3.5 h-3.5 text-slate-600" />}
+              onClick={handleExportCSV}
+            >
+              Export CSV
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={<RefreshCw className="w-3.5 h-3.5 text-slate-500" />}
+              onClick={resetFilters}
+              title="Reset Filters"
+            >
+              Reset
+            </Button>
+          </div>
         </div>
-
-        {/* Sort & Export Buttons */}
-        <div className="flex items-center gap-2">
-          {/* Sort By */}
-          <select
-            value={filterState.sortBy}
-            onChange={(e) => setFilterState(prev => ({ ...prev, sortBy: e.target.value as any }))}
-            className="px-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 cursor-pointer"
-          >
-            <option value="score_desc">Sort: Risk Score (High → Low)</option>
-            <option value="score_asc">Sort: Risk Score (Low → High)</option>
-            <option value="date_desc">Sort: Recently Created</option>
-            <option value="title_asc">Sort: Title (A → Z)</option>
-            <option value="probability_desc">Sort: Probability (High → Low)</option>
-          </select>
-
-          <Button
-            variant="outline"
-            size="sm"
-            icon={<Download className="w-3.5 h-3.5 text-slate-600" />}
-            onClick={handleExportCSV}
-          >
-            Export CSV
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            icon={<RefreshCw className="w-3.5 h-3.5 text-slate-500" />}
-            onClick={resetFilters}
-            title="Reset Filters"
-          >
-            Reset
-          </Button>
-        </div>
-      </div>
 
       {/* Filter Pills Bar */}
       <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2 text-xs">
@@ -169,5 +186,6 @@ export const RiskFilters: React.FC = () => {
         </select>
       </div>
     </div>
+    </>
   );
 };
