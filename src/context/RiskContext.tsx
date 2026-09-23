@@ -83,7 +83,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const supabase = createClient();
 
   useEffect(() => {
-    async function initServices() {
+    async function fetchLatestRisks() {
       try {
         const { data, error } = await supabase.from('risks').select('*');
         if (data && data.length > 0) {
@@ -118,13 +118,17 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
             createdAt: row.created_at ? new Date(row.created_at).toISOString().split('T')[0] : '2024-10-28'
           }));
           setRisks(mappedRisks);
-          setSupabaseStatus('Synced live data with Supabase Cloud');
+          setSupabaseStatus('⚡ Supabase Real-Time Sync Active');
         } else if (error) {
           setSupabaseStatus('Supabase Cloud Ready (Local Cache Active)');
         }
       } catch (err) {
         console.log('Supabase sync note:', err);
       }
+    }
+
+    async function initServices() {
+      await fetchLatestRisks();
 
       const isRenderOk = await checkRenderBackendHealth();
       setIsRenderConnected(isRenderOk);
@@ -136,6 +140,22 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     initServices();
+
+    // Supabase Real-Time Channel Subscription
+    const channel = supabase
+      .channel('realtime:risks')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'risks' },
+        () => {
+          fetchLatestRisks();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const addToast = (title: string, message: string, type: 'success' | 'info' | 'warning' | 'error' = 'info') => {
