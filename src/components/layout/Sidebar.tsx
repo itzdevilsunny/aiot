@@ -13,7 +13,8 @@ import {
   Settings, 
   Sparkles,
   ChevronRight,
-  MoreVertical
+  MoreVertical,
+  ShieldCheck
 } from 'lucide-react';
 import { useRiskContext } from '../../context/RiskContext';
 
@@ -29,15 +30,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
   const openRisksCount = risks.filter(r => r.status === 'Open').length;
   const criticalCount = risks.filter(r => r.severity === 'Critical').length;
 
-  const mainNav = [
+  const overviewNav = [
     { label: 'Dashboard', href: '/', icon: LayoutDashboard },
+  ];
+
+  const riskManagementNav = [
     { label: 'Risk Register', href: '/register', icon: ShieldAlert, badge: openRisksCount },
+    { label: 'My Risks', href: '/my-risks', icon: UserCheck, badge: criticalCount ? `${criticalCount} crit` : undefined },
     { label: 'Projects', href: '/projects', icon: FolderKanban },
     { label: 'Analytics', href: '/analytics', icon: BarChart3 },
   ];
 
   const workspaceNav = [
-    { label: 'My Risks', href: '/my-risks', icon: UserCheck, badge: criticalCount ? `${criticalCount} crit` : undefined },
     { label: 'Team', href: '/team', icon: Users },
   ];
 
@@ -46,7 +50,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
   ];
 
   const renderNavLink = (item: { label: string; href: string; icon: any; badge?: string | number }) => {
-    const isActive = pathname === item.href;
+    const isActive = pathname === item.href || (item.href === '/register' && pathname === '/risks');
     const Icon = item.icon;
 
     return (
@@ -96,20 +100,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
         <div className="p-4 border-b border-slate-100">
           <Link href="/" className="flex items-center gap-2.5 group">
             <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
-              <ShieldAlert className="w-4 h-4 text-emerald-400" />
+              <ShieldCheck className="w-4.5 h-4.5 text-emerald-400" />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-bold text-sm text-slate-900 tracking-tight">Risk Register</span>
+                <span className="font-extrabold text-sm text-slate-900 tracking-tight">Risk Register</span>
                 <span className="px-1.5 py-0.2 rounded-full text-[9px] font-extrabold uppercase bg-indigo-100 text-indigo-700 tracking-wide">Copilot</span>
               </div>
-              <p className="text-[10px] text-slate-600 font-medium">Enterprise Operations AI</p>
+              <p className="text-[10px] text-slate-500 font-semibold truncate">
+                MNB Research · Business Operations
+              </p>
             </div>
           </Link>
         </div>
 
         {/* Navigation Sections */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-6">
+        <div className="flex-1 overflow-y-auto p-3 space-y-5">
           {/* AI Banner Shortcut */}
           <Link
             href="/add"
@@ -122,7 +128,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
               </div>
               <div className="text-left">
                 <div className="text-xs font-semibold text-indigo-950 flex items-center gap-1">
-                  AI Risk Analyzer
+                  AI Risk Analysis
                 </div>
                 <div className="text-[10px] text-indigo-600 font-medium">Natural language threats</div>
               </div>
@@ -131,21 +137,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
           </Link>
 
           <div>
-            <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Main</h3>
+            <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Overview</h3>
             <nav className="space-y-1">
-              {mainNav.map(renderNavLink)}
+              {overviewNav.map(renderNavLink)}
             </nav>
           </div>
 
           <div>
-            <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Workspace</h3>
+            <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Risk Management</h3>
+            <nav className="space-y-1">
+              {riskManagementNav.map(renderNavLink)}
+            </nav>
+          </div>
+
+          <div>
+            <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Workspace</h3>
             <nav className="space-y-1">
               {workspaceNav.map(renderNavLink)}
             </nav>
           </div>
 
           <div>
-            <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">System</h3>
+            <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">System</h3>
             <nav className="space-y-1">
               {systemNav.map(renderNavLink)}
             </nav>
@@ -159,13 +172,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
               <div className="relative w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
                 <img
                   src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200"
-                  alt="Sunny P."
+                  alt="Sunny Prasad"
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="truncate text-left">
-                <h4 className="text-xs font-semibold text-slate-900 truncate">Sunny P.</h4>
-                <p className="text-[10px] text-slate-600 truncate">Lead Risk Officer</p>
+                <h4 className="text-xs font-bold text-slate-900 truncate">Sunny Prasad</h4>
+                <p className="text-[10px] text-slate-500 font-medium truncate">Business Operations Intern</p>
               </div>
             </div>
             <button className="text-slate-400 hover:text-slate-700 p-1 rounded-md hover:bg-slate-100">
