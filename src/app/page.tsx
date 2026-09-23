@@ -7,6 +7,7 @@ import { StatCard } from '../components/dashboard/StatCard';
 import { RiskMatrix } from '../components/dashboard/RiskMatrix';
 import { RiskDistribution } from '../components/dashboard/RiskDistribution';
 import { RecentRisks } from '../components/dashboard/RecentRisks';
+import { ExecutiveBriefingCard } from '../components/dashboard/ExecutiveBriefingCard';
 import { Button } from '../components/ui/Button';
 import { 
   ShieldAlert, 
@@ -126,6 +127,9 @@ export default function DashboardPage() {
           </Link>
         )}
       </div>
+
+      {/* Executive Gemini Briefing Card */}
+      <ExecutiveBriefingCard />
 
       {/* 4 KPI CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
