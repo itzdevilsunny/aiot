@@ -48,6 +48,7 @@ interface RiskContextType {
   deleteRisk: (id: string) => void;
   updateRiskStatus: (id: string, status: StatusLevel) => void;
   toggleChecklistItem: (riskId: string, checklistId: string) => void;
+  addProject: (projectData: Omit<Project, 'id' | 'totalRisks' | 'criticalRisks' | 'mitigationProgress' | 'lastUpdated'>) => Project;
   addToast: (title: string, message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
   removeToast: (id: string) => void;
   simulateAIRiskAnalysis: (naturalLanguagePrompt: string) => Promise<AIRiskAnalysisResult>;
@@ -68,7 +69,7 @@ const RiskContext = createContext<RiskContextType | undefined>(undefined);
 
 export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [risks, setRisks] = useState<RiskItem[]>(MOCK_RISKS);
-  const [projects] = useState<Project[]>(MOCK_PROJECTS);
+  const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
   const [teamMembers] = useState<TeamMember[]>(MOCK_TEAM_MEMBERS);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('All');
   const [filterState, setFilterState] = useState<FilterState>(initialFilterState);
@@ -80,10 +81,8 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const supabase = createClient();
 
-  // Load risks from Supabase & verify Render backend on mount
   useEffect(() => {
     async function initServices() {
-      // 1. Supabase Load
       try {
         const { data, error } = await supabase.from('risks').select('*');
         if (data && data.length > 0) {
@@ -126,7 +125,6 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('Supabase sync note:', err);
       }
 
-      // 2. Render Backend Ping
       const isRenderOk = await checkRenderBackendHealth();
       setIsRenderConnected(isRenderOk);
       if (isRenderOk) {
@@ -153,6 +151,36 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resetFilters = () => {
     setFilterState(initialFilterState);
+  };
+
+  const addProject = (projectData: Omit<Project, 'id' | 'totalRisks' | 'criticalRisks' | 'mitigationProgress' | 'lastUpdated'>): Project => {
+    const id = `proj-${projects.length + 1}`;
+    const newProj: Project = {
+      ...projectData,
+      id,
+      totalRisks: 0,
+      criticalRisks: 0,
+      mitigationProgress: 0,
+      lastUpdated: 'Just now'
+    };
+
+    setProjects(prev => [newProj, ...prev]);
+    addToast('Project Created', `Created workstream: ${newProj.name}`, 'success');
+
+    // Sync to Supabase
+    supabase.from('projects').insert([{
+      id: newProj.id,
+      name: newProj.name,
+      code: newProj.code,
+      description: newProj.description,
+      lead_name: newProj.leadName,
+      status: newProj.status,
+      last_updated: 'Just now'
+    }]).then(({ error }) => {
+      if (error) console.log('Supabase project insert note:', error.message);
+    });
+
+    return newProj;
   };
 
   const addRisk = (input: Omit<RiskItem, 'id' | 'createdAt' | 'lastUpdated' | 'score' | 'severity'>): RiskItem => {
@@ -330,14 +358,12 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const simulateAIRiskAnalysis = async (promptText: string): Promise<AIRiskAnalysisResult> => {
-    // 1. Try Gemini API / Render Backend first
     const aiResult = await analyzeRiskWithAI(promptText);
     if (aiResult) {
       addToast('Gemini AI Analysis', 'Generated threat structure using Gemini API.', 'success');
       return aiResult;
     }
 
-    // 2. Client fallback engine
     const lower = promptText.toLowerCase();
 
     let category: RiskCategory = 'Technical';
@@ -464,6 +490,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       deleteRisk,
       updateRiskStatus,
       toggleChecklistItem,
+      addProject,
       addToast,
       removeToast,
       simulateAIRiskAnalysis,

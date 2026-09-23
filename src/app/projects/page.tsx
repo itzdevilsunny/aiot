@@ -1,13 +1,15 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useRiskContext } from '../../context/RiskContext';
 import { ProjectCard } from '../../components/projects/ProjectCard';
+import { CreateProjectModal } from '../../components/projects/CreateProjectModal';
 import { FolderKanban, Plus } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 
 export default function ProjectsPage() {
   const { projects } = useRiskContext();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   return (
     <div className="space-y-6 animate-in fade-in-50">
@@ -19,7 +21,7 @@ export default function ProjectsPage() {
             <span>Active Projects & Workstreams</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Monitor risk health, critical density, and mitigation progress across enterprise project initiatives.
+            MNB Research · Monitor risk health, critical density, and mitigation progress across project initiatives.
           </p>
         </div>
 
@@ -27,9 +29,9 @@ export default function ProjectsPage() {
           variant="primary"
           size="sm"
           icon={<Plus className="w-4 h-4" />}
-          onClick={() => alert("New project workspace modal initialized.")}
+          onClick={() => setIsCreateModalOpen(true)}
         >
-          + Create Project
+          Create Project
         </Button>
       </div>
 
@@ -39,6 +41,12 @@ export default function ProjectsPage() {
           <ProjectCard key={project.id} project={project} />
         ))}
       </div>
+
+      {/* Create Project Modal */}
+      <CreateProjectModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
     </div>
   );
 }
