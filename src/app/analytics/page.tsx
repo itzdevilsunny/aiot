@@ -5,6 +5,7 @@ import { useRiskContext } from '../../context/RiskContext';
 import { TrendChart } from '../../components/analytics/TrendChart';
 import { CategoryChart } from '../../components/analytics/CategoryChart';
 import { OwnerChart } from '../../components/analytics/OwnerChart';
+import { FinancialExposureChart } from '../../components/analytics/FinancialExposureChart';
 import { RiskDistribution } from '../../components/dashboard/RiskDistribution';
 import { BarChart3 } from 'lucide-react';
 
@@ -23,6 +24,9 @@ export default function AnalyticsPage() {
           Quantitative telemetry insights into risk discovery velocity, owner workload distribution, and category severity.
         </p>
       </div>
+
+      {/* Financial Exposure Variance Hero Section */}
+      <FinancialExposureChart />
 
       {/* Top 2 Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
