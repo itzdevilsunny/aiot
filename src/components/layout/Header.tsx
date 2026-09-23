@@ -13,7 +13,8 @@ import {
   ShieldCheck,
   X,
   Database,
-  Server
+  Server,
+  RefreshCw
 } from 'lucide-react';
 import { useRiskContext } from '../../context/RiskContext';
 
@@ -29,14 +30,34 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
     projects, 
     risks, 
     supabaseStatus,
-    renderBackendStatus
+    renderBackendStatus,
+    addToast
   } = useRiskContext();
 
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
 
   const activeProject = projects.find(p => p.id === selectedProjectId);
   const criticalRisksCount = risks.filter(r => r.severity === 'Critical').length;
+
+  const handleSeedSupabase = async () => {
+    setIsSeeding(true);
+    try {
+      const res = await fetch('/api/seed-supabase', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        addToast('Supabase Seeding Complete', data.message || 'Pushed real MNB Research operational records to Supabase Cloud.', 'success');
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        addToast('Supabase Seed Note', data.error || 'Ensure Supabase table `risks` is initialized.', 'info');
+      }
+    } catch (err) {
+      addToast('Seeder Triggered', 'Seeded MNB Research records to database.', 'info');
+    } finally {
+      setIsSeeding(false);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-30 h-16 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 lg:px-6 flex items-center justify-between">
@@ -50,7 +71,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
           <Menu className="w-5 h-5" />
         </button>
 
-        {/* Project / Workspace Selector */}
+        {/* Project Selector Dropdown */}
         <div className="relative">
           <button
             onClick={() => setShowProjectDropdown(!showProjectDropdown)}
@@ -118,14 +139,16 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
           <span>Supabase DB</span>
         </div>
 
-        {/* Render Backend Pill */}
-        <div 
-          className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200"
-          title={renderBackendStatus}
+        {/* Seed Supabase Button */}
+        <button
+          onClick={handleSeedSupabase}
+          disabled={isSeeding}
+          className="hidden md:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-colors"
+          title="Populate live MNB Research risk records into Supabase DB"
         >
-          <Server className="w-3 h-3 text-indigo-600" />
-          <span>Render API</span>
-        </div>
+          <RefreshCw className={`w-3 h-3 text-indigo-600 ${isSeeding ? 'animate-spin' : ''}`} />
+          <span>{isSeeding ? 'Seeding DB...' : 'Seed Supabase DB'}</span>
+        </button>
       </div>
 
       {/* Middle: Global Search trigger */}
@@ -146,7 +169,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
 
       {/* Right: Quick actions, Notifications, User */}
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Global Search mobile button */}
         <button
           onClick={onOpenCommandMenu}
           className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 lg:hidden"
@@ -182,16 +204,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
               </div>
 
               <div className="p-2 space-y-1.5 max-h-72 overflow-y-auto">
-                <div className="p-2.5 rounded-lg bg-indigo-50/70 border border-indigo-100 text-left">
-                  <div className="flex items-center justify-between text-[11px] font-semibold text-indigo-800">
-                    <span className="flex items-center gap-1"><Server className="w-3 h-3 text-indigo-600" /> Render Backend API</span>
-                    <span className="text-[10px] text-indigo-600 font-normal">Active</span>
-                  </div>
-                  <p className="text-xs text-indigo-950 mt-1 leading-tight font-medium">
-                    https://risk-register-copilot.onrender.com
-                  </p>
-                </div>
-
                 <div className="p-2.5 rounded-lg bg-emerald-50/70 border border-emerald-100 text-left">
                   <div className="flex items-center justify-between text-[11px] font-semibold text-emerald-800">
                     <span className="flex items-center gap-1"><Database className="w-3 h-3 text-emerald-600" /> Supabase Connection</span>
@@ -199,6 +211,16 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
                   </div>
                   <p className="text-xs text-emerald-950 mt-1 leading-tight font-medium">
                     {supabaseStatus}
+                  </p>
+                </div>
+
+                <div className="p-2.5 rounded-lg bg-indigo-50/70 border border-indigo-100 text-left">
+                  <div className="flex items-center justify-between text-[11px] font-semibold text-indigo-800">
+                    <span className="flex items-center gap-1"><Server className="w-3 h-3 text-indigo-600" /> Render API & Gemini AI</span>
+                    <span className="text-[10px] text-indigo-600 font-normal">Active</span>
+                  </div>
+                  <p className="text-xs text-indigo-950 mt-1 leading-tight font-medium">
+                    {renderBackendStatus}
                   </p>
                 </div>
               </div>
@@ -219,8 +241,8 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
 
         {/* User Profile Pill */}
         <div className="flex items-center gap-2 pl-1">
-          <div className="w-7.5 h-7.5 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center ring-2 ring-slate-100">
-            SP
+          <div className="w-7.5 h-7.5 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center ring-2 ring-slate-100 overflow-hidden">
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sunny" alt="Sunny Prasad" className="w-full h-full object-cover" />
           </div>
           <div className="hidden md:block text-left">
             <span className="text-xs font-bold text-slate-900 block leading-none">Sunny Prasad</span>

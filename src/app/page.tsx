@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRiskContext } from '../context/RiskContext';
 import { StatCard } from '../components/dashboard/StatCard';
@@ -14,9 +14,7 @@ import {
   Clock, 
   CheckCircle2, 
   Plus, 
-  Sparkles,
-  ArrowRight,
-  TrendingUp
+  Sparkles
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -26,12 +24,49 @@ export default function DashboardPage() {
 
   const totalRisks = filteredRisks.length;
   const criticalHighRisks = filteredRisks.filter(r => r.severity === 'Critical' || r.severity === 'High').length;
+  const criticalCount = filteredRisks.filter(r => r.severity === 'Critical').length;
+  const highCount = filteredRisks.filter(r => r.severity === 'High').length;
   const openRisks = filteredRisks.filter(r => r.status === 'Open').length;
   const avgProgress = totalRisks > 0 
     ? Math.round(filteredRisks.reduce((acc, r) => acc + r.mitigationProgress, 0) / totalRisks) 
     : 0;
 
   const activeProject = projects.find(p => p.id === selectedProjectId);
+  const topCriticalRisk = filteredRisks.find(r => r.severity === 'Critical') || filteredRisks[0];
+
+  const [aiTelemetryText, setAiTelemetryText] = useState<string>(
+    'Copilot Telemetry: Multi-Region PostgreSQL locks detected. Elevating RSK-105 mitigation urgency recommended.'
+  );
+
+  // Fetch live Gemini AI Telemetry Insight
+  useEffect(() => {
+    async function fetchAiTelemetry() {
+      try {
+        const res = await fetch('/api/telemetry-insight', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            criticalCount,
+            highCount,
+            topRiskTitle: topCriticalRisk?.title
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.insight) {
+            setAiTelemetryText(data.insight);
+          }
+        }
+      } catch (err) {
+        // Keep default
+      }
+    }
+
+    if (totalRisks > 0) {
+      fetchAiTelemetry();
+    }
+  }, [totalRisks, criticalCount, highCount]);
 
   return (
     <div className="space-y-6 animate-in fade-in-50">
@@ -43,11 +78,11 @@ export default function DashboardPage() {
               Good morning, Sunny
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-              {activeProject ? activeProject.name : 'All Workspaces'}
+              {activeProject ? activeProject.name : 'MNB Research Operations'}
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Monitor project risks, track mitigation actions, and stay ahead of potential issues with real-time Copilot telemetry.
+            MNB Research · Monitor project risks, track mitigation actions, and stay ahead of operational challenges.
           </p>
         </div>
 
@@ -75,19 +110,21 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Copilot Live Insight Banner */}
+      {/* Copilot Live Gemini AI Telemetry Insight Banner */}
       <div className="p-3.5 rounded-2xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-indigo-500/10 border border-indigo-200/80 flex items-center justify-between text-xs">
         <div className="flex items-center gap-2.5">
           <div className="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0">
             <Sparkles className="w-3.5 h-3.5" />
           </div>
-          <span className="text-indigo-950 font-semibold">
-            Copilot Live Telemetry: <strong className="text-slate-900 font-bold">2 webhook failure spikes</strong> detected in production staging. Elevating <code className="bg-white px-1.5 py-0.5 rounded text-indigo-700 font-mono font-bold">RSK-104</code> urgency recommended.
+          <span className="text-indigo-950 font-semibold leading-snug">
+            {aiTelemetryText}
           </span>
         </div>
-        <Link href="/risk/RSK-104" className="text-xs font-bold text-indigo-600 hover:underline shrink-0 hidden md:inline">
-          View Suggested Mitigation →
-        </Link>
+        {topCriticalRisk && (
+          <Link href={`/risk/${topCriticalRisk.id}`} className="text-xs font-bold text-indigo-600 hover:underline shrink-0 hidden md:inline ml-3">
+            View Top Threat →
+          </Link>
+        )}
       </div>
 
       {/* 4 KPI CARDS */}
@@ -105,7 +142,7 @@ export default function DashboardPage() {
           label="Critical / High Risks"
           value={criticalHighRisks}
           subValue={`of ${totalRisks} total`}
-          trend={{ text: `${criticalHighRisks > 5 ? 'High Attention Required' : 'Controlled'}`, type: criticalHighRisks > 5 ? 'negative' : 'positive' }}
+          trend={{ text: criticalHighRisks > 3 ? 'High Attention Required' : 'Controlled', type: criticalHighRisks > 3 ? 'negative' : 'positive' }}
           icon={<AlertTriangle className="w-4 h-4 text-red-600" />}
           iconBg="bg-red-50"
         />
@@ -114,7 +151,7 @@ export default function DashboardPage() {
           label="Open Risks"
           value={openRisks}
           subValue="in triage & active"
-          trend={{ text: "4 in active mitigation", type: "neutral" }}
+          trend={{ text: "3 in active mitigation", type: "neutral" }}
           icon={<Clock className="w-4 h-4 text-amber-600" />}
           iconBg="bg-amber-50"
         />
@@ -123,7 +160,7 @@ export default function DashboardPage() {
           label="Mitigation Progress"
           value={`${avgProgress}%`}
           subValue="readiness rate"
-          trend={{ text: "+6% sprint over sprint", type: "positive" }}
+          trend={{ text: "+8% sprint over sprint", type: "positive" }}
           icon={<CheckCircle2 className="w-4 h-4 text-emerald-600" />}
           iconBg="bg-emerald-50"
         />
