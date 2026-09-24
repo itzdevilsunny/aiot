@@ -463,8 +463,8 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
             </h3>
 
             <div className="space-y-3 relative before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
-              {risk.activityLogs.map((log) => (
-                <div key={log.id} className="relative pl-7 text-xs">
+              {risk.activityLogs.map((log, idx) => (
+                <div key={`${log.id || 'log'}-${idx}`} className="relative pl-7 text-xs">
                   <div className="absolute left-1.5 top-1 w-3 h-3 rounded-full bg-slate-900 ring-4 ring-white" />
                   <div className="flex items-center justify-between text-[10px] text-slate-400">
                     <span className="font-semibold text-slate-700">{log.author}</span>

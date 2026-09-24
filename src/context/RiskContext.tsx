@@ -197,7 +197,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     addToast('Project Created', `Created workstream: ${newProj.name}`, 'success');
 
     // Sync to Supabase
-    supabase.from('projects').insert([{
+    supabase.from('projects').upsert([{
       id: newProj.id,
       name: newProj.name,
       code: newProj.code,
@@ -205,15 +205,15 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       lead_name: newProj.leadName,
       status: newProj.status,
       last_updated: 'Just now'
-    }]).then(({ error }) => {
-      if (error) console.log('Supabase project insert note:', error.message);
+    }], { onConflict: 'id' }).then(({ error }) => {
+      if (error) console.log('Supabase project upsert note:', error.message);
     });
 
     return newProj;
   };
 
   const addRisk = (input: Omit<RiskItem, 'id' | 'createdAt' | 'lastUpdated' | 'score' | 'severity'>): RiskItem => {
-    const nextNum = 100 + risks.length + 1;
+    const nextNum = 100 + risks.length + Math.floor(Math.random() * 1000);
     const id = `RSK-${nextNum}`;
     const score = input.probability * input.impact;
     const severity = calculateSeverity(score);
@@ -228,7 +228,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       lastUpdated: 'Just now',
       activityLogs: [
         {
-          id: `act-${Date.now()}`,
+          id: `act-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
           timestamp: 'Just now',
           author: 'Sunny Prasad',
           action: 'Created new risk entry in register.',
@@ -242,7 +242,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     addToast('Risk Created', `${newRisk.id}: ${newRisk.title} added to register.`, 'success');
 
     // Sync to Supabase
-    supabase.from('risks').insert([{
+    supabase.from('risks').upsert([{
       id: newRisk.id,
       title: newRisk.title,
       description: newRisk.description,
@@ -268,8 +268,8 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ai_confidence: newRisk.aiConfidence,
       estimated_impact_usd: newRisk.estimatedImpactUsd,
       last_updated: newRisk.lastUpdated
-    }]).then(({ error }) => {
-      if (error) console.log('Supabase insert note:', error.message);
+    }], { onConflict: 'id' }).then(({ error }) => {
+      if (error) console.log('Supabase upsert note:', error.message);
     });
 
     // Sync to Render Backend
@@ -287,7 +287,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const severity = calculateSeverity(score);
 
       const updatedLog = {
-        id: `act-${Date.now()}`,
+        id: `act-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         timestamp: 'Just now',
         author: 'Sunny Prasad',
         action: 'Updated risk configuration or mitigation status.',

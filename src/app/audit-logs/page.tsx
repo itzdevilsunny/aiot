@@ -250,8 +250,8 @@ export default function AuditLogsPage() {
               No audit log entries match the selected filters.
             </div>
           ) : (
-            filteredLogs.map(log => (
-              <div key={log.id} className="p-4 hover:bg-slate-50/80 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            filteredLogs.map((log, idx) => (
+              <div key={`${log.id}-${idx}`} className="p-4 hover:bg-slate-50/80 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-start gap-3">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
                     log.type === 'ai_analysis' ? 'bg-indigo-100 text-indigo-700' :
