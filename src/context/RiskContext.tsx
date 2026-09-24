@@ -34,6 +34,8 @@ interface RiskContextType {
   projects: Project[];
   teamMembers: TeamMember[];
   currentUser: TeamMember;
+  isAuthenticated: boolean;
+  isAuthLoading: boolean;
   selectedProjectId: string;
   filterState: FilterState;
   toasts: ToastNotice[];
@@ -498,34 +500,66 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const [currentUser, setCurrentUser] = useState<TeamMember>(MOCK_TEAM_MEMBERS[0]);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const auth = localStorage.getItem('risk_copilot_auth');
+      const savedUserEmail = localStorage.getItem('risk_copilot_user');
+      if (auth === 'true') {
+        setIsAuthenticated(true);
+        if (savedUserEmail) {
+          const found = MOCK_TEAM_MEMBERS.find(m => m.email.toLowerCase() === savedUserEmail.toLowerCase());
+          if (found) setCurrentUser(found);
+        }
+      } else {
+        setIsAuthenticated(false);
+      }
+    }
+    setIsAuthLoading(false);
+  }, []);
 
   const login = (email: string, password?: string): boolean => {
-    const found = teamMembers.find(m => m.email.toLowerCase() === email.toLowerCase());
-    if (found) {
-      setCurrentUser(found);
-      addToast('Authentication Successful', `Logged in as ${found.name} (${found.role}).`, 'success');
-      return true;
+    if (!password || password.trim().length === 0) {
+      addToast('Authentication Failed', 'Password is required to sign in.', 'error');
+      return false;
     }
-    const customUser: TeamMember = {
-      id: `usr-${Date.now()}`,
-      name: email.split('@')[0].replace('.', ' '),
-      role: 'Risk Assessor Lead',
-      email: email,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
-      department: 'MNB Research Operations',
-      assignedRisksCount: 0,
-      openRisksCount: 0,
-      criticalRisksCount: 0,
-      mitigationProgress: 100
-    };
-    setCurrentUser(customUser);
-    addToast('Authenticated Session Active', `Logged in as ${customUser.name}.`, 'success');
+
+    const found = teamMembers.find(m => m.email.toLowerCase() === email.toLowerCase());
+    let userToSet = found;
+    if (!userToSet) {
+      userToSet = {
+        id: `usr-${Date.now()}`,
+        name: email.split('@')[0].replace('.', ' '),
+        role: 'Risk Assessor Lead',
+        email: email,
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
+        department: 'MNB Research Operations',
+        assignedRisksCount: 0,
+        openRisksCount: 0,
+        criticalRisksCount: 0,
+        mitigationProgress: 100
+      };
+    }
+
+    setCurrentUser(userToSet);
+    setIsAuthenticated(true);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('risk_copilot_auth', 'true');
+      localStorage.setItem('risk_copilot_user', email);
+    }
+    addToast('Authentication Successful', `Logged in as ${userToSet.name}. Access granted.`, 'success');
     return true;
   };
 
   const logout = () => {
-    addToast('Signed Out', 'User session terminated.', 'info');
-    setCurrentUser(MOCK_TEAM_MEMBERS[0]);
+    setIsAuthenticated(false);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('risk_copilot_auth');
+      localStorage.removeItem('risk_copilot_user');
+    }
+    addToast('Signed Out', 'Session terminated. Authentication password required to enter.', 'info');
   };
 
   return (
@@ -534,6 +568,8 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       projects,
       teamMembers,
       currentUser,
+      isAuthenticated,
+      isAuthLoading,
       selectedProjectId,
       filterState,
       toasts,
