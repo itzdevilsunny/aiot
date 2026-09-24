@@ -95,6 +95,7 @@ export interface FilterState {
   severity: string; // 'All' or specific
   status: string;   // 'All' or specific
   owner: string;    // 'All' or specific
+  department?: string; // 'All' or specific
   projectId: string; // 'All' or specific
   sortBy: 'score_desc' | 'score_asc' | 'date_desc' | 'title_asc' | 'probability_desc';
 }
