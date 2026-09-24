@@ -103,7 +103,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
             </button>
 
             {showProjectDropdown && (
-              <div className="absolute left-0 mt-1.5 w-64 rounded-xl bg-white border border-slate-200 shadow-popover py-1.5 z-50 animate-in fade-in-50 zoom-in-95">
+              <div className="absolute left-0 mt-1.5 w-68 rounded-xl bg-white border border-slate-200 shadow-popover py-1.5 z-50 animate-in fade-in-50 zoom-in-95">
                 <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   MNB Research Workspaces
                 </div>
@@ -117,32 +117,44 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
                     selectedProjectId === 'All' ? 'text-indigo-600 font-semibold bg-indigo-50/50' : 'text-slate-700'
                   }`}
                 >
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-indigo-600" />
-                    <span>MNB Research Operations</span>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-indigo-600" />
+                      <span className="font-bold text-slate-900">MNB Research Operations</span>
+                    </div>
+                    <div className="text-[10px] text-slate-500 pl-4 mt-0.5">
+                      {risks.length} total risks • {risks.filter(r => r.severity === 'Critical').length} critical
+                    </div>
                   </div>
-                  {selectedProjectId === 'All' && <Check className="w-3.5 h-3.5 text-indigo-600" />}
+                  {selectedProjectId === 'All' && <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0" />}
                 </button>
 
                 <div className="my-1 border-t border-slate-100" />
 
-                {projects.map(proj => (
-                  <button
-                    key={proj.id}
-                    onClick={() => {
-                      setSelectedProjectId(proj.id);
-                      setShowProjectDropdown(false);
-                    }}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-xs text-left hover:bg-slate-50 transition-colors ${
-                      selectedProjectId === proj.id ? 'text-indigo-600 font-semibold bg-indigo-50/50' : 'text-slate-700'
-                    }`}
-                  >
-                    <div>
-                      <div className="font-medium text-slate-900">{proj.name}</div>
-                      <div className="text-[10px] text-slate-500">{proj.totalRisks} risks • {proj.criticalRisks} critical</div>
-                    </div>
-                  </button>
-                ))}
+                {projects.map(proj => {
+                  const projRisks = risks.filter(r => r.projectId === proj.id || r.projectName.toLowerCase() === proj.name.toLowerCase());
+                  const totalCount = projRisks.length;
+                  const criticalCount = projRisks.filter(r => r.severity === 'Critical').length;
+
+                  return (
+                    <button
+                      key={proj.id}
+                      onClick={() => {
+                        setSelectedProjectId(proj.id);
+                        setShowProjectDropdown(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2 text-xs text-left hover:bg-slate-50 transition-colors ${
+                        selectedProjectId === proj.id ? 'text-indigo-600 font-semibold bg-indigo-50/50' : 'text-slate-700'
+                      }`}
+                    >
+                      <div>
+                        <div className="font-medium text-slate-900">{proj.name}</div>
+                        <div className="text-[10px] text-slate-500">{totalCount} risks • {criticalCount} critical</div>
+                      </div>
+                      {selectedProjectId === proj.id && <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0" />}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
