@@ -20,7 +20,8 @@ import {
   Square,
   TrendingUp,
   FileText,
-  Code2
+  Code2,
+  Plus
 } from 'lucide-react';
 
 interface RiskDetailProps {
@@ -37,6 +38,56 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
   const [descInput, setDescInput] = useState(risk.description);
   const [mitigationInput, setMitigationInput] = useState(risk.mitigationPlan);
   const [contingencyInput, setContingencyInput] = useState(risk.contingencyPlan);
+  const [newChecklistText, setNewChecklistText] = useState('');
+  const [isGeneratingChecklist, setIsGeneratingChecklist] = useState(false);
+
+  const handleAddChecklistItem = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newChecklistText.trim()) return;
+
+    const newItem = {
+      id: `chk-${Date.now()}`,
+      title: newChecklistText.trim(),
+      completed: false
+    };
+
+    const updatedChecklist = [...risk.checklist, newItem];
+    const completedCount = updatedChecklist.filter(c => c.completed).length;
+    const progress = Math.round((completedCount / updatedChecklist.length) * 100);
+
+    updateRisk(risk.id, {
+      checklist: updatedChecklist,
+      mitigationProgress: progress
+    });
+
+    setNewChecklistText('');
+    addToast('Action Item Added', 'New task appended to mitigation checklist.', 'success');
+  };
+
+  const handleAIGenerateChecklist = async () => {
+    setIsGeneratingChecklist(true);
+    addToast('AI Synthesizing Execution Checklist', 'Generating tailored task items based on threat scope...', 'info');
+
+    setTimeout(() => {
+      const aiGeneratedItems = [
+        { id: `chk-${Date.now()}-1`, title: `Conduct security vulnerability audit for ${risk.title}`, completed: false },
+        { id: `chk-${Date.now()}-2`, title: `Formulate failover procedure & update runbook with ${risk.ownerName}`, completed: false },
+        { id: `chk-${Date.now()}-3`, title: `Establish real-time latency monitoring & alert threshold`, completed: false }
+      ];
+
+      const updatedChecklist = [...risk.checklist, ...aiGeneratedItems];
+      const completedCount = updatedChecklist.filter(c => c.completed).length;
+      const progress = Math.round((completedCount / updatedChecklist.length) * 100);
+
+      updateRisk(risk.id, {
+        checklist: updatedChecklist,
+        mitigationProgress: progress
+      });
+
+      setIsGeneratingChecklist(false);
+      addToast('AI Execution Tasks Appended', 'Added 3 structured action items to checklist.', 'success');
+    }, 800);
+  };
 
   const handleSaveEdits = () => {
     updateRisk(risk.id, {
@@ -253,10 +304,36 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
             )}
 
             {/* Execution Checklist */}
-            <div className="pt-2 space-y-2">
-              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                Execution Action Checklist ({risk.checklist.filter(c => c.completed).length} / {risk.checklist.length})
-              </h4>
+            <div className="pt-2 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                  Execution Action Checklist ({risk.checklist.filter(c => c.completed).length} / {risk.checklist.length})
+                </h4>
+
+                <Button
+                  variant="copilot"
+                  size="sm"
+                  disabled={isGeneratingChecklist}
+                  icon={<Sparkles className="w-3.5 h-3.5 text-indigo-200" />}
+                  onClick={handleAIGenerateChecklist}
+                >
+                  {isGeneratingChecklist ? 'Synthesizing...' : 'AI Generate Action Items'}
+                </Button>
+              </div>
+
+              {/* Add Custom Task Form */}
+              <form onSubmit={handleAddChecklistItem} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Add a new mitigation action task..."
+                  value={newChecklistText}
+                  onChange={(e) => setNewChecklistText(e.target.value)}
+                  className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 font-medium"
+                />
+                <Button variant="outline" size="sm" type="submit" icon={<Plus className="w-3.5 h-3.5 text-indigo-600" />}>
+                  Add Task
+                </Button>
+              </form>
 
               <div className="space-y-2">
                 {risk.checklist.map(item => (
