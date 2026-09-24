@@ -33,6 +33,7 @@ interface RiskContextType {
   risks: RiskItem[];
   projects: Project[];
   teamMembers: TeamMember[];
+  currentUser: TeamMember;
   selectedProjectId: string;
   filterState: FilterState;
   toasts: ToastNotice[];
@@ -40,6 +41,9 @@ interface RiskContextType {
   supabaseStatus: string;
   renderBackendStatus: string;
   isRenderConnected: boolean;
+  setCurrentUser: (user: TeamMember) => void;
+  login: (email: string, password?: string) => boolean;
+  logout: () => void;
   setSelectedProjectId: (id: string) => void;
   setFilterState: React.Dispatch<React.SetStateAction<FilterState>>;
   resetFilters: () => void;
@@ -493,11 +497,43 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
+  const [currentUser, setCurrentUser] = useState<TeamMember>(MOCK_TEAM_MEMBERS[0]);
+
+  const login = (email: string, password?: string): boolean => {
+    const found = teamMembers.find(m => m.email.toLowerCase() === email.toLowerCase());
+    if (found) {
+      setCurrentUser(found);
+      addToast('Authentication Successful', `Logged in as ${found.name} (${found.role}).`, 'success');
+      return true;
+    }
+    const customUser: TeamMember = {
+      id: `usr-${Date.now()}`,
+      name: email.split('@')[0].replace('.', ' '),
+      role: 'Risk Assessor Lead',
+      email: email,
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
+      department: 'MNB Research Operations',
+      assignedRisksCount: 0,
+      openRisksCount: 0,
+      criticalRisksCount: 0,
+      mitigationProgress: 100
+    };
+    setCurrentUser(customUser);
+    addToast('Authenticated Session Active', `Logged in as ${customUser.name}.`, 'success');
+    return true;
+  };
+
+  const logout = () => {
+    addToast('Signed Out', 'User session terminated.', 'info');
+    setCurrentUser(MOCK_TEAM_MEMBERS[0]);
+  };
+
   return (
     <RiskContext.Provider value={{
       risks,
       projects,
       teamMembers,
+      currentUser,
       selectedProjectId,
       filterState,
       toasts,
@@ -505,6 +541,9 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       supabaseStatus,
       renderBackendStatus,
       isRenderConnected,
+      setCurrentUser,
+      login,
+      logout,
       setSelectedProjectId,
       setFilterState,
       resetFilters,
