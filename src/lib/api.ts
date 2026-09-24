@@ -4,17 +4,23 @@ import { AIRiskAnalysisResult, RiskItem } from '../types/risk';
  * Call the Gemini AI Risk Analysis API (/api/analyze-risk) or proxied Render backend API
  */
 export async function analyzeRiskWithAI(
-  naturalLanguagePrompt: string
+  naturalLanguagePrompt: string,
+  imageBase64?: string,
+  imageMimeType?: string
 ): Promise<AIRiskAnalysisResult | null> {
   // 1. Try native Gemini API route (/api/analyze-risk)
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
     const response = await fetch('/api/analyze-risk', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: naturalLanguagePrompt }),
+      body: JSON.stringify({ 
+        prompt: naturalLanguagePrompt,
+        imageBase64,
+        imageMimeType
+      }),
       signal: controller.signal
     });
 
@@ -35,7 +41,12 @@ export async function analyzeRiskWithAI(
     const response = await fetch('/api/proxy?path=/api/analyze-risk', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: naturalLanguagePrompt, text: naturalLanguagePrompt })
+      body: JSON.stringify({ 
+        prompt: naturalLanguagePrompt, 
+        text: naturalLanguagePrompt,
+        imageBase64,
+        imageMimeType
+      })
     });
 
     if (response.ok) {

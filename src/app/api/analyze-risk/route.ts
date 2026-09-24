@@ -3,7 +3,7 @@ import { GoogleGenAI } from '@google/genai';
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt } = await req.json();
+    const { prompt, imageBase64, imageMimeType } = await req.json();
 
     if (!prompt || typeof prompt !== 'string') {
       return NextResponse.json({ error: 'Prompt string is required' }, { status: 400 });
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     const ai = new GoogleGenAI({ apiKey });
 
     const systemInstruction = `You are Risk Register Copilot, an enterprise AI Business Operations assistant for MNB Research.
-Analyze the user's natural language project threat and return a strict JSON object matching this schema:
+Analyze the user's natural language project threat and any attached issue screenshots or architecture diagrams. Return a strict JSON object matching this schema:
 {
   "title": "Short descriptive risk title",
   "category": "Technical" | "Resource" | "Financial" | "Schedule" | "Operational" | "Security" | "Compliance" | "External",
@@ -34,10 +34,24 @@ Analyze the user's natural language project threat and return a strict JSON obje
 Score Interpretation: 1-4 Low, 5-9 Medium, 10-16 High, 17-25 Critical.
 Return ONLY valid JSON with no markdown wrapping.`;
 
+    const parts: any[] = [];
+
+    if (imageBase64 && imageMimeType) {
+      const cleanData = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+      parts.push({
+        inlineData: {
+          data: cleanData,
+          mimeType: imageMimeType
+        }
+      });
+    }
+
+    parts.push({ text: `Analyze this project risk description and optional attached screenshot:\n"${prompt}"` });
+
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: [
-        { role: 'user', parts: [{ text: `Analyze this project risk description:\n"${prompt}"` }] }
+        { role: 'user', parts }
       ],
       config: {
         systemInstruction,
@@ -70,7 +84,7 @@ Return ONLY valid JSON with no markdown wrapping.`;
       severity,
       suggestedOwnerName: data.suggestedOwnerName || 'Sunny Prasad',
       suggestedOwnerRole: data.suggestedOwnerRole || 'Business Operations Intern',
-      mitigationPlan: data.mitigationPlan || 'Conduct technical spike and establish monitoring safeguards.',
+      mitigationPlan: data.mitigationPlan || 'Conduct technical discovery spike and establish monitoring safeguards.',
       contingencyPlan: data.contingencyPlan || 'Activate fallback procedure and trigger manual review.',
       aiConfidence: data.aiConfidence || 95,
       estimatedImpactUsd: data.estimatedImpactUsd || score * 2500
@@ -79,6 +93,7 @@ Return ONLY valid JSON with no markdown wrapping.`;
     console.error('Gemini API Note (Using fallback synthesis):', err?.message || err);
     
     // Intelligent Fallback Synthesis Engine
+    const { prompt } = await req.json().catch(() => ({ prompt: '' }));
     const p = String(prompt || '').toLowerCase();
     let category = 'Technical';
     let probability = 4;
