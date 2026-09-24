@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useRiskContext } from '../../context/RiskContext';
-import { Sparkles, MessageSquare, Send, X, Bot, User, RefreshCw, ChevronDown, Zap } from 'lucide-react';
+import { Sparkles, MessageSquare, Send, X, Bot, User, RefreshCw, Zap } from 'lucide-react';
 
 interface ChatMessage {
   id: string;
@@ -25,7 +25,95 @@ export const CopilotChatDrawer: React.FC = () => {
     }
   ]);
 
+  // Draggable position state
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const buttonPosOnStart = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const hasDragged = useRef<boolean>(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Initialize position to bottom-right corner after mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setPosition({
+        x: window.innerWidth - 68,
+        y: window.innerHeight - 68
+      });
+    }
+  }, []);
+
+  // Handle Dragging
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    hasDragged.current = false;
+    dragStartPos.current = { x: e.clientX, y: e.clientY };
+    if (position) {
+      buttonPosOnStart.current = { ...position };
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      setIsDragging(true);
+      hasDragged.current = false;
+      dragStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      if (position) {
+        buttonPosOnStart.current = { ...position };
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      const dx = e.clientX - dragStartPos.current.x;
+      const dy = e.clientY - dragStartPos.current.y;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        hasDragged.current = true;
+      }
+      const newX = Math.max(12, Math.min(window.innerWidth - 60, buttonPosOnStart.current.x + dx));
+      const newY = Math.max(12, Math.min(window.innerHeight - 60, buttonPosOnStart.current.y + dy));
+      setPosition({ x: newX, y: newY });
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isDragging || e.touches.length === 0) return;
+      const dx = e.touches[0].clientX - dragStartPos.current.x;
+      const dy = e.touches[0].clientY - dragStartPos.current.y;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        hasDragged.current = true;
+      }
+      const newX = Math.max(12, Math.min(window.innerWidth - 60, buttonPosOnStart.current.x + dx));
+      const newY = Math.max(12, Math.min(window.innerHeight - 60, buttonPosOnStart.current.y + dy));
+      setPosition({ x: newX, y: newY });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('touchmove', handleTouchMove);
+      window.addEventListener('touchend', handleMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleMouseUp);
+    };
+  }, [isDragging]);
+
+  const handleButtonClick = () => {
+    if (!hasDragged.current) {
+      setIsOpen(prev => !prev);
+    }
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -94,23 +182,46 @@ export const CopilotChatDrawer: React.FC = () => {
 
   return (
     <>
-      {/* Floating Trigger Button */}
-      <div className="fixed bottom-6 right-6 z-40">
+      {/* Small Round Draggable Trigger Button */}
+      <div 
+        className="fixed z-50 select-none touch-none"
+        style={{
+          left: position ? `${position.x}px` : undefined,
+          top: position ? `${position.y}px` : undefined,
+          right: position ? undefined : '24px',
+          bottom: position ? undefined : '24px'
+        }}
+      >
         <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="group relative flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-indigo-600 via-indigo-700 to-slate-900 text-white shadow-2xl hover:shadow-indigo-500/25 hover:scale-105 transition-all duration-200 cursor-pointer border border-indigo-400/30"
+          onClick={handleButtonClick}
+          onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
+          title="Drag anywhere or click to Ask Risk Copilot"
+          className={`group relative w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-600 via-indigo-700 to-purple-600 text-white shadow-xl hover:shadow-indigo-500/40 hover:scale-110 active:scale-95 transition-transform duration-150 cursor-grab active:cursor-grabbing flex items-center justify-center border-2 border-white/30 ${
+            isDragging ? 'ring-4 ring-indigo-400/50 scale-105' : ''
+          }`}
         >
-          <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-indigo-200 animate-pulse" />
-          </div>
-          <span className="text-xs font-extrabold tracking-wide hidden sm:inline">Ask Risk Copilot</span>
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping absolute -top-0.5 -right-0.5" />
+          <Sparkles className="w-5 h-5 text-white animate-pulse" />
+          
+          {/* Live Online Ping Dot */}
+          <span className="w-3 h-3 rounded-full bg-emerald-400 border-2 border-slate-900 absolute -top-0.5 -right-0.5 animate-pulse" />
+
+          {/* Hover Tooltip */}
+          <span className="absolute right-full mr-2.5 px-2.5 py-1 rounded-lg bg-slate-900/90 text-white text-[11px] font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-md border border-slate-700">
+            Ask Risk Copilot (Drag Me)
+          </span>
         </button>
       </div>
 
       {/* Floating Copilot Chat Drawer Window */}
       {isOpen && (
-        <div className="fixed bottom-20 right-4 sm:right-6 z-50 max-w-md w-[calc(100vw-2rem)] sm:w-96 bg-slate-900 text-white rounded-3xl shadow-2xl border border-indigo-900/60 overflow-hidden flex flex-col h-[520px] animate-in slide-in-from-bottom-5">
+        <div 
+          className="fixed z-50 max-w-md w-[calc(100vw-2rem)] sm:w-96 bg-slate-900 text-white rounded-3xl shadow-2xl border border-indigo-900/60 overflow-hidden flex flex-col h-[520px] animate-in slide-in-from-bottom-5"
+          style={{
+            bottom: '80px',
+            right: position ? `${Math.min(window.innerWidth - position.x - 30, window.innerWidth - 400)}px` : '24px'
+          }}
+        >
           {/* Header */}
           <div className="p-4 bg-slate-950 border-b border-indigo-900/40 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
