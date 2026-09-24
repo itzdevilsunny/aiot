@@ -48,6 +48,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
   ];
 
   const systemNav = [
+    { label: 'Audit Logs', href: '/audit-logs', icon: ShieldCheck },
     { label: 'Settings', href: '/settings', icon: Settings },
   ];
 
