@@ -264,15 +264,15 @@ export const CopilotChatDrawer: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userQuery: q + (currentImg ? ' (User attached issue screenshot for analysis)' : ''),
-          risks
+          userQuery: q || 'Analyze attached issue screenshot and identify operational threats.',
+          risks,
+          imageBase64: currentImg || undefined,
+          imageMimeType: currentImg?.startsWith('data:image/jpeg') ? 'image/jpeg' : 'image/png'
         })
       });
 
       const data = await res.json();
-      const aiMsgText = currentImg
-        ? `📷 **Image Analysis & Threat Synthesis:**\nAnalyzed attached issue screenshot. Identified database latency lock pattern matching **[RSK-104]** (Score: 16/25). Recommendation: Apply query index optimization and initiate backup failover.`
-        : (data.reply || 'Analyzed risk register state. All metrics normal.');
+      const aiMsgText = data.reply || 'Analyzed risk register state. All metrics normal.';
 
       const aiMsg: ChatMessage = {
         id: `ai-${Date.now()}`,
