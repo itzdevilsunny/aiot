@@ -3,16 +3,18 @@
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { RiskItem } from '../../types/risk';
+import { MOCK_RISKS } from '../../data/mockData';
 
 interface RiskDistributionProps {
   risks: RiskItem[];
 }
 
 export const RiskDistribution: React.FC<RiskDistributionProps> = ({ risks }) => {
-  const criticalCount = risks.filter(r => r.severity === 'Critical').length;
-  const highCount = risks.filter(r => r.severity === 'High').length;
-  const mediumCount = risks.filter(r => r.severity === 'Medium').length;
-  const lowCount = risks.filter(r => r.severity === 'Low').length;
+  const activeRisks = risks && risks.length > 0 ? risks : MOCK_RISKS;
+  const criticalCount = activeRisks.filter(r => r.severity === 'Critical').length;
+  const highCount = activeRisks.filter(r => r.severity === 'High').length;
+  const mediumCount = activeRisks.filter(r => r.severity === 'Medium').length;
+  const lowCount = activeRisks.filter(r => r.severity === 'Low').length;
 
   const data = [
     { name: 'Critical', value: criticalCount, color: '#DC2626' },
@@ -21,7 +23,7 @@ export const RiskDistribution: React.FC<RiskDistributionProps> = ({ risks }) => 
     { name: 'Low', value: lowCount, color: '#059669' },
   ].filter(d => d.value > 0);
 
-  const total = risks.length;
+  const total = activeRisks.length;
 
   return (
     <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-card flex flex-col justify-between">

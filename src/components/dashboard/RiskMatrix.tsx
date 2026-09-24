@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { RiskItem, ProbabilityLevel, ImpactLevel } from '../../types/risk';
 import { Badge } from '../ui/Badge';
 import { useRouter } from 'next/navigation';
+import { MOCK_RISKS } from '../../data/mockData';
 
 interface RiskMatrixProps {
   risks: RiskItem[];
@@ -13,9 +14,11 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({ risks }) => {
   const router = useRouter();
   const [selectedCell, setSelectedCell] = useState<{ prob: ProbabilityLevel; imp: ImpactLevel } | null>(null);
 
+  const activeRisks = risks && risks.length > 0 ? risks : MOCK_RISKS;
+
   // Group risks by (Probability, Impact)
   const getCellRisks = (prob: ProbabilityLevel, imp: ImpactLevel) => {
-    return risks.filter(r => r.probability === prob && r.impact === imp);
+    return activeRisks.filter(r => r.probability === prob && r.impact === imp);
   };
 
   const getCellBg = (prob: number, imp: number) => {

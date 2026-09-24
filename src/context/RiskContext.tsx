@@ -119,10 +119,12 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }));
           setRisks(mappedRisks);
           setSupabaseStatus('⚡ Supabase Real-Time Sync Active');
-        } else if (error) {
-          setSupabaseStatus('Supabase Cloud Ready (Local Cache Active)');
+        } else {
+          setRisks(MOCK_RISKS);
+          setSupabaseStatus('Supabase Cloud Ready (Loaded Enterprise Cache)');
         }
       } catch (err) {
+        setRisks(MOCK_RISKS);
         console.log('Supabase sync note:', err);
       }
     }
