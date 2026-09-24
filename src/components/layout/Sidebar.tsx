@@ -14,7 +14,8 @@ import {
   Sparkles,
   ChevronRight,
   MoreVertical,
-  ShieldCheck
+  ShieldCheck,
+  SlidersHorizontal
 } from 'lucide-react';
 import { useRiskContext } from '../../context/RiskContext';
 
@@ -39,6 +40,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
     { label: 'My Risks', href: '/my-risks', icon: UserCheck, badge: criticalCount ? `${criticalCount} crit` : undefined },
     { label: 'Projects', href: '/projects', icon: FolderKanban },
     { label: 'Analytics', href: '/analytics', icon: BarChart3 },
+    { label: 'Monte Carlo Stress Test', href: '/simulation', icon: SlidersHorizontal },
   ];
 
   const workspaceNav = [
