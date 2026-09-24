@@ -1,18 +1,21 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRiskContext } from '../../context/RiskContext';
 import { RiskFilters } from '../../components/risks/RiskFilters';
 import { RiskTable } from '../../components/risks/RiskTable';
+import { RiskDependencyGraph } from '../../components/risks/RiskDependencyGraph';
 import { Button } from '../../components/ui/Button';
-import { Plus, Sparkles, ShieldAlert, Download, Upload } from 'lucide-react';
+import { Plus, Sparkles, ShieldAlert, Download, Upload, Network, Table } from 'lucide-react';
 import { exportRisksToCSV, parseCSVToRisks } from '../../lib/exportUtils';
 
 export default function RiskRegisterPage() {
   const { getFilteredRisks, risks, addRisk, addToast } = useRiskContext();
   const filteredRisks = getFilteredRisks();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [viewMode, setViewMode] = useState<'table' | 'graph'>('table');
 
   const criticalCount = risks.filter(r => r.severity === 'Critical').length;
   const highCount = risks.filter(r => r.severity === 'High').length;
@@ -72,7 +75,7 @@ export default function RiskRegisterPage() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in-50">
+    <div className="space-y-6 animate-in fade-in-50 pb-12">
       {/* Hidden File Input for CSV Import */}
       <input
         type="file"
@@ -100,6 +103,28 @@ export default function RiskRegisterPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 shrink-0">
+          {/* View Mode Toggle */}
+          <div className="flex items-center p-1 rounded-lg bg-slate-100 border border-slate-200 text-xs font-bold mr-1">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-colors ${
+                viewMode === 'table' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Table className="w-3.5 h-3.5" />
+              <span>Table</span>
+            </button>
+            <button
+              onClick={() => setViewMode('graph')}
+              className={`px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-colors ${
+                viewMode === 'graph' ? 'bg-white text-indigo-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Network className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Cascading Threat Graph</span>
+            </button>
+          </div>
+
           <Button
             variant="outline"
             size="sm"
@@ -158,11 +183,15 @@ export default function RiskRegisterPage() {
         </div>
       </div>
 
-      {/* Filters Bar */}
-      <RiskFilters />
-
-      {/* Main Data Table */}
-      <RiskTable risks={filteredRisks} />
+      {/* Main View Area */}
+      {viewMode === 'table' ? (
+        <>
+          <RiskFilters />
+          <RiskTable risks={filteredRisks} />
+        </>
+      ) : (
+        <RiskDependencyGraph />
+      )}
     </div>
   );
 }
