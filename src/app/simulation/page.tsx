@@ -13,7 +13,12 @@ import {
   Activity,
   CheckCircle2,
   BrainCircuit,
-  BarChart3
+  BarChart3,
+  FolderKanban,
+  Download,
+  ShieldCheck,
+  Zap,
+  FileSpreadsheet
 } from 'lucide-react';
 import { 
   XAxis, 
@@ -22,114 +27,175 @@ import {
   Tooltip, 
   ResponsiveContainer, 
   BarChart, 
-  Bar
+  Bar,
+  PieChart,
+  Pie,
+  Cell
 } from 'recharts';
+import { Button } from '../../components/ui/Button';
+
+const CATEGORY_COLORS: Record<string, string> = {
+  Technical: '#6366f1',
+  Financial: '#10b981',
+  Security: '#ef4444',
+  Compliance: '#f59e0b',
+  Operational: '#06b6d4',
+  Resource: '#8b5cf6',
+  External: '#ec4899',
+  Schedule: '#f97316'
+};
 
 export default function SimulationPage() {
-  const { risks } = useRiskContext();
+  const { risks, projects, selectedProjectId, addToast } = useRiskContext();
 
-  // Stress testing parameters
+  // Filters & Stress Controls
+  const [activeProjectFilter, setActiveProjectFilter] = useState<string>('All');
   const [cyberSpike, setCyberSpike] = useState<number>(0); // 0% to +100%
   const [financialInflation, setFinancialInflation] = useState<number>(0); // 0% to +50%
   const [vendorDelayMultiplier, setVendorDelayMultiplier] = useState<number>(1.0); // 1.0x to 2.5x
-  const [simCount] = useState<number>(1000); // 1000 iterations
+  const [simIterations, setSimIterations] = useState<number>(1000); // 1000, 5000, 10000
 
-  // Helper to format currency
+  // Format currency helper
   const formatUSD = (val: number) => {
     if (val >= 1_000_000) return `$${(val / 1_000_000).toFixed(2)}M`;
     if (val >= 1_000) return `$${(val / 1_000).toFixed(0)}K`;
     return `$${Math.round(val).toLocaleString()}`;
   };
 
-  // Run Monte Carlo stochastic simulation calculation
+  // Run 100% Live Monte Carlo Stochastic Simulation
   const simulationResults = useMemo(() => {
-    const openRisks = risks.filter(r => r.status !== 'Closed' && r.status !== 'Mitigated');
+    const targetRisks = risks.filter(r => {
+      if (r.status === 'Closed' || r.status === 'Mitigated') return false;
+      if (activeProjectFilter !== 'All' && r.projectId !== activeProjectFilter) return false;
+      return true;
+    });
 
-    // Run N iterations
+    const activeRiskList = targetRisks.length > 0 ? targetRisks : risks;
+
     const losses: number[] = [];
+    const categoryTotals: Record<string, number> = {};
 
-    for (let i = 0; i < simCount; i++) {
-      let totalIterLoss = 0;
+    for (let i = 0; i < simIterations; i++) {
+      let iterLoss = 0;
 
-      openRisks.forEach(risk => {
-        // Base probability (1-5 scaled to 0.1 to 0.9)
-        let prob = risk.probability * 0.18;
-        
-        // Apply category stress multipliers
+      activeRiskList.forEach(risk => {
+        // Base probability scaled (1-5 -> 0.15 to 0.85)
+        let prob = risk.probability * 0.17;
+
+        // Apply stress multipliers
         if (risk.category === 'Security' || risk.category === 'Technical') {
           prob = Math.min(0.95, prob * (1 + cyberSpike / 100));
         } else if (risk.category === 'Operational' || risk.category === 'External' || risk.category === 'Schedule') {
           prob = Math.min(0.95, prob * vendorDelayMultiplier);
         }
 
-        // Check if event occurs in this simulation step
+        // Event occurrence check
         if (Math.random() <= prob) {
-          // Financial Impact
-          let baseImpact = risk.estimatedImpactUsd || (risk.impact * 25000);
-          
-          // Apply Inflation stress multiplier
+          let baseImpact = risk.estimatedImpactUsd || (risk.score * 25000);
+
           if (risk.category === 'Financial' || risk.category === 'Compliance' || risk.category === 'Operational') {
             baseImpact *= (1 + financialInflation / 100);
           }
 
-          // Random variation within +/- 25% (Triangular stochastic distribution)
+          // Stochastic triangular variation (+/- 25%)
           const variation = (Math.random() + Math.random() - 1) * 0.25;
-          const iterLoss = Math.max(0, baseImpact * (1 + variation));
-          
-          totalIterLoss += iterLoss;
+          const lossValue = Math.max(0, baseImpact * (1 + variation));
+
+          iterLoss += lossValue;
+          categoryTotals[risk.category] = (categoryTotals[risk.category] || 0) + lossValue;
         }
       });
 
-      losses.push(totalIterLoss);
+      losses.push(iterLoss);
     }
 
-    // Sort losses ascending
     losses.sort((a, b) => a - b);
 
-    // Calculate statistical metrics
-    const mean = losses.reduce((sum, l) => sum + l, 0) / losses.length;
     const p10 = losses[Math.floor(losses.length * 0.10)] || 0;
     const p50 = losses[Math.floor(losses.length * 0.50)] || 0;
     const p90 = losses[Math.floor(losses.length * 0.90)] || 0;
+    const p99 = losses[Math.floor(losses.length * 0.99)] || 0;
     const maxLoss = losses[losses.length - 1] || 0;
 
-    // Build Histogram buckets
+    // Build Histogram (15 buckets)
     const bucketCount = 15;
     const minL = losses[0] || 0;
     const maxL = maxLoss || 100000;
     const step = (maxL - minL) / bucketCount || 10000;
 
-    const histogram: { rangeLabel: string; frequency: number; cumulativePct: number }[] = [];
-    let countSoFar = 0;
-
+    const histogram: { rangeLabel: string; frequency: number }[] = [];
     for (let b = 0; b < bucketCount; b++) {
       const bMin = minL + b * step;
       const bMax = bMin + step;
       const countInBucket = losses.filter(l => l >= bMin && (b === bucketCount - 1 ? l <= bMax : l < bMax)).length;
-      countSoFar += countInBucket;
 
       histogram.push({
         rangeLabel: formatUSD(bMax),
-        frequency: countInBucket,
-        cumulativePct: Math.round((countSoFar / losses.length) * 100)
+        frequency: countInBucket
       });
     }
 
+    // Category Loss Distribution data for Pie Chart
+    const categoryPieData = Object.entries(categoryTotals).map(([cat, total]) => ({
+      name: cat,
+      value: Math.round(total / simIterations),
+      color: CATEGORY_COLORS[cat] || '#64748b'
+    })).sort((a, b) => b.value - a.value);
+
+    // Top 5 Contributing Risks to VaR
+    const topContributors = activeRiskList.map(r => {
+      const impact = r.estimatedImpactUsd || (r.score * 25000);
+      const expectedExp = r.probability * 0.2 * impact;
+      return {
+        ...r,
+        expectedExp
+      };
+    }).sort((a, b) => b.expectedExp - a.expectedExp).slice(0, 5);
+
     return {
-      mean,
+      activeRiskCount: activeRiskList.length,
       p10,
       p50,
       p90,
+      p99,
       maxLoss,
       histogram,
+      categoryPieData,
+      topContributors,
       contingencyReserve: p90 * 1.15
     };
-  }, [risks, cyberSpike, financialInflation, vendorDelayMultiplier, simCount]);
+  }, [risks, activeProjectFilter, cyberSpike, financialInflation, vendorDelayMultiplier, simIterations]);
 
   const handleReset = () => {
+    setActiveProjectFilter('All');
     setCyberSpike(0);
     setFinancialInflation(0);
     setVendorDelayMultiplier(1.0);
+    setSimIterations(1000);
+    addToast('Simulation Reset', 'Restored baseline parameters.', 'info');
+  };
+
+  const handleExportSimulationCSV = () => {
+    const headers = ['Simulation Iterations', 'Project Filter', 'P50 Expected Loss', 'P90 VaR Severe Loss', 'P99 Extreme Loss', 'Recommended Liquidity Reserve'];
+    const row = [
+      simIterations,
+      activeProjectFilter,
+      `"${formatUSD(simulationResults.p50)}"`,
+      `"${formatUSD(simulationResults.p90)}"`,
+      `"${formatUSD(simulationResults.p99)}"`,
+      `"${formatUSD(simulationResults.contingencyReserve)}"`
+    ];
+
+    const csvContent = [headers.join(','), row.join(',')].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Monte_Carlo_Simulation_Report_${Date.now()}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    addToast('Simulation Report Exported', 'Downloaded Executive Monte Carlo VaR CSV Report.', 'success');
   };
 
   return (
@@ -142,22 +208,70 @@ export default function SimulationPage() {
               <SlidersHorizontal className="w-4 h-4" />
             </div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-              Enterprise Risk Monte Carlo & Stress Testing Engine
+              Enterprise Monte Carlo & Stress Testing Engine
             </h1>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Simulate 1,000+ stochastic operational scenarios to forecast Expected Losses, Value-at-Risk (VaR P90), and recommended contingency reserves.
+            Simulate 1,000–10,000 stochastic operational scenarios to calculate Expected Loss (P50), Value-at-Risk (VaR P90), and capital liquidity buffers.
           </p>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            icon={<FileSpreadsheet className="w-3.5 h-3.5 text-indigo-600" />}
+            onClick={handleExportSimulationCSV}
+          >
+            Export Monte Carlo Report (.CSV)
+          </Button>
+
           <button
             onClick={handleReset}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 shadow-2xs transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 shadow-2xs transition-colors cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            Reset Parameters
+            Reset
           </button>
+        </div>
+      </div>
+
+      {/* Control Bar: Workspace Selector & Iteration Run Selector */}
+      <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+            <FolderKanban className="w-4 h-4 text-indigo-600" />
+            <span>Target Workstream:</span>
+          </div>
+          <select
+            value={activeProjectFilter}
+            onChange={(e) => setActiveProjectFilter(e.target.value)}
+            className="text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 focus:outline-none cursor-pointer"
+          >
+            <option value="All">MNB Research Operations (All Workstreams)</option>
+            {projects.map(p => (
+              <option key={p.id} value={p.id}>{p.name} ({p.code})</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+          <span className="text-xs font-semibold text-slate-500">Stochastic Iterations:</span>
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+            {[1000, 5000, 10000].map(count => (
+              <button
+                key={count}
+                onClick={() => setSimIterations(count)}
+                className={`px-2.5 py-1 text-[11px] font-extrabold rounded-md transition-all cursor-pointer ${
+                  simIterations === count
+                    ? 'bg-indigo-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {count.toLocaleString()} Runs
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -170,7 +284,7 @@ export default function SimulationPage() {
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-slate-900 mt-2">
+          <div className="text-2xl font-black text-slate-900 mt-2 font-mono">
             {formatUSD(simulationResults.p50)}
           </div>
           <p className="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
@@ -186,7 +300,7 @@ export default function SimulationPage() {
               <AlertTriangle className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-amber-900 mt-2">
+          <div className="text-2xl font-black text-amber-900 mt-2 font-mono">
             {formatUSD(simulationResults.p90)}
           </div>
           <p className="text-[11px] text-amber-600 mt-1 flex items-center gap-1">
@@ -201,7 +315,7 @@ export default function SimulationPage() {
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-emerald-950 mt-2">
+          <div className="text-2xl font-black text-emerald-950 mt-2 font-mono">
             {formatUSD(simulationResults.contingencyReserve)}
           </div>
           <p className="text-[11px] text-emerald-600 mt-1">
@@ -211,16 +325,16 @@ export default function SimulationPage() {
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Simulated Runs</span>
-            <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
-              <Activity className="w-4 h-4" />
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">P99 Black Swan Extreme</span>
+            <div className="w-7 h-7 rounded-lg bg-red-50 text-red-600 flex items-center justify-center font-bold">
+              <ShieldAlert className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-slate-900 mt-2">
-            {simCount.toLocaleString()} Iterations
+          <div className="text-2xl font-black text-red-900 mt-2 font-mono">
+            {formatUSD(simulationResults.p99)}
           </div>
-          <p className="text-[11px] text-indigo-600 font-semibold mt-1">
-            Triangular Distribution Monte Carlo
+          <p className="text-[11px] text-red-600 font-semibold mt-1">
+            99th percentile extreme tail loss
           </p>
         </div>
       </div>
@@ -321,14 +435,14 @@ export default function SimulationPage() {
               <BrainCircuit className="w-4 h-4 text-emerald-400" />
               <h4 className="text-xs font-bold text-slate-100">AI Scenario Synthesis</h4>
             </div>
-            <p className="text-[11px] text-slate-300 leading-relaxed">
+            <p className="text-[11px] text-slate-300 leading-relaxed font-medium">
               {cyberSpike > 30 || financialInflation > 20 || vendorDelayMultiplier > 1.5 ? (
-                <span className="text-amber-300 font-medium">
-                  ⚠️ <strong>High Stress Scenario Detected:</strong> Total P90 exposure exceeds normal capital buffers. Recommend initiating hedging strategies and increasing cybersecurity insurance reserves by at least {formatUSD(simulationResults.p90 - simulationResults.p50)}.
+                <span className="text-amber-300">
+                  ⚠️ <strong>High Stress Scenario Active:</strong> P90 Value-at-Risk reaches {formatUSD(simulationResults.p90)}. Recommending an extra capital buffer of {formatUSD(simulationResults.p90 - simulationResults.p50)}.
                 </span>
               ) : (
                 <span>
-                  🟢 <strong>Normal Resilience Profile:</strong> Baseline operational risks are well-contained within the current {formatUSD(simulationResults.p50)} expected loss margin.
+                  🟢 <strong>Normal Resilience Profile:</strong> Active operational risks ({simulationResults.activeRiskCount} items) are well-contained within baseline {formatUSD(simulationResults.p50)} Expected Loss.
                 </span>
               )}
             </p>
@@ -341,17 +455,17 @@ export default function SimulationPage() {
             <div>
               <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-indigo-600" />
-                <span>Simulated Loss Distribution (Probability Density & Cumulative VaR)</span>
+                <span>Simulated Loss Distribution (Probability Density & VaR)</span>
               </h3>
               <p className="text-[11px] text-slate-500">
-                Frequency histogram of simulated financial outcomes over {simCount} iterations.
+                Frequency histogram of simulated financial outcomes over {simIterations.toLocaleString()} iterations.
               </p>
             </div>
 
             <div className="flex items-center gap-3 text-[11px] font-semibold text-slate-600">
               <span className="flex items-center gap-1">
                 <span className="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
-                Loss Frequency
+                Iteration Frequency
               </span>
             </div>
           </div>
@@ -379,7 +493,7 @@ export default function SimulationPage() {
                     border: 'none'
                   }}
                   formatter={(value: any) => [
-                    `${value} iterations`,
+                    `${value} simulation runs`,
                     'Frequency'
                   ]}
                 />
@@ -391,36 +505,54 @@ export default function SimulationPage() {
 
       </div>
 
-      {/* Risk Treatment & Strategic Recommendations */}
+      {/* Top 5 Risk Exposure Contributors Table */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
-        <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-indigo-600" />
-          <span>Strategic Executive Risk Mitigation Directives</span>
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5">
-            <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Directive 1 · Financial Reserves</span>
-            <h4 className="text-xs font-extrabold text-slate-900">Capital Contingency Allocation</h4>
-            <p className="text-[11px] text-slate-600">
-              Earmark <strong>{formatUSD(simulationResults.contingencyReserve)}</strong> in working capital reserves to absorb multi-threat tail risks without jeopardizing quarter operational EBITDA.
+        <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+          <div>
+            <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+              <Zap className="w-4 h-4 text-amber-500" />
+              <span>Top Risk Exposure Contributors Driving Value-at-Risk</span>
+            </h3>
+            <p className="text-[11px] text-slate-500">
+              Live register items sorted by stochastic exposure impact.
             </p>
           </div>
+        </div>
 
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5">
-            <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Directive 2 · Operational SLAs</span>
-            <h4 className="text-xs font-extrabold text-slate-900">High-Severity Review Cadence</h4>
-            <p className="text-[11px] text-slate-600">
-              Enforce bi-weekly mitigation updates for all {risks.filter(r => r.severity === 'Critical' || r.severity === 'High').length} High/Critical category risks to compress mean response window below 14 days.
-            </p>
-          </div>
+        <div className="divide-y divide-slate-100">
+          {simulationResults.topContributors.map((r, idx) => (
+            <div key={r.id} className="py-3 flex items-center justify-between text-xs gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-700 font-extrabold text-[10px] flex items-center justify-center shrink-0">
+                  #{idx + 1}
+                </span>
+                <div className="truncate">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700">
+                      {r.id}
+                    </span>
+                    <h4 className="font-bold text-slate-900 truncate">{r.title}</h4>
+                  </div>
+                  <div className="text-[10px] text-slate-500 mt-0.5">
+                    Category: {r.category} • Owner: {r.ownerName} ({r.projectName})
+                  </div>
+                </div>
+              </div>
 
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5">
-            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Directive 3 · Insurance & Transfer</span>
-            <h4 className="text-xs font-extrabold text-slate-900">Risk Transfer Optimization</h4>
-            <p className="text-[11px] text-slate-600">
-              Evaluate cyber liability & third-party SLA indemnity contracts to offload up to 40% of unmitigated residual liability.
-            </p>
-          </div>
+              <div className="text-right shrink-0">
+                <div className="font-extrabold text-indigo-950 font-mono">
+                  {formatUSD(r.expectedExp)}
+                </div>
+                <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
+                  r.severity === 'Critical' ? 'bg-red-100 text-red-800' :
+                  r.severity === 'High' ? 'bg-amber-100 text-amber-800' :
+                  'bg-slate-100 text-slate-700'
+                }`}>
+                  {r.severity}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
