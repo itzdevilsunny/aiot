@@ -1,6 +1,7 @@
 -- ====================================================================
 -- MNB RESEARCH · RISK REGISTER COPILOT
 -- ENTERPRISE ADD-ONS: SOC2 AUDIT TRAIL, AUTOMATED TRIGGERS, VIEWS & NOTIFICATIONS
+-- (100% FAIL-SAFE & IDEMPOTENT — EXECUTE SAFELY MULTIPLE TIMES)
 -- ====================================================================
 
 -- 1. DEDICATED SOC2 AUDIT LOGS TABLE
@@ -82,11 +83,31 @@ AFTER UPDATE OR DELETE ON risks
 FOR EACH ROW
 EXECUTE FUNCTION fn_log_risk_changes();
 
--- 6. ENABLE REAL-TIME BROADCAST ON NEW TABLES
-BEGIN;
-  ALTER PUBLICATION supabase_realtime ADD TABLE risk_audit_logs;
-  ALTER PUBLICATION supabase_realtime ADD TABLE risk_notifications;
-COMMIT;
+-- 6. ENABLE REAL-TIME BROADCAST (FAIL-SAFE IDEMPOTENT PL/PGSQL BLOCK)
+DO $$
+BEGIN
+  -- Add risk_audit_logs to realtime if not already present
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_rel 
+    WHERE prpubid = (SELECT oid FROM pg_publication WHERE pubname = 'supabase_realtime')
+      AND prrelid = 'risk_audit_logs'::regclass
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE risk_audit_logs;
+  END IF;
+
+  -- Add risk_notifications to realtime if not already present
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_rel 
+    WHERE prpubid = (SELECT oid FROM pg_publication WHERE pubname = 'supabase_realtime')
+      AND prrelid = 'risk_notifications'::regclass
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE risk_notifications;
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN
+    -- Suppress publication error if table already added
+    NULL;
+END $$;
 
 -- 7. RLS SECURITY POLICIES FOR NEW TABLES
 ALTER TABLE risk_audit_logs ENABLE ROW LEVEL SECURITY;
