@@ -561,7 +561,36 @@ export const AIRiskAnalyzer: React.FC = () => {
             <h3 className="text-sm font-bold text-slate-900">✨ Gemini AI Project Risk Profile Generator</h3>
             <p className="text-xs text-slate-500">Provide a project scope topic and let Gemini generate 3 to 4 structured operational risks automatically.</p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                Industry Vertical Template Presets:
+              </span>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setBulkTopic('FinTech Payment Gateway & PCI-DSS Cloud Migration')}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold border border-indigo-200 transition-colors"
+                >
+                  💳 FinTech Core Migration
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBulkTopic('Healthcare AI Platform & HIPAA Data Governance')}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold border border-emerald-200 transition-colors"
+                >
+                  🏥 Healthcare AI & HIPAA
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBulkTopic('SaaS DevOps Pipeline & Kubernetes Security Hardening')}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 font-semibold border border-amber-200 transition-colors"
+                >
+                  🚀 SaaS DevOps & K8s
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               <div>
                 <label className="block text-xs font-bold text-slate-800 mb-1">Target Project</label>
                 <select

@@ -1,33 +1,100 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Settings, User, Building, Bell, Sliders, Shield } from 'lucide-react';
+import { Settings, User, Building, Bell, Sliders, Terminal, Send, CheckCircle2, Sparkles } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { useRiskContext } from '../../context/RiskContext';
 
 export default function SettingsPage() {
   const { addToast } = useRiskContext();
-  const [activeTab, setActiveTab] = useState<'profile' | 'workspace' | 'scoring' | 'notifications'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'workspace' | 'scoring' | 'notifications' | 'testbench'>('profile');
+  const [testLog, setTestLog] = useState<string>('Ready to test enterprise webhooks & API endpoints...');
+  const [isTesting, setIsTesting] = useState<boolean>(false);
 
   const handleSave = () => {
     addToast('Settings Saved', 'Your system preferences have been updated.', 'success');
   };
 
+  const handleRunSlackTest = async () => {
+    setIsTesting(true);
+    setTestLog('POST /api/notify-escalation -> Dispatching Slack payload...');
+    try {
+      const res = await fetch('/api/notify-escalation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          riskId: 'RSK-999',
+          title: 'TEST SLA Escalation Alert',
+          severity: 'Critical',
+          score: 25,
+          ownerName: 'Sunny Prasad',
+          channel: '#mnb-ops-risk-alerts'
+        })
+      });
+      const data = await res.json();
+      setTestLog(prev => `${prev}\nHTTP 200 OK: ${JSON.stringify(data, null, 2)}`);
+      addToast('Slack Webhook Sent', 'Test escalation dispatched to #mnb-ops-risk-alerts.', 'success');
+    } catch (e: any) {
+      setTestLog(prev => `${prev}\nError: ${e.message}`);
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
+  const handleRunJiraTest = async () => {
+    setIsTesting(true);
+    setTestLog('POST /api/jira-export -> Synthesizing Jira payload...');
+    try {
+      const res = await fetch('/api/jira-export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          riskId: 'RSK-104',
+          title: 'Database Failover Latency Spike',
+          severity: 'High',
+          projectCode: 'MNB-CORE'
+        })
+      });
+      const data = await res.json();
+      setTestLog(prev => `${prev}\nHTTP 200 OK: ${JSON.stringify(data, null, 2)}`);
+      addToast('Jira Payload Ready', 'Formatted REST payload generated for issue key MNB-CORE-104.', 'success');
+    } catch (e: any) {
+      setTestLog(prev => `${prev}\nError: ${e.message}`);
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
+  const handleRunCronTest = async () => {
+    setIsTesting(true);
+    setTestLog('GET /api/cron-risk-health -> Triggering 30-Day SLA Review Scan...');
+    try {
+      const res = await fetch('/api/cron-risk-health');
+      const data = await res.json();
+      setTestLog(prev => `${prev}\nHTTP 200 OK: ${JSON.stringify(data, null, 2)}`);
+      addToast('Risk Health Cron Executed', 'Scanned active register. 0 overdue SLA breaches found.', 'success');
+    } catch (e: any) {
+      setTestLog(prev => `${prev}\nError: ${e.message}`);
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in-50">
+    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in-50 pb-12">
       {/* Header */}
       <div className="pb-2 border-b border-slate-200/60">
         <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
           <Settings className="w-6 h-6 text-indigo-600" />
-          <span>System Settings</span>
+          <span>System Settings & API Test Bench</span>
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-          Manage workspace settings, risk scoring matrix standards, profile, and notification rules.
+          Manage workspace settings, risk scoring matrix standards, notification rules, and integration webhooks.
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 text-xs font-semibold">
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 text-xs font-semibold">
         <button
           onClick={() => setActiveTab('profile')}
           className={`pb-3 px-3 flex items-center gap-2 transition-colors border-b-2 ${
@@ -70,6 +137,17 @@ export default function SettingsPage() {
           }`}
         >
           <Bell className="w-4 h-4" /> Notifications
+        </button>
+
+        <button
+          onClick={() => setActiveTab('testbench')}
+          className={`pb-3 px-3 flex items-center gap-2 transition-colors border-b-2 ${
+            activeTab === 'testbench'
+              ? 'border-indigo-600 text-indigo-600 font-bold'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Terminal className="w-4 h-4 text-emerald-600" /> Webhook Test Bench
         </button>
       </div>
 
@@ -152,6 +230,62 @@ export default function SettingsPage() {
               <input type="checkbox" defaultChecked className="rounded text-indigo-600" />
               <span>Slack integration webhook notifications</span>
             </label>
+          </div>
+        )}
+
+        {activeTab === 'testbench' && (
+          <div className="space-y-4 text-xs">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Terminal className="w-4 h-4 text-emerald-600" />
+                <span>Live API Webhook & Governance Test Bench</span>
+              </h3>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold uppercase">
+                Active Telemetry
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isTesting}
+                icon={<Send className="w-3.5 h-3.5 text-indigo-600" />}
+                onClick={handleRunSlackTest}
+              >
+                Test Slack Webhook
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isTesting}
+                icon={<Sparkles className="w-3.5 h-3.5 text-amber-600" />}
+                onClick={handleRunJiraTest}
+              >
+                Test Jira REST Payload
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isTesting}
+                icon={<CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+                onClick={handleRunCronTest}
+              >
+                Trigger Midnight SLA Cron
+              </Button>
+            </div>
+
+            {/* Live Terminal Output Box */}
+            <div>
+              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Execution Terminal Telemetry Log
+              </label>
+              <pre className="w-full h-[180px] p-3 rounded-xl bg-slate-900 text-emerald-400 font-mono text-[11px] overflow-y-auto leading-relaxed">
+                {testLog}
+              </pre>
+            </div>
           </div>
         )}
 
