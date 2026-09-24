@@ -141,32 +141,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
                       <div className="font-medium text-slate-900">{proj.name}</div>
                       <div className="text-[10px] text-slate-500">{proj.totalRisks} risks • {proj.criticalRisks} critical</div>
                     </div>
-                    {selectedProjectId === proj.id && <Check className="w-3.5 h-3.5 text-indigo-600" />}
                   </button>
                 ))}
               </div>
             )}
           </div>
-
-          {/* Supabase Status Pill */}
-          <div 
-            className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"
-            title={supabaseStatus}
-          >
-            <Database className="w-3 h-3 text-emerald-600" />
-            <span>Supabase DB</span>
-          </div>
-
-          {/* Seed Supabase Button */}
-          <button
-            onClick={handleSeedSupabase}
-            disabled={isSeeding}
-            className="hidden md:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-colors cursor-pointer"
-            title="Populate live MNB Research risk records into Supabase DB"
-          >
-            <RefreshCw className={`w-3 h-3 text-indigo-600 ${isSeeding ? 'animate-spin' : ''}`} />
-            <span>{isSeeding ? 'Seeding DB...' : 'Seed Supabase DB'}</span>
-          </button>
         </div>
 
         {/* Middle: Global Search trigger */}
@@ -184,8 +163,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
             </kbd>
           </button>
         </div>
-
-        {/* Right: Notifications, Help, User Profile Menu */}
         <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={onOpenCommandMenu}
@@ -194,7 +171,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
             <Search className="w-4 h-4" />
           </button>
 
-          {/* Notifications Icon & Popover */}
+          {/* Notifications Icon & Live Popover */}
           <div className="relative">
             <button
               onClick={() => {
@@ -205,60 +182,108 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
               aria-label="Notifications"
             >
               <Bell className="w-4 h-4" />
-              {hasUnreadAlerts && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-600 ring-2 ring-white animate-pulse" />
+              {hasUnreadAlerts && criticalRisks.length > 0 && (
+                <span className="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full text-[9px] font-extrabold bg-red-600 text-white ring-2 ring-white shadow-xs">
+                  {criticalRisks.length}
+                </span>
               )}
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 mt-1.5 w-80 rounded-2xl bg-white border border-slate-200 shadow-popover py-2 z-50 animate-in fade-in-50 zoom-in-95">
-                <div className="px-4 py-2 flex items-center justify-between border-b border-slate-100">
-                  <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600" /> Enterprise Operations Alerts
-                  </h4>
+              <div className="absolute right-0 mt-1.5 w-84 rounded-2xl bg-white border border-slate-200 shadow-popover py-2 z-50 animate-in fade-in-50 zoom-in-95">
+                <div className="px-4 py-2.5 flex items-center justify-between border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                    <h4 className="text-xs font-extrabold text-slate-900">
+                      Live Operations Notifications
+                    </h4>
+                  </div>
                   <button 
                     onClick={() => {
                       setHasUnreadAlerts(false);
-                      addToast('Alerts Cleared', 'Marked notifications as read.', 'info');
+                      addToast('Notifications Cleared', 'All alerts marked as read.', 'info');
                     }}
-                    className="text-[10px] font-bold text-indigo-600 hover:underline"
+                    className="text-[10px] font-bold text-indigo-600 hover:underline cursor-pointer"
                   >
                     Clear All
                   </button>
                 </div>
 
-                <div className="p-2 space-y-1.5 max-h-72 overflow-y-auto text-xs">
-                  {criticalRisks.length > 0 && (
-                    <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-left">
+                <div className="p-2 space-y-2 max-h-80 overflow-y-auto text-xs">
+                  {/* Real Live Critical Risk Notifications */}
+                  {criticalRisks.map(r => (
+                    <button
+                      key={`notif-crit-${r.id}`}
+                      onClick={() => {
+                        setShowNotifications(false);
+                        router.push(`/risk/${r.id}`);
+                      }}
+                      className="w-full p-2.5 rounded-xl bg-red-50/90 hover:bg-red-100/90 border border-red-200 text-left transition-colors cursor-pointer group"
+                    >
                       <div className="flex items-center justify-between text-[11px] font-bold text-red-900">
-                        <span className="flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5 text-red-600" /> Critical Severity Alert</span>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-100 text-red-800">Action Required</span>
+                        <span className="flex items-center gap-1.5">
+                          <AlertTriangle className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                          <span>Critical Severity · {r.id}</span>
+                        </span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-200/80 text-red-900 font-extrabold uppercase">
+                          Action Required
+                        </span>
                       </div>
-                      <p className="text-[11px] text-red-950 mt-1 leading-tight font-medium">
-                        [{criticalRisks[0].id}] {criticalRisks[0].title} requires bi-weekly review.
+                      <p className="text-[11px] text-red-950 mt-1 font-semibold leading-tight group-hover:underline">
+                        {r.title}
+                      </p>
+                      <div className="flex items-center justify-between text-[10px] text-red-800 mt-1.5 font-medium">
+                        <span>Owner: {r.ownerName}</span>
+                        <span className="font-mono text-red-700">{r.score} Risk Score</span>
+                      </div>
+                    </button>
+                  ))}
+
+                  {/* Real High Severity Open Risks */}
+                  {risks.filter(r => r.severity === 'High' && r.status === 'Open').slice(0, 2).map(r => (
+                    <button
+                      key={`notif-high-${r.id}`}
+                      onClick={() => {
+                        setShowNotifications(false);
+                        router.push(`/risk/${r.id}`);
+                      }}
+                      className="w-full p-2.5 rounded-xl bg-amber-50/80 hover:bg-amber-100/80 border border-amber-200 text-left transition-colors cursor-pointer group"
+                    >
+                      <div className="flex items-center justify-between text-[11px] font-bold text-amber-900">
+                        <span className="flex items-center gap-1.5">
+                          <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                          <span>High Priority · {r.id}</span>
+                        </span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-200/80 text-amber-900 font-extrabold uppercase">
+                          Open
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-amber-950 mt-1 font-semibold leading-tight group-hover:underline">
+                        {r.title}
+                      </p>
+                      <div className="text-[10px] text-amber-800 mt-1 font-medium">
+                        Owner: {r.ownerName} ({r.projectName})
+                      </div>
+                    </button>
+                  ))}
+
+                  {/* Live Activity Log Notification */}
+                  {risks.length > 0 && risks[0].activityLogs && risks[0].activityLogs[0] && (
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-left">
+                      <div className="flex items-center justify-between text-[11px] font-bold text-slate-800">
+                        <span className="flex items-center gap-1.5">
+                          <UserCheck className="w-3.5 h-3.5 text-indigo-600" />
+                          <span>Latest Audit Activity</span>
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-medium">
+                          {risks[0].activityLogs[0].timestamp}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-700 mt-1 font-medium leading-tight">
+                        <strong>{risks[0].activityLogs[0].author}</strong>: {risks[0].activityLogs[0].action}
                       </p>
                     </div>
                   )}
-
-                  <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-100 text-left">
-                    <div className="flex items-center justify-between text-[11px] font-semibold text-emerald-800">
-                      <span className="flex items-center gap-1"><Database className="w-3 h-3 text-emerald-600" /> Supabase Cloud Database</span>
-                      <span className="text-[10px] text-emerald-600 font-normal">Active</span>
-                    </div>
-                    <p className="text-[11px] text-emerald-950 mt-1 leading-tight font-medium">
-                      {supabaseStatus}
-                    </p>
-                  </div>
-
-                  <div className="p-2.5 rounded-xl bg-indigo-50/70 border border-indigo-100 text-left">
-                    <div className="flex items-center justify-between text-[11px] font-semibold text-indigo-800">
-                      <span className="flex items-center gap-1"><Server className="w-3 h-3 text-indigo-600" /> Render API & Gemini AI</span>
-                      <span className="text-[10px] text-indigo-600 font-normal">Active</span>
-                    </div>
-                    <p className="text-[11px] text-indigo-950 mt-1 leading-tight font-medium">
-                      {renderBackendStatus}
-                    </p>
-                  </div>
                 </div>
               </div>
             )}
