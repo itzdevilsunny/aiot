@@ -20,7 +20,8 @@ import {
   Check,
   KeyRound,
   Printer,
-  Gauge
+  Gauge,
+  DollarSign
 } from 'lucide-react';
 import { useRiskContext } from '../../context/RiskContext';
 
@@ -50,6 +51,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
     { label: 'Analytics', href: '/analytics', icon: BarChart3 },
     { label: 'Compliance Matrix', href: '/compliance', icon: ShieldCheck },
     { label: 'KRI Telemetry', href: '/kri', icon: Gauge },
+    { label: 'Mitigation ROI Optimizer', href: '/roi', icon: DollarSign },
     { label: 'Monte Carlo Stress Test', href: '/simulation', icon: SlidersHorizontal },
   ];
 
