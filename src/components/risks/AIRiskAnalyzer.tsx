@@ -346,6 +346,48 @@ export const AIRiskAnalyzer: React.FC = () => {
     router.push('/register');
   };
 
+  const handleAddSingleBulkRisk = (item: AIRiskAnalysisResult, index: number) => {
+    const projectObj = projects.find(p => p.id === selectedProjectId) || projects[0];
+    const defaultOwner = teamMembers[0];
+
+    addRisk({
+      title: item.title,
+      description: item.description,
+      category: item.category,
+      probability: item.probability,
+      impact: item.impact,
+      status: 'Open',
+      projectId: projectObj.id,
+      projectName: projectObj.name,
+      ownerId: defaultOwner.id,
+      ownerName: item.suggestedOwnerName || defaultOwner.name,
+      ownerRole: item.suggestedOwnerRole || defaultOwner.role,
+      ownerAvatar: defaultOwner.avatar,
+      mitigationPlan: item.mitigationPlan,
+      contingencyPlan: item.contingencyPlan,
+      mitigationProgress: 0,
+      dueDate: new Date(Date.now() + (10 + index * 3) * 86400000).toISOString().split('T')[0],
+      aiSuggested: true,
+      aiConfidence: item.aiConfidence,
+      estimatedImpactUsd: item.estimatedImpactUsd,
+      checklist: [
+        { id: `c-${Date.now()}-${index}`, title: 'Initial risk discovery review', completed: false }
+      ],
+      activityLogs: [
+        {
+          id: `act-${Date.now()}-${index}`,
+          timestamp: 'Just now',
+          author: 'Gemini Bulk AI',
+          action: 'Individual bulk risk item added to register.',
+          type: 'ai_analysis'
+        }
+      ]
+    });
+
+    addToast('Risk Added', `Added "${item.title}" to risk register.`, 'success');
+    setGeneratedBulkRisks(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualTitle.trim()) return;
@@ -813,29 +855,77 @@ export const AIRiskAnalyzer: React.FC = () => {
           {/* Generated Bulk Results Stream */}
           {generatedBulkRisks.length > 0 && (
             <div className="p-6 rounded-2xl bg-white border border-amber-200 shadow-xl space-y-4 animate-in slide-in-from-bottom-3">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-bold text-slate-900">Generated ({generatedBulkRisks.length}) Risk Profiles</h4>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-2 border-b border-slate-100">
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
+                    Synthesized ({generatedBulkRisks.length}) Risk Profiles
+                  </h4>
+                  <p className="text-[11px] text-slate-500">Review AI-quantified operational risks before committing to the register.</p>
+                </div>
                 <Button
                   variant="primary"
                   size="sm"
                   icon={<Plus className="w-3.5 h-3.5" />}
                   onClick={handleAddAllBulkToRegister}
                 >
-                  Add All to Risk Register
+                  Add All ({generatedBulkRisks.length}) to Risk Register
                 </Button>
               </div>
 
               <div className="space-y-3">
                 {generatedBulkRisks.map((item, idx) => (
-                  <div key={idx} className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
-                    <div className="flex items-center justify-between">
-                      <h5 className="font-bold text-slate-900">{item.title}</h5>
+                  <div key={idx} className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3 text-xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] font-mono font-bold text-slate-400 uppercase">Risk #{idx + 1} · {item.category}</span>
+                        <h5 className="font-extrabold text-slate-900 text-sm">{item.title}</h5>
+                      </div>
                       <div className="flex items-center gap-2">
                         <Badge variant="category">{item.category}</Badge>
                         <Badge severity={item.severity} />
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">
+                          Score: {item.probability}×{item.impact}={item.score}
+                        </span>
                       </div>
                     </div>
-                    <p className="text-slate-600 leading-relaxed font-medium">Mitigation: {item.mitigationPlan}</p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 py-1 text-[11px]">
+                      <div className="p-2 rounded-lg bg-white border border-slate-200">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Owner</span>
+                        <span className="font-bold text-slate-800">{item.suggestedOwnerName || 'Sunny Prasad'}</span>
+                      </div>
+                      <div className="p-2 rounded-lg bg-white border border-slate-200">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Est. Financial Risk</span>
+                        <span className="font-bold text-emerald-700 font-mono">${(item.estimatedImpactUsd || item.score * 2500).toLocaleString()}</span>
+                      </div>
+                      <div className="p-2 rounded-lg bg-white border border-slate-200">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">AI Confidence</span>
+                        <span className="font-bold text-indigo-600 font-mono">{item.aiConfidence || 94}%</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 text-xs">
+                      <div className="p-2.5 rounded-lg bg-emerald-50/70 border border-emerald-200/70 text-slate-800">
+                        <span className="font-bold text-emerald-900 block mb-0.5">🛡️ Proactive Mitigation:</span>
+                        <p className="leading-relaxed text-slate-700">{item.mitigationPlan}</p>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-amber-50/70 border border-amber-200/70 text-slate-800">
+                        <span className="font-bold text-amber-900 block mb-0.5">⚡ Contingency Fallback:</span>
+                        <p className="leading-relaxed text-slate-700">{item.contingencyPlan}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end pt-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        icon={<Plus className="w-3.5 h-3.5 text-indigo-600" />}
+                        onClick={() => handleAddSingleBulkRisk(item, idx)}
+                      >
+                        Add This Risk Only
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>

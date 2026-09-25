@@ -29,6 +29,23 @@ export interface ToastNotice {
   type: 'success' | 'info' | 'warning' | 'error';
 }
 
+export interface WorkspaceSettings {
+  workspaceName: string;
+  riskIdPrefix: string;
+  defaultReviewDays: number;
+  cloudSyncMode: 'auto' | 'manual';
+  criticalScoreThreshold: number;
+  highScoreThreshold: number;
+  mediumScoreThreshold: number;
+}
+
+export interface NotificationSettings {
+  emailCriticalAlerts: boolean;
+  dailyDigestEmail: boolean;
+  slackWebhookAlerts: boolean;
+  slaBreachAutoEscalation: boolean;
+}
+
 interface RiskContextType {
   risks: RiskItem[];
   projects: Project[];
@@ -43,7 +60,12 @@ interface RiskContextType {
   supabaseStatus: string;
   renderBackendStatus: string;
   isRenderConnected: boolean;
+  workspaceSettings: WorkspaceSettings;
+  notificationSettings: NotificationSettings;
   setCurrentUser: (user: TeamMember) => void;
+  updateUserProfile: (profileUpdates: Partial<TeamMember>) => void;
+  updateWorkspaceSettings: (settingsUpdates: Partial<WorkspaceSettings>) => void;
+  updateNotificationSettings: (notificationUpdates: Partial<NotificationSettings>) => void;
   login: (email: string, password?: string) => boolean;
   logout: () => void;
   setSelectedProjectId: (id: string) => void;
@@ -503,6 +525,23 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
 
+  const [workspaceSettings, setWorkspaceSettings] = useState<WorkspaceSettings>({
+    workspaceName: 'MNB Research Business Operations',
+    riskIdPrefix: 'RSK-',
+    defaultReviewDays: 30,
+    cloudSyncMode: 'auto',
+    criticalScoreThreshold: 20,
+    highScoreThreshold: 12,
+    mediumScoreThreshold: 6
+  });
+
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
+    emailCriticalAlerts: true,
+    dailyDigestEmail: true,
+    slackWebhookAlerts: true,
+    slaBreachAutoEscalation: true
+  });
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const auth = localStorage.getItem('risk_copilot_auth');
@@ -516,9 +555,64 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         setIsAuthenticated(false);
       }
+
+      // Load custom user profile, workspace settings, and notification settings if saved
+      const savedProfile = localStorage.getItem('risk_copilot_user_profile');
+      if (savedProfile) {
+        try {
+          setCurrentUser(prev => ({ ...prev, ...JSON.parse(savedProfile) }));
+        } catch (e) {}
+      }
+
+      const savedWs = localStorage.getItem('risk_copilot_workspace_settings');
+      if (savedWs) {
+        try {
+          setWorkspaceSettings(prev => ({ ...prev, ...JSON.parse(savedWs) }));
+        } catch (e) {}
+      }
+
+      const savedNotifs = localStorage.getItem('risk_copilot_notification_settings');
+      if (savedNotifs) {
+        try {
+          setNotificationSettings(prev => ({ ...prev, ...JSON.parse(savedNotifs) }));
+        } catch (e) {}
+      }
     }
     setIsAuthLoading(false);
   }, []);
+
+  const updateUserProfile = (profileUpdates: Partial<TeamMember>) => {
+    setCurrentUser(prev => {
+      const updated = { ...prev, ...profileUpdates };
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('risk_copilot_user_profile', JSON.stringify(updated));
+      }
+      return updated;
+    });
+    addToast('Profile Updated', 'User profile details synchronized across workspace.', 'success');
+  };
+
+  const updateWorkspaceSettings = (settingsUpdates: Partial<WorkspaceSettings>) => {
+    setWorkspaceSettings(prev => {
+      const updated = { ...prev, ...settingsUpdates };
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('risk_copilot_workspace_settings', JSON.stringify(updated));
+      }
+      return updated;
+    });
+    addToast('Workspace Configured', 'Workspace settings and scoring thresholds saved.', 'success');
+  };
+
+  const updateNotificationSettings = (notificationUpdates: Partial<NotificationSettings>) => {
+    setNotificationSettings(prev => {
+      const updated = { ...prev, ...notificationUpdates };
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('risk_copilot_notification_settings', JSON.stringify(updated));
+      }
+      return updated;
+    });
+    addToast('Notification Rules Updated', 'Preferences updated for email, Slack, and SLA alerts.', 'success');
+  };
 
   const login = (email: string, password?: string): boolean => {
     if (!password || password.trim().length === 0) {
@@ -577,7 +671,12 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       supabaseStatus,
       renderBackendStatus,
       isRenderConnected,
+      workspaceSettings,
+      notificationSettings,
       setCurrentUser,
+      updateUserProfile,
+      updateWorkspaceSettings,
+      updateNotificationSettings,
       login,
       logout,
       setSelectedProjectId,

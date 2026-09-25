@@ -2,13 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 
 export async function POST(req: NextRequest) {
+  let bodyData: any = {};
   try {
-    const { prompt, imageBase64, imageMimeType } = await req.json();
+    bodyData = await req.json();
+  } catch (e) {
+    return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 });
+  }
 
-    if (!prompt || typeof prompt !== 'string') {
-      return NextResponse.json({ error: 'Prompt string is required' }, { status: 400 });
-    }
+  const { prompt, imageBase64, imageMimeType } = bodyData;
 
+  if (!prompt || typeof prompt !== 'string') {
+    return NextResponse.json({ error: 'Prompt string is required' }, { status: 400 });
+  }
+
+  try {
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
@@ -93,7 +100,6 @@ Return ONLY valid JSON with no markdown wrapping.`;
     console.error('Gemini API Note (Using fallback synthesis):', err?.message || err);
     
     // Intelligent Fallback Synthesis Engine
-    const { prompt } = await req.json().catch(() => ({ prompt: '' }));
     const p = String(prompt || '').toLowerCase();
     let category = 'Technical';
     let probability = 4;

@@ -18,7 +18,8 @@ import {
   SlidersHorizontal,
   LogOut,
   Check,
-  KeyRound
+  KeyRound,
+  Printer
 } from 'lucide-react';
 import { useRiskContext } from '../../context/RiskContext';
 
@@ -54,6 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
   ];
 
   const systemNav = [
+    { label: 'Executive Report', href: '/report', icon: Printer },
     { label: 'Audit Logs', href: '/audit-logs', icon: ShieldCheck },
     { label: 'Settings', href: '/settings', icon: Settings },
   ];
