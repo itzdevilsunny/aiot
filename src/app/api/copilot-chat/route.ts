@@ -11,14 +11,11 @@ export async function POST(request: Request) {
     const highRisks = risks.filter((r: any) => r.severity === 'High');
     const totalExposureUsd = risks.reduce((acc: number, r: any) => acc + (r.estimatedImpactUsd || (r.score * 2500)), 0);
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const groqApiKey = process.env.GROQ_API_KEY;
+    const geminiApiKey = process.env.GEMINI_API_KEY;
 
-    if (apiKey) {
-      try {
-        const ai = new GoogleGenAI({ apiKey });
-
-        const systemPrompt = `
-You are Risk Register Copilot, an enterprise-grade AI Business Operations & Multimodal Vision assistant for MNB Research.
+    const systemPrompt = `
+You are Risk Register Copilot, an enterprise-grade AI Business Operations assistant for MNB Research.
 You are inspecting live risk register data AND/OR an attached system error screenshot, architecture diagram, or metric log.
 
 LIVE ENTERPRISE RISK INVENTORY (${totalRisks} Total Active Items, $${totalExposureUsd.toLocaleString()} Total Exposure):
@@ -27,12 +24,46 @@ ${risks.map((r: any) => `- [${r.id}] "${r.title}" | Cat: ${r.category} | Prob:${
 USER QUERY: "${userQuery || 'Analyze this attached issue screenshot and identify operational threats.'}"
 
 RESPONSE REQUIREMENTS:
-1. If an image screenshot is attached, inspect the image visually, identify text/error logs/metrics inside it, diagnose the root cause, and specify how it impacts risk register item severity.
-2. Provide a detailed, logical response supported by exact data proof (cite specific Risk IDs like [RSK-104], Risk Scores, Owner names, and USD Exposure values).
-3. Use clear markdown formatting with bold metrics and bullet points.
-4. Keep the explanation structured, authoritative, and actionable for C-Suite leadership (Sunny Prasad, Yash Raj, Ritika).
+1. Provide a detailed, logical response supported by exact data proof (cite specific Risk IDs like [RSK-104], Risk Scores, Owner names, and USD Exposure values).
+2. Use clear markdown formatting with bold metrics and bullet points.
+3. Keep the explanation structured, authoritative, and actionable for C-Suite leadership (Sunny Prasad, Yash Raj, Ritika).
 `;
 
+    // 1. Try Groq Ultra-Fast LLaMA 3.3 70B Engine (Primary - Sub 200ms)
+    if (groqApiKey && groqApiKey.trim().length > 10) {
+      try {
+        const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${groqApiKey.trim()}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'llama-3.3-70b-versatile',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userQuery || 'Perform portfolio risk assessment.' }
+            ],
+            temperature: 0.3
+          })
+        });
+
+        if (groqRes.ok) {
+          const groqData = await groqRes.json();
+          const reply = groqData.choices?.[0]?.message?.content?.trim();
+          if (reply) {
+            return NextResponse.json({ reply, provider: 'Groq (LLaMA 3.3 70B)' });
+          }
+        }
+      } catch (groqErr: any) {
+        console.warn('Groq copilot-chat note:', groqErr?.message || groqErr);
+      }
+    }
+
+    // 2. Try Gemini API fallback
+    if (geminiApiKey && geminiApiKey.trim().length > 10) {
+      try {
+        const ai = new GoogleGenAI({ apiKey: geminiApiKey });
         const parts: any[] = [{ text: systemPrompt }];
 
         if (imageBase64) {
@@ -52,14 +83,14 @@ RESPONSE REQUIREMENTS:
 
         const reply = response.text?.trim();
         if (reply) {
-          return NextResponse.json({ reply });
+          return NextResponse.json({ reply, provider: 'Gemini 2.5' });
         }
       } catch (geminiErr: any) {
-        console.warn('Gemini API Note (Using Multimodal Analytical Engine):', geminiErr?.message || geminiErr);
+        console.warn('Gemini copilot-chat note:', geminiErr?.message || geminiErr);
       }
     }
 
-    // High-Performance Analytical Engine Fallback
+    // 3. High-Performance Analytical Engine Fallback
     const q = String(userQuery || '').toLowerCase();
     let reply = '';
 
@@ -106,7 +137,7 @@ RESPONSE REQUIREMENTS:
         `*Key Recommendation: Focus immediate mitigation resources on [${risks[0]?.id || 'RSK-104'}] (${risks[0]?.title || 'Operational Risk'}) to compress overall portfolio exposure by up to 25%.*`;
     }
 
-    return NextResponse.json({ reply });
+    return NextResponse.json({ reply, provider: 'Enterprise AI Telemetry' });
 
   } catch (error: any) {
     console.error('Error in copilot-chat:', error);

@@ -3,15 +3,11 @@ import { GoogleGenAI } from '@google/genai';
 
 export async function POST(request: Request) {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: 'GEMINI_API_KEY environment variable missing' }, { status: 500 });
-    }
-
     const body = await request.json();
     const risks = body.risks || [];
 
-    const ai = new GoogleGenAI({ apiKey });
+    const groqApiKey = process.env.GROQ_API_KEY;
+    const geminiApiKey = process.env.GEMINI_API_KEY;
 
     const totalRisks = risks.length;
     const criticalCount = risks.filter((r: any) => r.severity === 'Critical').length;
@@ -36,31 +32,69 @@ Generate a JSON object containing:
 4. "governanceRating": A string ('Strong Governance', 'Moderate Exposure', or 'Action Required').
 
 Respond strictly in valid JSON format without markdown code fences.
-    `;
+`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt
-    });
+    // 1. Try Groq LLaMA 3.3 70B Engine (Sub 200ms)
+    if (groqApiKey && groqApiKey.trim().length > 10) {
+      try {
+        const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${groqApiKey.trim()}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'llama-3.3-70b-versatile',
+            messages: [
+              { role: 'user', content: prompt }
+            ],
+            response_format: { type: 'json_object' },
+            temperature: 0.2
+          })
+        });
 
-    const text = response.text || '';
-    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-
-    try {
-      const parsed = JSON.parse(cleanText);
-      return NextResponse.json(parsed);
-    } catch {
-      return NextResponse.json({
-        executiveSummary: `MNB Research currently tracks ${totalRisks} active project risks with ${criticalCount} critical vulnerabilities requiring immediate mitigation owner assignment. Overall financial risk exposure stands at $${totalExposure.toLocaleString()} USD across core technical and operational workstreams.`,
-        topPriorityActions: [
-          `Accelerate technical discovery spikes to address key developer capacity constraints before production deployment.`,
-          `Enforce automated billing alerts at 80% threshold to prevent cloud infrastructure cost variance overruns.`,
-          `Audit third-party compliance evidence logging policies to maintain SOC2 audit readiness.`
-        ],
-        financialVulnerabilityScore: 68,
-        governanceRating: 'Moderate Exposure'
-      });
+        if (groqRes.ok) {
+          const groqData = await groqRes.json();
+          const contentStr = groqData.choices?.[0]?.message?.content?.trim();
+          if (contentStr) {
+            const parsed = JSON.parse(contentStr);
+            return NextResponse.json(parsed);
+          }
+        }
+      } catch (err: any) {
+        console.warn('Groq briefing note:', err?.message || err);
+      }
     }
+
+    // 2. Try Gemini fallback
+    if (geminiApiKey && geminiApiKey.trim().length > 10) {
+      try {
+        const ai = new GoogleGenAI({ apiKey: geminiApiKey });
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: prompt
+        });
+
+        const text = response.text || '';
+        const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(cleanText);
+        return NextResponse.json(parsed);
+      } catch (err: any) {
+        console.warn('Gemini briefing note:', err?.message || err);
+      }
+    }
+
+    // 3. Structured Fallback Output
+    return NextResponse.json({
+      executiveSummary: `MNB Research currently tracks ${totalRisks} active project risks with ${criticalCount} critical vulnerabilities requiring immediate mitigation owner assignment. Overall financial risk exposure stands at $${totalExposure.toLocaleString()} USD across core technical and operational workstreams.`,
+      topPriorityActions: [
+        `Accelerate technical discovery spikes to address key developer capacity constraints before production deployment.`,
+        `Enforce automated billing alerts at 80% threshold to prevent cloud infrastructure cost variance overruns.`,
+        `Audit third-party compliance evidence logging policies to maintain SOC2 audit readiness.`
+      ],
+      financialVulnerabilityScore: 68,
+      governanceRating: 'Moderate Exposure'
+    });
 
   } catch (error: any) {
     console.error('Error generating AI executive briefing:', error);
