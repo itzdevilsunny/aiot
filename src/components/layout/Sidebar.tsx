@@ -47,6 +47,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
     { label: 'My Risks', href: '/my-risks', icon: UserCheck, badge: criticalCount ? `${criticalCount} crit` : undefined },
     { label: 'Projects', href: '/projects', icon: FolderKanban },
     { label: 'Analytics', href: '/analytics', icon: BarChart3 },
+    { label: 'Compliance Matrix', href: '/compliance', icon: ShieldCheck },
     { label: 'Monte Carlo Stress Test', href: '/simulation', icon: SlidersHorizontal },
   ];
 
