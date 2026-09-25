@@ -22,6 +22,7 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { useRiskContext } from '../../context/RiskContext';
 import { createClient } from '../../lib/supabase/client';
+import { RBACPermissionMatrix } from '../../components/settings/RBACPermissionMatrix';
 
 export default function SettingsPage() {
   const { 
@@ -864,6 +865,9 @@ export default function SettingsPage() {
           </Button>
         </div>
       </div>
+
+      {/* RBAC Governance Matrix */}
+      <RBACPermissionMatrix />
     </div>
   );
 }
