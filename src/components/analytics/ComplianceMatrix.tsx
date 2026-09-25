@@ -11,21 +11,17 @@ import {
   FileCheck, 
   Download, 
   Sparkles, 
-  Building2, 
-  Lock, 
+  Search,
+  Filter,
+  ExternalLink,
+  ChevronRight,
+  Shield,
   Activity,
-  FileSpreadsheet,
-  ExternalLink
+  FileSpreadsheet
 } from 'lucide-react';
-
-interface ComplianceControl {
-  framework: 'ISO 31000' | 'NIST SP 800-30' | 'SOC 2 Type II' | 'GDPR';
-  controlId: string;
-  name: string;
-  category: string;
-  description: string;
-  mappedCategories: string[];
-}
+import { SoAExportModal } from '../compliance/SoAExportModal';
+import { ControlDetailModal, ComplianceControl } from '../compliance/ControlDetailModal';
+import { AIComplianceAuditModal } from '../compliance/AIComplianceAuditModal';
 
 const FRAMEWORK_CONTROLS: ComplianceControl[] = [
   {
@@ -85,21 +81,52 @@ const FRAMEWORK_CONTROLS: ComplianceControl[] = [
     mappedCategories: ['Technical', 'Operational', 'Schedule']
   },
   {
+    framework: 'SOC 2 Type II',
+    controlId: 'SOC2-CC7.1',
+    name: 'Vulnerability Detection & System Monitoring',
+    category: 'Operations',
+    description: 'Infrastructure vulnerability scanning and security event detection telemetry.',
+    mappedCategories: ['Technical', 'Security']
+  },
+  {
     framework: 'GDPR',
     controlId: 'GDPR-Art32',
     name: 'Security of Personal Data Processing',
     category: 'Data Privacy',
     description: 'Technical and organizational measures to ensure data confidentiality & resilience.',
     mappedCategories: ['Compliance', 'Security']
+  },
+  {
+    framework: 'PCI DSS 4.0',
+    controlId: 'PCI-Req10',
+    name: 'Security Event Logging & Monitoring',
+    category: 'Payment Security',
+    description: 'Comprehensive audit logging for all access to cardholder data and system components.',
+    mappedCategories: ['Security', 'Compliance', 'Technical']
+  },
+  {
+    framework: 'ISO 27001',
+    controlId: 'A.8.8',
+    name: 'Management of Technical Vulnerabilities',
+    category: 'ISMS Controls',
+    description: 'Timely evaluation and remediation of technical software dependencies.',
+    mappedCategories: ['Technical', 'Security']
   }
 ];
 
-import { SoAExportModal } from '../compliance/SoAExportModal';
-
 export const ComplianceMatrix: React.FC = () => {
   const { risks, addToast } = useRiskContext();
+
   const [selectedFramework, setSelectedFramework] = useState<string>('All');
+  const [selectedStatus, setSelectedStatus] = useState<string>('All');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
   const [isSoAModalOpen, setIsSoAModalOpen] = useState<boolean>(false);
+  const [isAIAuditModalOpen, setIsAIAuditModalOpen] = useState<boolean>(false);
+  const [activeControlDetail, setActiveControlDetail] = useState<{
+    control: ComplianceControl;
+    status: 'Compliant' | 'Warning' | 'Non-Compliant';
+  } | null>(null);
 
   const complianceResults = useMemo(() => {
     const activeRisks = risks.filter(r => r.status !== 'Closed');
@@ -127,41 +154,49 @@ export const ComplianceMatrix: React.FC = () => {
       };
     });
 
-    const filteredMappings = selectedFramework === 'All' 
-      ? controlMappings 
-      : controlMappings.filter(c => c.framework === selectedFramework);
+    // Apply Framework, Status, and Search query filters
+    const filteredMappings = controlMappings.filter(c => {
+      const matchFw = selectedFramework === 'All' || c.framework === selectedFramework;
+      const matchStatus = selectedStatus === 'All' || c.status === selectedStatus;
+      const matchSearch = !searchQuery.trim() || 
+        c.controlId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.description.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchFw && matchStatus && matchSearch;
+    });
 
-    const compliantCount = filteredMappings.filter(c => c.status === 'Compliant').length;
-    const warningCount = filteredMappings.filter(c => c.status === 'Warning').length;
-    const nonCompliantCount = filteredMappings.filter(c => c.status === 'Non-Compliant').length;
-    const healthScore = Math.round((compliantCount / (filteredMappings.length || 1)) * 100);
+    const compliantCount = controlMappings.filter(c => c.status === 'Compliant').length;
+    const warningCount = controlMappings.filter(c => c.status === 'Warning').length;
+    const nonCompliantCount = controlMappings.filter(c => c.status === 'Non-Compliant').length;
+    const healthScore = Math.round((compliantCount / (controlMappings.length || 1)) * 100);
 
     return {
       controlMappings: filteredMappings,
+      totalControls: controlMappings.length,
       compliantCount,
       warningCount,
       nonCompliantCount,
       healthScore
     };
-  }, [risks, selectedFramework]);
+  }, [risks, selectedFramework, selectedStatus, searchQuery]);
 
   const handleExportAuditMemo = () => {
     const lines = [
       `=================================================================`,
-      `ENTERPRISE COMPLIANCE AUDIT READINESS MEMO (ISO 31000 & NIST SP 800-30)`,
+      `ENTERPRISE COMPLIANCE AUDIT READINESS MEMO (ISO 31000, NIST & SOC 2)`,
       `Generated: ${new Date().toISOString().split('T')[0]} | MNB Research Operations`,
       `=================================================================\n`,
       `OVERVIEW HEALTH SCORE: ${complianceResults.healthScore}%`,
       `Compliant Controls: ${complianceResults.compliantCount}`,
       `Warning Controls: ${complianceResults.warningCount}`,
       `Deficient / Non-Compliant Controls: ${complianceResults.nonCompliantCount}\n`,
-      `DETAILED CONTROL COMPLIANCE MAPPING:`,
+      `DETAILED CONTROL COMPLIANCE MAPPING (${complianceResults.controlMappings.length} Controls Filtered):`,
       `-----------------------------------------------------------------`
     ];
 
     complianceResults.controlMappings.forEach(c => {
       lines.push(`[${c.framework}] ${c.controlId}: ${c.name}`);
-      lines.push(`  Status: ${c.status.toUpperCase()} | Associated Risks: ${c.mappedRiskCount} | Unmitigated: ${c.unmitigatedCount}`);
+      lines.push(`  Status: ${c.status.toUpperCase()} | Associated Live Risks: ${c.mappedRiskCount} | Unmitigated: ${c.unmitigatedCount}`);
       lines.push(`  Description: ${c.description}`);
       lines.push(`-----------------------------------------------------------------`);
     });
@@ -176,7 +211,7 @@ export const ComplianceMatrix: React.FC = () => {
     link.click();
     document.body.removeChild(link);
 
-    addToast('Audit Memo Downloaded', 'Exported ISO 31000 & NIST SP 800-30 audit readiness memo.', 'success');
+    addToast('Audit Memo Downloaded', 'Exported regulatory audit readiness memo.', 'success');
   };
 
   return (
@@ -185,28 +220,51 @@ export const ComplianceMatrix: React.FC = () => {
         isOpen={isSoAModalOpen}
         onClose={() => setIsSoAModalOpen(false)}
       />
+
+      <AIComplianceAuditModal
+        isOpen={isAIAuditModalOpen}
+        onClose={() => setIsAIAuditModalOpen(false)}
+        selectedFramework={selectedFramework}
+      />
+
+      <ControlDetailModal
+        control={activeControlDetail?.control || null}
+        status={activeControlDetail?.status || 'Compliant'}
+        isOpen={!!activeControlDetail}
+        onClose={() => setActiveControlDetail(null)}
+      />
+
       <div className="space-y-6">
         {/* Header Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
           <div>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold shadow-xs">
-                <ShieldCheck className="w-4.5 h-4.5" />
+                <ShieldCheck className="w-4 h-4" />
               </div>
               <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
                 Enterprise Compliance & Governance Control Matrix
               </h2>
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              Automated alignment of live register threats against <strong>ISO 31000</strong>, <strong>NIST SP 800-30</strong>, and <strong>SOC 2 Type II</strong> control frameworks.
+              Automated alignment of live register threats against <strong>ISO 31000</strong>, <strong>NIST SP 800-30</strong>, <strong>SOC 2 Type II</strong>, and <strong>GDPR</strong> frameworks.
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Button
               variant="copilot"
               size="sm"
               icon={<Sparkles className="w-3.5 h-3.5 text-indigo-200" />}
+              onClick={() => setIsAIAuditModalOpen(true)}
+            >
+              Run AI Compliance Audit
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<Shield className="w-3.5 h-3.5 text-indigo-600" />}
               onClick={() => setIsSoAModalOpen(true)}
             >
               ISO 27001 SoA Package
@@ -223,109 +281,142 @@ export const ComplianceMatrix: React.FC = () => {
           </div>
         </div>
 
-      {/* Top Health Gauge Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Compliance Health</span>
-          <div className="text-2xl font-black text-slate-900 mt-1 font-mono">{complianceResults.healthScore}%</div>
-          <p className="text-[11px] text-emerald-600 font-semibold mt-0.5 flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-            Audit Readiness Rating
-          </p>
+        {/* Top Health Gauge Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Compliance Health</span>
+            <div className="text-2xl font-black text-slate-900 mt-1 font-mono">{complianceResults.healthScore}%</div>
+            <p className="text-[11px] text-emerald-600 font-semibold mt-0.5 flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+              Audit Readiness Rating
+            </p>
+          </div>
+
+          <div className="bg-white p-4 rounded-xl border border-emerald-200 bg-emerald-50/20 shadow-2xs">
+            <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Compliant Controls</span>
+            <div className="text-2xl font-black text-emerald-950 mt-1 font-mono">{complianceResults.compliantCount}</div>
+            <span className="text-[11px] text-emerald-600 font-medium">Fully aligned & mitigated</span>
+          </div>
+
+          <div className="bg-white p-4 rounded-xl border border-amber-200 bg-amber-50/20 shadow-2xs">
+            <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Warning Level</span>
+            <div className="text-2xl font-black text-amber-950 mt-1 font-mono">{complianceResults.warningCount}</div>
+            <span className="text-[11px] text-amber-600 font-medium">Partial mitigation active</span>
+          </div>
+
+          <div className="bg-white p-4 rounded-xl border border-red-200 bg-red-50/20 shadow-2xs">
+            <span className="text-[10px] font-bold text-red-700 uppercase tracking-wider">Deficient / Action Needed</span>
+            <div className="text-2xl font-black text-red-950 mt-1 font-mono">{complianceResults.nonCompliantCount}</div>
+            <span className="text-[11px] text-red-600 font-medium">Requires immediate controls</span>
+          </div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-emerald-200 bg-emerald-50/20 shadow-2xs">
-          <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Compliant Controls</span>
-          <div className="text-2xl font-black text-emerald-950 mt-1 font-mono">{complianceResults.compliantCount}</div>
-          <span className="text-[11px] text-emerald-600 font-medium">Fully aligned & mitigated</span>
+        {/* Search & Filter Bar */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
+          {/* Framework Filter Tabs */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {['All', 'ISO 31000', 'NIST SP 800-30', 'SOC 2 Type II', 'GDPR', 'PCI DSS 4.0', 'ISO 27001'].map(fw => (
+              <button
+                key={fw}
+                onClick={() => setSelectedFramework(fw)}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
+                  selectedFramework === fw
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                }`}
+              >
+                {fw}
+              </button>
+            ))}
+          </div>
+
+          {/* Search Box */}
+          <div className="relative min-w-[220px]">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search control ID or title..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-amber-200 bg-amber-50/20 shadow-2xs">
-          <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Warning Level</span>
-          <div className="text-2xl font-black text-amber-950 mt-1 font-mono">{complianceResults.warningCount}</div>
-          <span className="text-[11px] text-amber-600 font-medium">Partial mitigation active</span>
-        </div>
+        {/* Compliance Mapping Table */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+          <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+              Regulatory Control Mapping Table ({complianceResults.controlMappings.length} Controls)
+            </h3>
+            <span className="text-[11px] text-indigo-600 font-bold flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5" /> ISO & NIST Standards
+            </span>
+          </div>
 
-        <div className="bg-white p-4 rounded-xl border border-red-200 bg-red-50/20 shadow-2xs">
-          <span className="text-[10px] font-bold text-red-700 uppercase tracking-wider">Deficient / Action Needed</span>
-          <div className="text-2xl font-black text-red-950 mt-1 font-mono">{complianceResults.nonCompliantCount}</div>
-          <span className="text-[11px] text-red-600 font-medium">Requires immediate controls</span>
-        </div>
-      </div>
-
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
-        {['All', 'ISO 31000', 'NIST SP 800-30', 'SOC 2 Type II', 'GDPR'].map(fw => (
-          <button
-            key={fw}
-            onClick={() => setSelectedFramework(fw)}
-            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
-              selectedFramework === fw
-                ? 'bg-slate-900 text-white shadow-xs'
-                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-            }`}
-          >
-            {fw}
-          </button>
-        ))}
-      </div>
-
-      {/* Compliance Mapping Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-          <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-            Regulatory Control Mapping Table ({complianceResults.controlMappings.length} Controls)
-          </h3>
-          <span className="text-[11px] text-indigo-600 font-bold flex items-center gap-1">
-            <Sparkles className="w-3.5 h-3.5" /> ISO & NIST Standards
-          </span>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              <tr>
-                <th className="p-3">Framework</th>
-                <th className="p-3">Control ID & Title</th>
-                <th className="p-3">Description</th>
-                <th className="p-3 text-center">Active Risks</th>
-                <th className="p-3 text-center">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {complianceResults.controlMappings.map((c) => (
-                <tr key={c.controlId} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="p-3 whitespace-nowrap font-bold text-slate-900">
-                    <span className="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px]">
-                      {c.framework}
-                    </span>
-                  </td>
-                  <td className="p-3 max-w-xs">
-                    <div className="font-mono text-[10px] font-bold text-slate-400">{c.controlId}</div>
-                    <div className="font-bold text-slate-900">{c.name}</div>
-                  </td>
-                  <td className="p-3 text-slate-600 text-[11px] leading-relaxed max-w-sm">
-                    {c.description}
-                  </td>
-                  <td className="p-3 text-center font-mono font-extrabold text-slate-800">
-                    {c.mappedRiskCount}
-                  </td>
-                  <td className="p-3 text-center whitespace-nowrap">
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase ${
-                      c.status === 'Compliant' ? 'bg-emerald-100 text-emerald-800' :
-                      c.status === 'Warning' ? 'bg-amber-100 text-amber-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {c.status}
-                    </span>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                <tr>
+                  <th className="p-3">Framework</th>
+                  <th className="p-3">Control ID & Title</th>
+                  <th className="p-3">Description</th>
+                  <th className="p-3 text-center">Active Risks</th>
+                  <th className="p-3 text-center">Status</th>
+                  <th className="p-3 text-right">Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {complianceResults.controlMappings.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-slate-400 text-xs">
+                      No compliance controls match the selected filters.
+                    </td>
+                  </tr>
+                ) : (
+                  complianceResults.controlMappings.map((c) => (
+                    <tr 
+                      key={c.controlId} 
+                      onClick={() => setActiveControlDetail({ control: c, status: c.status })}
+                      className="hover:bg-indigo-50/40 transition-colors cursor-pointer group"
+                    >
+                      <td className="p-3 whitespace-nowrap font-bold text-slate-900">
+                        <span className="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px]">
+                          {c.framework}
+                        </span>
+                      </td>
+                      <td className="p-3 max-w-xs">
+                        <div className="font-mono text-[10px] font-bold text-slate-400">{c.controlId}</div>
+                        <div className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{c.name}</div>
+                      </td>
+                      <td className="p-3 text-slate-600 text-[11px] leading-relaxed max-w-sm">
+                        {c.description}
+                      </td>
+                      <td className="p-3 text-center font-mono font-extrabold text-slate-800">
+                        {c.mappedRiskCount}
+                      </td>
+                      <td className="p-3 text-center whitespace-nowrap">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase ${
+                          c.status === 'Compliant' ? 'bg-emerald-100 text-emerald-800' :
+                          c.status === 'Warning' ? 'bg-amber-100 text-amber-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {c.status}
+                        </span>
+                      </td>
+                      <td className="p-3 text-right whitespace-nowrap">
+                        <span className="text-indigo-600 font-bold text-[11px] inline-flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
+                          Inspect <ChevronRight className="w-3.5 h-3.5" />
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
-  </>
+    </>
   );
 };
