@@ -8,6 +8,7 @@ import { RiskMatrix } from '../components/dashboard/RiskMatrix';
 import { RiskDistribution } from '../components/dashboard/RiskDistribution';
 import { RecentRisks } from '../components/dashboard/RecentRisks';
 import { ExecutiveBriefingCard } from '../components/dashboard/ExecutiveBriefingCard';
+import { WhatIfSimulator } from '../components/dashboard/WhatIfSimulator';
 import { Button } from '../components/ui/Button';
 import { 
   ShieldAlert, 
@@ -175,6 +176,9 @@ export default function DashboardPage() {
         <RiskMatrix risks={filteredRisks} />
         <RiskDistribution risks={filteredRisks} />
       </div>
+
+      {/* WHAT-IF MITIGATION IMPACT SIMULATOR */}
+      <WhatIfSimulator />
 
       {/* RECENT RISKS SECTION */}
       <RecentRisks risks={filteredRisks} />
