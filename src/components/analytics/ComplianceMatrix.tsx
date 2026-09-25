@@ -94,9 +94,12 @@ const FRAMEWORK_CONTROLS: ComplianceControl[] = [
   }
 ];
 
+import { SoAExportModal } from '../compliance/SoAExportModal';
+
 export const ComplianceMatrix: React.FC = () => {
   const { risks, addToast } = useRiskContext();
   const [selectedFramework, setSelectedFramework] = useState<string>('All');
+  const [isSoAModalOpen, setIsSoAModalOpen] = useState<boolean>(false);
 
   const complianceResults = useMemo(() => {
     const activeRisks = risks.filter(r => r.status !== 'Closed');
@@ -177,34 +180,48 @@ export const ComplianceMatrix: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold shadow-xs">
-              <ShieldCheck className="w-4.5 h-4.5" />
+    <>
+      <SoAExportModal
+        isOpen={isSoAModalOpen}
+        onClose={() => setIsSoAModalOpen(false)}
+      />
+      <div className="space-y-6">
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+          <div>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold shadow-xs">
+                <ShieldCheck className="w-4.5 h-4.5" />
+              </div>
+              <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
+                Enterprise Compliance & Governance Control Matrix
+              </h2>
             </div>
-            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
-              Enterprise Compliance & Governance Control Matrix
-            </h2>
+            <p className="text-xs text-slate-500 mt-1">
+              Automated alignment of live register threats against <strong>ISO 31000</strong>, <strong>NIST SP 800-30</strong>, and <strong>SOC 2 Type II</strong> control frameworks.
+            </p>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Automated alignment of live register threats against <strong>ISO 31000</strong>, <strong>NIST SP 800-30</strong>, and <strong>SOC 2 Type II</strong> control frameworks.
-          </p>
-        </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            icon={<FileCheck className="w-3.5 h-3.5 text-indigo-600" />}
-            onClick={handleExportAuditMemo}
-          >
-            Export Audit Memo (.TXT)
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="copilot"
+              size="sm"
+              icon={<Sparkles className="w-3.5 h-3.5 text-indigo-200" />}
+              onClick={() => setIsSoAModalOpen(true)}
+            >
+              ISO 27001 SoA Package
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<FileCheck className="w-3.5 h-3.5 text-indigo-600" />}
+              onClick={handleExportAuditMemo}
+            >
+              Export Audit Memo (.TXT)
+            </Button>
+          </div>
         </div>
-      </div>
 
       {/* Top Health Gauge Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
@@ -309,5 +326,6 @@ export const ComplianceMatrix: React.FC = () => {
         </div>
       </div>
     </div>
+  </>
   );
 };

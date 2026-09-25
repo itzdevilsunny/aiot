@@ -21,7 +21,9 @@ import {
   KeyRound,
   Printer,
   Gauge,
-  DollarSign
+  DollarSign,
+  TrendingUp,
+  Network
 } from 'lucide-react';
 import { useRiskContext } from '../../context/RiskContext';
 
@@ -52,6 +54,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
     { label: 'Compliance Matrix', href: '/compliance', icon: ShieldCheck },
     { label: 'KRI Telemetry', href: '/kri', icon: Gauge },
     { label: 'Mitigation ROI Optimizer', href: '/roi', icon: DollarSign },
+    { label: 'Predictive Threat Radar', href: '/radar', icon: TrendingUp },
+    { label: 'Cascading Threat Graph', href: '/cascade', icon: Network },
     { label: 'Monte Carlo Stress Test', href: '/simulation', icon: SlidersHorizontal },
   ];
 
