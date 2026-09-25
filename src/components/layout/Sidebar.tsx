@@ -67,6 +67,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
 
   const systemNav = [
     { label: 'Executive Report', href: '/report', icon: Printer },
+    { label: 'Blockchain Ledger', href: '/audit-ledger', icon: Lock, badge: 'On-Chain' },
     { label: 'Audit Logs', href: '/audit-logs', icon: ShieldCheck },
     { label: 'Settings', href: '/settings', icon: Settings },
   ];
@@ -94,9 +95,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
           <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
             isActive 
               ? 'bg-white/20 text-white' 
-              : item.label === 'My Risks' && criticalCount > 0 
-                ? 'bg-red-100 text-red-700' 
-                : 'bg-slate-200 text-slate-700'
+              : item.label === 'Blockchain Ledger'
+                ? 'bg-emerald-100 text-emerald-800 border border-emerald-200 font-mono'
+                : item.label === 'My Risks' && criticalCount > 0 
+                  ? 'bg-red-100 text-red-700' 
+                  : 'bg-slate-200 text-slate-700'
           }`}>
             {item.badge}
           </span>

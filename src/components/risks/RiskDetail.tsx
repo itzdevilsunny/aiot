@@ -10,6 +10,7 @@ import { Button } from '../ui/Button';
 import { JiraTicketModal } from './JiraTicketModal';
 import { AIRedTeamerModal } from './AIRedTeamerModal';
 import { SLABreachGuardModal } from './SLABreachGuardModal';
+import { BlockchainLedgerModal } from '../blockchain/BlockchainLedgerModal';
 import { 
   ArrowLeft, 
   CheckCircle2, 
@@ -24,8 +25,11 @@ import {
   FileText,
   Code2,
   Plus,
-  Crosshair
+  Crosshair,
+  Lock,
+  ShieldCheck
 } from 'lucide-react';
+import { generateHash } from '../../lib/blockchainLedger';
 
 interface RiskDetailProps {
   risk: RiskItem;
@@ -39,6 +43,9 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [isRedTeamerOpen, setIsRedTeamerOpen] = useState(false);
   const [isSlaModalOpen, setIsSlaModalOpen] = useState(false);
+  const [isBlockchainLedgerOpen, setIsBlockchainLedgerOpen] = useState(false);
+
+  const riskHash = generateHash(`${risk.id}-${risk.lastUpdated || risk.createdAt}-${risk.title}`);
   const [titleInput, setTitleInput] = useState(risk.title);
   const [descInput, setDescInput] = useState(risk.description);
   const [mitigationInput, setMitigationInput] = useState(risk.mitigationPlan);
@@ -151,9 +158,18 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
             </Button>
 
             <Button
-              variant="copilot"
+              variant="outline"
               size="sm"
-              icon={<Crosshair className="w-3.5 h-3.5 text-red-300" />}
+              icon={<ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />}
+              onClick={() => setIsBlockchainLedgerOpen(true)}
+            >
+              On-Chain Audit
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<Crosshair className="w-3.5 h-3.5 text-purple-600" />}
               onClick={() => setIsRedTeamerOpen(true)}
             >
               AI Red-Teamer Audit
@@ -195,11 +211,20 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
       {/* Main Header Card */}
       <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-card space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="font-mono text-xs font-bold text-slate-400 bg-slate-100 px-2.5 py-1 rounded border border-slate-200">
               {risk.id}
             </span>
             <Badge variant="category">{risk.category}</Badge>
+            <button
+              onClick={() => setIsBlockchainLedgerOpen(true)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors shadow-2xs cursor-pointer"
+              title="Click to view Cryptographic Blockchain Audit Ledger"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <Lock className="w-3 h-3 text-emerald-600" />
+              <span>On-Chain: 0x{riskHash.slice(0, 8)}...</span>
+            </button>
             <span className="text-xs text-slate-500 font-medium">Project: {risk.projectName}</span>
           </div>
 
@@ -519,6 +544,27 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
         </div>
       </div>
     </div>
+
+    {/* Modals */}
+    <AIRedTeamerModal 
+      isOpen={isRedTeamerOpen} 
+      onClose={() => setIsRedTeamerOpen(false)} 
+      risk={risk} 
+    />
+    <JiraTicketModal 
+      isOpen={isJiraModalOpen} 
+      onClose={() => setIsJiraModalOpen(false)} 
+      risk={risk} 
+    />
+    <SLABreachGuardModal 
+      isOpen={isSlaModalOpen} 
+      onClose={() => setIsSlaModalOpen(false)} 
+      risk={risk} 
+    />
+    <BlockchainLedgerModal 
+      isOpen={isBlockchainLedgerOpen} 
+      onClose={() => setIsBlockchainLedgerOpen(false)} 
+    />
     </>
   );
 };

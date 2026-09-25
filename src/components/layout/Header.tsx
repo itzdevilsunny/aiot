@@ -20,7 +20,8 @@ import {
   UserCheck,
   KeyRound,
   Settings,
-  AlertTriangle
+  AlertTriangle,
+  Lock
 } from 'lucide-react';
 import { useRiskContext } from '../../context/RiskContext';
 import { HelpModal } from './HelpModal';
@@ -181,6 +182,16 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
             className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 lg:hidden"
           >
             <Search className="w-4 h-4" />
+          </button>
+
+          {/* Blockchain Ledger Top Badge */}
+          <button
+            onClick={() => router.push('/audit-ledger')}
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition-colors cursor-pointer"
+            title="Blockchain Immutable Risk Audit Ledger"
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>On-Chain Verified</span>
           </button>
 
           {/* Notifications Icon & Live Popover */}
