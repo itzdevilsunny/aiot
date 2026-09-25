@@ -9,6 +9,7 @@ import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { JiraTicketModal } from './JiraTicketModal';
 import { AIRedTeamerModal } from './AIRedTeamerModal';
+import { SLABreachGuardModal } from './SLABreachGuardModal';
 import { 
   ArrowLeft, 
   CheckCircle2, 
@@ -37,6 +38,7 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [isRedTeamerOpen, setIsRedTeamerOpen] = useState(false);
+  const [isSlaModalOpen, setIsSlaModalOpen] = useState(false);
   const [titleInput, setTitleInput] = useState(risk.title);
   const [descInput, setDescInput] = useState(risk.description);
   const [mitigationInput, setMitigationInput] = useState(risk.mitigationPlan);
@@ -122,6 +124,11 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
         onClose={() => setIsRedTeamerOpen(false)}
         risk={risk}
       />
+      <SLABreachGuardModal
+        isOpen={isSlaModalOpen}
+        onClose={() => setIsSlaModalOpen(false)}
+        risk={risk}
+      />
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Top Navigation */}
         <div className="flex items-center justify-between">
@@ -134,6 +141,15 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
           </Link>
 
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<Clock className="w-3.5 h-3.5 text-amber-600" />}
+              onClick={() => setIsSlaModalOpen(true)}
+            >
+              SLA Predictor
+            </Button>
+
             <Button
               variant="copilot"
               size="sm"
