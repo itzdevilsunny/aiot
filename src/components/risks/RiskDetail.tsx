@@ -8,6 +8,7 @@ import { useRiskContext } from '../../context/RiskContext';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { JiraTicketModal } from './JiraTicketModal';
+import { AIRedTeamerModal } from './AIRedTeamerModal';
 import { 
   ArrowLeft, 
   CheckCircle2, 
@@ -21,7 +22,8 @@ import {
   TrendingUp,
   FileText,
   Code2,
-  Plus
+  Plus,
+  Crosshair
 } from 'lucide-react';
 
 interface RiskDetailProps {
@@ -34,6 +36,7 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
+  const [isRedTeamerOpen, setIsRedTeamerOpen] = useState(false);
   const [titleInput, setTitleInput] = useState(risk.title);
   const [descInput, setDescInput] = useState(risk.description);
   const [mitigationInput, setMitigationInput] = useState(risk.mitigationPlan);
@@ -114,6 +117,11 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
         onClose={() => setIsJiraModalOpen(false)}
         risk={risk}
       />
+      <AIRedTeamerModal
+        isOpen={isRedTeamerOpen}
+        onClose={() => setIsRedTeamerOpen(false)}
+        risk={risk}
+      />
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Top Navigation */}
         <div className="flex items-center justify-between">
@@ -126,6 +134,15 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
           </Link>
 
           <div className="flex items-center gap-2">
+            <Button
+              variant="copilot"
+              size="sm"
+              icon={<Crosshair className="w-3.5 h-3.5 text-red-300" />}
+              onClick={() => setIsRedTeamerOpen(true)}
+            >
+              AI Red-Teamer Audit
+            </Button>
+
             <Button
               variant="outline"
               size="sm"
