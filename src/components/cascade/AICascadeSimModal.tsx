@@ -98,7 +98,7 @@ export const AICascadeSimModal: React.FC<AICascadeSimModalProps> = ({
                 AI Cascading Threat Topological Blast-Radius Simulator
               </h2>
               <p className="text-xs text-slate-300 mt-0.5">
-                Groq LLaMA 3.3 70B & Gemini AI Upstream-to-Downstream Failure Engine
+                Upstream-to-Downstream Failure Cascade & Blast-Radius Engine
               </p>
             </div>
           </div>

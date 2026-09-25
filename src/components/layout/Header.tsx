@@ -21,7 +21,9 @@ import {
   KeyRound,
   Settings,
   AlertTriangle,
-  Lock
+  Lock,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { useRiskContext } from '../../context/RiskContext';
 import { HelpModal } from './HelpModal';
@@ -53,6 +55,26 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
   const [hasUnreadAlerts, setHasUnreadAlerts] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return document.documentElement.classList.contains('dark') || localStorage.getItem('theme') === 'dark';
+    }
+    return false;
+  });
+
+  const toggleDarkMode = () => {
+    const newMode = !isDarkMode;
+    setIsDarkMode(newMode);
+    if (typeof window !== 'undefined') {
+      if (newMode) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      }
+    }
+  };
 
   const activeProject = projects.find(p => p.id === selectedProjectId);
   const criticalRisks = risks.filter(r => r.severity === 'Critical');
@@ -192,6 +214,20 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
           >
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span>On-Chain Verified</span>
+          </button>
+
+          {/* Dark Mode Compact Toggle Button */}
+          <button
+            onClick={toggleDarkMode}
+            className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors border border-slate-200 dark:border-slate-700 cursor-pointer"
+            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            aria-label="Toggle Dark Mode"
+          >
+            {isDarkMode ? (
+              <Sun className="w-4 h-4 text-amber-400" />
+            ) : (
+              <Moon className="w-4 h-4 text-slate-600" />
+            )}
           </button>
 
           {/* Notifications Icon & Live Popover */}

@@ -119,7 +119,7 @@ export const AISurfaceScanModal: React.FC<AISurfaceScanModalProps> = ({
                 AI Cyber Threat Surface & Vulnerability Scan Studio
               </h2>
               <p className="text-xs text-slate-300 mt-0.5">
-                Groq LLaMA 3.3 70B & Gemini AI Offensive Red Team Scanner
+                Offensive Cyber Threat Surface & Vulnerability Scanning Engine
               </p>
             </div>
           </div>

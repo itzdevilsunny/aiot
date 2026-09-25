@@ -142,7 +142,7 @@ export const AIComplianceAuditModal: React.FC<AIComplianceAuditModalProps> = ({
                 AI Compliance & Governance Audit Studio
               </h2>
               <p className="text-xs text-slate-300 mt-0.5">
-                Groq LLaMA 3.3 70B & Gemini AI Regulatory Alignment Engine
+                Regulatory Governance & Compliance Alignment Engine
               </p>
             </div>
           </div>

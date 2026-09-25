@@ -108,7 +108,7 @@ export const AIBudgetOptimizerModal: React.FC<AIBudgetOptimizerModalProps> = ({
                 AI Mitigation ROI & Capital Allocation Optimizer
               </h2>
               <p className="text-xs text-slate-300 mt-0.5">
-                Groq LLaMA 3.3 70B & Gemini AI Quantitative Portfolio Optimizer
+                Quantitative Portfolio & Risk Capital Optimization Engine
               </p>
             </div>
           </div>

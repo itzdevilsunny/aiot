@@ -123,7 +123,7 @@ export const AIKRIScanModal: React.FC<AIKRIScanModalProps> = ({
                 AI KRI Telemetry & SLA Breach Anomaly Predictor
               </h2>
               <p className="text-xs text-slate-300 mt-0.5">
-                Groq LLaMA 3.3 70B & Gemini AI Early-Warning Reliability Engine
+                Early-Warning Telemetry & Metric Reliability Engine
               </p>
             </div>
           </div>

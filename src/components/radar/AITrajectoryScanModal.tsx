@@ -107,7 +107,7 @@ export const AITrajectoryScanModal: React.FC<AITrajectoryScanModalProps> = ({
                 AI 12-Month Loss Trajectory & Forecast Studio
               </h2>
               <p className="text-xs text-slate-300 mt-0.5">
-                Groq LLaMA 3.3 70B & Gemini AI Actuarial Financial Engine
+                Actuarial Financial Trajectory & Quantitative Forecasting Engine
               </p>
             </div>
           </div>
