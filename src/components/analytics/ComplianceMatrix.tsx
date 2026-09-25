@@ -17,13 +17,28 @@ import {
   ChevronRight,
   Shield,
   Activity,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Award,
+  Layers,
+  TrendingUp,
+  Plus
 } from 'lucide-react';
+import { 
+  ResponsiveContainer, 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  CartesianGrid 
+} from 'recharts';
 import { SoAExportModal } from '../compliance/SoAExportModal';
 import { ControlDetailModal, ComplianceControl } from '../compliance/ControlDetailModal';
 import { AIComplianceAuditModal } from '../compliance/AIComplianceAuditModal';
+import { ComplianceCertificateModal } from '../compliance/ComplianceCertificateModal';
+import { CustomControlModal } from '../compliance/CustomControlModal';
 
-const FRAMEWORK_CONTROLS: ComplianceControl[] = [
+const INITIAL_CONTROLS: ComplianceControl[] = [
   {
     framework: 'ISO 31000',
     controlId: 'ISO-5.4',
@@ -114,24 +129,60 @@ const FRAMEWORK_CONTROLS: ComplianceControl[] = [
   }
 ];
 
+const HISTORICAL_COMPLIANCE_TREND = [
+  { sprint: 'Sprint 1', score: 62, compliant: 4, warning: 5, deficient: 2 },
+  { sprint: 'Sprint 2', score: 71, compliant: 6, warning: 4, deficient: 1 },
+  { sprint: 'Sprint 3', score: 79, compliant: 7, warning: 3, deficient: 1 },
+  { sprint: 'Sprint 4', score: 84, compliant: 8, warning: 2, deficient: 1 },
+  { sprint: 'Sprint 5', score: 88, compliant: 9, warning: 2, deficient: 0 },
+];
+
+const CROSS_FRAMEWORK_OVERLAPS = [
+  {
+    action: 'Multi-Factor Authentication & RBAC Telemetry',
+    leverage: '5x Framework Coverage',
+    satisfiedControls: ['SOC2-CC6.1', 'NIST-RA-1', 'ISO-6.4', 'GDPR-Art32', 'PCI-Req10'],
+    category: 'Security'
+  },
+  {
+    action: 'Continuous Automated CVE & Dependency Scanner',
+    leverage: '4x Framework Coverage',
+    satisfiedControls: ['ISO-27001 A.8.8', 'SOC2-CC7.1', 'NIST-RA-1', 'PCI-Req10'],
+    category: 'Technical'
+  },
+  {
+    action: 'Stochastic Risk Rating & 5-Whys RCA Post-Mortems',
+    leverage: '3x Framework Coverage',
+    satisfiedControls: ['ISO-31000 6.4', 'ISO-31000 6.5', 'SOC2-CC8.1'],
+    category: 'Governance'
+  }
+];
+
 export const ComplianceMatrix: React.FC = () => {
   const { risks, addToast } = useRiskContext();
 
+  const [controlsList, setControlsList] = useState<ComplianceControl[]>(INITIAL_CONTROLS);
   const [selectedFramework, setSelectedFramework] = useState<string>('All');
   const [selectedStatus, setSelectedStatus] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const [isSoAModalOpen, setIsSoAModalOpen] = useState<boolean>(false);
   const [isAIAuditModalOpen, setIsAIAuditModalOpen] = useState<boolean>(false);
+  const [isCertModalOpen, setIsCertModalOpen] = useState<boolean>(false);
+  const [isCustomControlModalOpen, setIsCustomControlModalOpen] = useState<boolean>(false);
   const [activeControlDetail, setActiveControlDetail] = useState<{
     control: ComplianceControl;
     status: 'Compliant' | 'Warning' | 'Non-Compliant';
   } | null>(null);
 
+  const handleAddCustomControl = (newControl: ComplianceControl) => {
+    setControlsList(prev => [newControl, ...prev]);
+  };
+
   const complianceResults = useMemo(() => {
     const activeRisks = risks.filter(r => r.status !== 'Closed');
 
-    const controlMappings = FRAMEWORK_CONTROLS.map(control => {
+    const controlMappings = controlsList.map(control => {
       // Find matching risks for this control category
       const matchingRisks = activeRisks.filter(r => control.mappedCategories.includes(r.category));
       const criticalOrHighCount = matchingRisks.filter(r => r.severity === 'Critical' || r.severity === 'High').length;
@@ -178,7 +229,7 @@ export const ComplianceMatrix: React.FC = () => {
       nonCompliantCount,
       healthScore
     };
-  }, [risks, selectedFramework, selectedStatus, searchQuery]);
+  }, [risks, controlsList, selectedFramework, selectedStatus, searchQuery]);
 
   const handleExportAuditMemo = () => {
     const lines = [
@@ -227,6 +278,22 @@ export const ComplianceMatrix: React.FC = () => {
         selectedFramework={selectedFramework}
       />
 
+      <ComplianceCertificateModal
+        isOpen={isCertModalOpen}
+        onClose={() => setIsCertModalOpen(false)}
+        healthScore={complianceResults.healthScore}
+        compliantCount={complianceResults.compliantCount}
+        warningCount={complianceResults.warningCount}
+        nonCompliantCount={complianceResults.nonCompliantCount}
+        totalControls={complianceResults.totalControls}
+      />
+
+      <CustomControlModal
+        isOpen={isCustomControlModalOpen}
+        onClose={() => setIsCustomControlModalOpen(false)}
+        onAddControl={handleAddCustomControl}
+      />
+
       <ControlDetailModal
         control={activeControlDetail?.control || null}
         status={activeControlDetail?.status || 'Compliant'}
@@ -262,12 +329,30 @@ export const ComplianceMatrix: React.FC = () => {
             </Button>
 
             <Button
+              variant="primary"
+              size="sm"
+              icon={<Award className="w-3.5 h-3.5 text-indigo-300" />}
+              onClick={() => setIsCertModalOpen(true)}
+            >
+              CISO Audit Package
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<Plus className="w-3.5 h-3.5 text-indigo-600" />}
+              onClick={() => setIsCustomControlModalOpen(true)}
+            >
+              Add Custom Control
+            </Button>
+
+            <Button
               variant="outline"
               size="sm"
               icon={<Shield className="w-3.5 h-3.5 text-indigo-600" />}
               onClick={() => setIsSoAModalOpen(true)}
             >
-              ISO 27001 SoA Package
+              ISO 27001 SoA
             </Button>
 
             <Button
@@ -276,7 +361,7 @@ export const ComplianceMatrix: React.FC = () => {
               icon={<FileCheck className="w-3.5 h-3.5 text-indigo-600" />}
               onClick={handleExportAuditMemo}
             >
-              Export Audit Memo (.TXT)
+              Export Memo (.TXT)
             </Button>
           </div>
         </div>
@@ -311,11 +396,91 @@ export const ComplianceMatrix: React.FC = () => {
           </div>
         </div>
 
+        {/* Cross-Framework Overlap & Trend Visualizers Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Historical Health Trend Chart */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-3 lg:col-span-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <TrendingUp className="w-4 h-4 text-indigo-600" />
+                  Compliance Readiness Trajectory (Historical Sprint Trend)
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Improvement of enterprise compliance rating over recent mitigation cycles.
+                </p>
+              </div>
+              <span className="text-xs font-mono font-extrabold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                +26% Growth
+              </span>
+            </div>
+
+            <div className="h-44 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={HISTORICAL_COMPLIANCE_TREND} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="sprint" stroke="#94a3b8" fontSize={10} tickLine={false} />
+                  <YAxis stroke="#94a3b8" fontSize={10} domain={[40, 100]} tickLine={false} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#0f172a', borderRadius: '8px', border: 'none', color: '#fff', fontSize: '11px' }}
+                    formatter={(val: any) => [`${val}% Readiness`, 'Health Score']}
+                  />
+                  <Area type="monotone" dataKey="score" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="url(#colorScore)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Cross-Framework Mitigation Multiplier */}
+          <div className="bg-gradient-to-br from-slate-900 to-indigo-950 text-white p-5 rounded-2xl shadow-md space-y-3 flex flex-col justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-1">
+                  <Layers className="w-3.5 h-3.5 text-indigo-400" /> Multi-Framework Leverage
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold border border-emerald-500/30">
+                  5x Efficiency
+                </span>
+              </div>
+              <h4 className="text-sm font-extrabold tracking-tight">Cross-Framework Mitigation ROI</h4>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Single security controls satisfy multiple regulatory frameworks simultaneously:
+              </p>
+            </div>
+
+            <div className="space-y-2 pt-2">
+              {CROSS_FRAMEWORK_OVERLAPS.map((item, i) => (
+                <div key={i} className="p-2.5 rounded-xl bg-white/10 backdrop-blur-xs border border-white/10 space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-white text-[11px] truncate">{item.action}</span>
+                    <span className="font-mono text-[9px] font-extrabold text-indigo-300 bg-indigo-500/30 px-1.5 py-0.5 rounded">
+                      {item.leverage}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {item.satisfiedControls.map(c => (
+                      <span key={c} className="text-[9px] font-mono text-slate-300 bg-slate-800/80 px-1.5 py-0.2 rounded">
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Search & Filter Bar */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
           {/* Framework Filter Tabs */}
           <div className="flex items-center gap-1.5 flex-wrap">
-            {['All', 'ISO 31000', 'NIST SP 800-30', 'SOC 2 Type II', 'GDPR', 'PCI DSS 4.0', 'ISO 27001'].map(fw => (
+            {['All', 'ISO 31000', 'NIST SP 800-30', 'SOC 2 Type II', 'GDPR', 'PCI DSS 4.0', 'ISO 27001', 'HIPAA', 'Custom Policy'].map(fw => (
               <button
                 key={fw}
                 onClick={() => setSelectedFramework(fw)}
