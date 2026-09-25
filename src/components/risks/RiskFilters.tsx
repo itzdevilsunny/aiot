@@ -2,13 +2,15 @@
 
 import React, { useState } from 'react';
 import { useRiskContext } from '../../context/RiskContext';
-import { Search, Download, Filter, RefreshCw, FileText } from 'lucide-react';
+import { Search, Download, Filter, RefreshCw, FileText, Upload } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { ExecutivePDFModal } from './ExecutivePDFModal';
+import { CSVImportModal } from './CSVImportModal';
 
 export const RiskFilters: React.FC = () => {
   const { filterState, setFilterState, resetFilters, teamMembers, risks, addToast } = useRiskContext();
   const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
+  const [isCSVModalOpen, setIsCSVModalOpen] = useState(false);
 
   const handleExportCSV = () => {
     const headers = ['ID', 'Title', 'Category', 'Probability', 'Impact', 'Score', 'Severity', 'Status', 'Owner', 'Mitigation Plan', 'Due Date'];
@@ -49,6 +51,10 @@ export const RiskFilters: React.FC = () => {
         onClose={() => setIsPDFModalOpen(false)}
         risks={risks}
       />
+      <CSVImportModal
+        isOpen={isCSVModalOpen}
+        onClose={() => setIsCSVModalOpen(false)}
+      />
       <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-card space-y-3.5">
         {/* Search & Top Action Bar */}
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
@@ -86,6 +92,15 @@ export const RiskFilters: React.FC = () => {
               <option value="title_asc">Sort: Title (A → Z)</option>
               <option value="probability_desc">Sort: Probability (High → Low)</option>
             </select>
+
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<Upload className="w-3.5 h-3.5 text-indigo-600" />}
+              onClick={() => setIsCSVModalOpen(true)}
+            >
+              Import CSV
+            </Button>
 
             <Button
               variant="outline"
