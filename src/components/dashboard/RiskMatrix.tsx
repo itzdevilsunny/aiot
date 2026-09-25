@@ -23,22 +23,22 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({ risks }) => {
 
   const getCellBg = (prob: number, imp: number) => {
     const score = prob * imp;
-    if (score >= 20) return 'bg-red-100/90 text-red-900 border-red-200 hover:bg-red-200/80';
-    if (score >= 12) return 'bg-orange-100/90 text-orange-900 border-orange-200 hover:bg-orange-200/80';
-    if (score >= 6) return 'bg-amber-100/80 text-amber-900 border-amber-200 hover:bg-amber-200/70';
-    return 'bg-emerald-100/80 text-emerald-900 border-emerald-200 hover:bg-emerald-200/70';
+    if (score >= 20) return 'bg-red-100/90 text-red-900 border-red-200/90 hover:bg-red-200/80 shadow-2xs';
+    if (score >= 12) return 'bg-amber-100/90 text-amber-900 border-amber-200/90 hover:bg-amber-200/80 shadow-2xs';
+    if (score >= 6) return 'bg-yellow-100/80 text-yellow-900 border-yellow-200/90 hover:bg-yellow-200/70 shadow-2xs';
+    return 'bg-emerald-100/80 text-emerald-900 border-emerald-200/90 hover:bg-emerald-200/70 shadow-2xs';
   };
 
   const selectedCellRisks = selectedCell ? getCellRisks(selectedCell.prob, selectedCell.imp) : [];
 
   return (
-    <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-card flex flex-col justify-between">
+    <div className="p-5 rounded-2xl glass-card flex flex-col justify-between">
       <div>
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <span>5×5 Risk Severity Matrix</span>
-              <span className="text-[10px] font-normal px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+              <span className="text-[10px] font-mono-code font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
                 Formula: P × I
               </span>
             </h3>
@@ -56,7 +56,7 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({ risks }) => {
           <div className="space-y-1.5 pl-2">
             {[5, 4, 3, 2, 1].map((probLevel) => (
               <div key={probLevel} className="flex items-center gap-1.5">
-                <span className="w-4 text-xs font-semibold text-slate-400 text-right">{probLevel}</span>
+                <span className="w-4 text-xs font-mono-code font-bold text-slate-400 text-right">{probLevel}</span>
                 <div className="grid grid-cols-5 gap-1.5 flex-1">
                   {[1, 2, 3, 4, 5].map((impLevel) => {
                     const prob = probLevel as ProbabilityLevel;
@@ -69,13 +69,13 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({ risks }) => {
                         key={`${prob}-${imp}`}
                         onClick={() => setSelectedCell(isSelected ? null : { prob, imp })}
                         className={`h-11 rounded-lg border text-xs font-bold flex flex-col items-center justify-center relative transition-all duration-150 cursor-pointer ${getCellBg(prob, imp)} ${
-                          isSelected ? 'ring-2 ring-slate-900 ring-offset-1 scale-[1.03] shadow-md z-10' : ''
+                          isSelected ? 'ring-2 ring-slate-900 ring-offset-1 scale-[1.04] shadow-md z-10' : ''
                         }`}
                         title={`P:${prob} × I:${imp} = Score ${prob * imp} (${cellRisks.length} risks)`}
                       >
-                        <span className="text-[10px] opacity-75 font-mono">{prob * imp}</span>
+                        <span className="text-[10px] opacity-75 font-mono-code">{prob * imp}</span>
                         {cellRisks.length > 0 && (
-                          <span className="w-5 h-5 rounded-full bg-slate-900 text-white text-[10px] font-bold flex items-center justify-center shadow-xs mt-0.5">
+                          <span className="w-5 h-5 rounded-full bg-slate-900 text-white text-[10px] font-mono-code font-bold flex items-center justify-center shadow-xs mt-0.5">
                             {cellRisks.length}
                           </span>
                         )}
@@ -89,7 +89,7 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({ risks }) => {
             {/* X Axis Numbers & Label */}
             <div className="flex items-center gap-1.5 pt-1 pl-2">
               <span className="w-4"></span>
-              <div className="grid grid-cols-5 gap-1.5 flex-1 text-center text-xs font-semibold text-slate-400">
+              <div className="grid grid-cols-5 gap-1.5 flex-1 text-center text-xs font-mono-code font-bold text-slate-400">
                 <span>1</span>
                 <span>2</span>
                 <span>3</span>
@@ -128,7 +128,7 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({ risks }) => {
                   className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200/80 hover:border-indigo-300 text-left cursor-pointer transition-colors"
                 >
                   <div className="truncate pr-2">
-                    <span className="text-xs font-mono font-bold text-slate-500 mr-2">{r.id}</span>
+                    <span className="text-xs font-mono-code font-bold text-slate-500 mr-2">{r.id}</span>
                     <span className="text-xs font-semibold text-slate-900 truncate">{r.title}</span>
                   </div>
                   <Badge severity={r.severity} />
