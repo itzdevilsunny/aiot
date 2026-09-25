@@ -276,7 +276,7 @@ export default function SettingsPage() {
   const handleRunGeminiTest = async () => {
     setIsTesting(true);
     const timestamp = new Date().toLocaleTimeString();
-    setTestLog(prev => `${prev}\n\n[${timestamp}] POST /api/copilot-chat -> Executing Gemini 2.5 Flash copilot reasoning...`);
+    setTestLog(prev => `${prev}\n\n[${timestamp}] POST /api/copilot-chat -> Executing AI Copilot intelligence reasoning...`);
     const startTime = performance.now();
     try {
       const res = await fetch('/api/copilot-chat', {
@@ -290,10 +290,10 @@ export default function SettingsPage() {
       const data = await res.json();
       const duration = Math.round(performance.now() - startTime);
       setTestLog(prev => `${prev}\n[${timestamp}] HTTP 200 OK (${duration}ms latency):\n${data.reply}`);
-      addToast('Gemini AI Pipeline Active', `Generated analytical response in ${duration}ms.`, 'success');
+      addToast('AI Intelligence Active', `Generated analytical response in ${duration}ms.`, 'success');
     } catch (e: any) {
       setTestLog(prev => `${prev}\n[${timestamp}] ERROR: ${e.message}`);
-      addToast('Gemini Test Error', e.message, 'error');
+      addToast('AI Test Error', e.message, 'error');
     } finally {
       setIsTesting(false);
     }
@@ -811,7 +811,7 @@ export default function SettingsPage() {
                 icon={<Bot className="w-3.5 h-3.5 text-emerald-600" />}
                 onClick={handleRunGeminiTest}
               >
-                Test Gemini AI Chat
+                Test AI Copilot Chat
               </Button>
             </div>
 

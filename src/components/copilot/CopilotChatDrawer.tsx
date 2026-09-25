@@ -47,7 +47,7 @@ export const CopilotChatDrawer: React.FC = () => {
     {
       id: 'msg-1',
       sender: 'ai',
-      text: 'Hello Sunny! I am your Gemini 2.5 Flash Risk Copilot. Ask me any question about active project threats, owner workloads, or upload a system issue screenshot.',
+      text: 'Hello Sunny! I am your Risk Register Copilot assistant. Ask me any question about active project threats, owner workloads, or upload a system issue screenshot.',
       timestamp: 'Just now'
     }
   ]);
@@ -392,9 +392,9 @@ export const CopilotChatDrawer: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-xs font-extrabold text-white flex items-center gap-1.5">
-                  <span>Gemini Risk Copilot</span>
+                  <span>Enterprise Risk Copilot</span>
                   <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                    Gemini 2.5
+                    AI Online
                   </span>
                 </h3>
                 <p className="text-[10px] text-slate-400">Live Supabase DB Context Active</p>

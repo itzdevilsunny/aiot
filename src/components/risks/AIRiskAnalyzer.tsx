@@ -230,7 +230,7 @@ export const AIRiskAnalyzer: React.FC = () => {
         {
           id: `act-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
           timestamp: 'Just now',
-          author: 'Gemini 2.5 Flash AI',
+          author: 'Enterprise AI Copilot',
           action: `Structured natural language threat with ${result.aiConfidence}% confidence score.`,
           type: 'ai_analysis'
         }
@@ -335,7 +335,7 @@ export const AIRiskAnalyzer: React.FC = () => {
           {
             id: `act-${Date.now()}-${index}`,
             timestamp: 'Just now',
-            author: 'Gemini Bulk AI',
+            author: 'Enterprise AI Copilot',
             action: 'Bulk risk item generated for project.',
             type: 'ai_analysis'
           }
@@ -377,7 +377,7 @@ export const AIRiskAnalyzer: React.FC = () => {
         {
           id: `act-${Date.now()}-${index}`,
           timestamp: 'Just now',
-          author: 'Gemini Bulk AI',
+          author: 'Enterprise AI Copilot',
           action: 'Individual bulk risk item added to register.',
           type: 'ai_analysis'
         }
@@ -435,7 +435,7 @@ export const AIRiskAnalyzer: React.FC = () => {
           <div className="space-y-1 max-w-xl">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
               <Sparkles className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
-              <span>Gemini 2.5 Flash Multimodal Vision Engine</span>
+              <span>Enterprise AI Threat Intelligence Engine</span>
             </div>
             <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight pt-1">
               Add Risk & AI Threat Analyzer
@@ -527,7 +527,7 @@ export const AIRiskAnalyzer: React.FC = () => {
                 </div>
                 <div>
                   <span className="font-bold text-slate-900 block">Attach Issue Screenshot or Architecture Diagram</span>
-                  <span className="text-[10px] text-slate-500">Gemini 2.5 Multimodal Vision will inspect image context.</span>
+                  <span className="text-[10px] text-slate-500">AI Multimodal Vision will inspect image context.</span>
                 </div>
               </div>
 
@@ -573,7 +573,7 @@ export const AIRiskAnalyzer: React.FC = () => {
                 onClick={handleRunSingleAnalysis}
                 disabled={analyzingStep > 0 || !promptText.trim()}
               >
-                {analyzingStep > 0 ? 'Analyzing with Gemini AI...' : 'Synthesize & Quantify with Copilot'}
+                {analyzingStep > 0 ? 'Analyzing with AI Intelligence...' : 'Synthesize & Quantify with Copilot'}
               </Button>
             </div>
           </div>
@@ -584,7 +584,7 @@ export const AIRiskAnalyzer: React.FC = () => {
               <div className="flex items-center justify-between font-bold text-indigo-950">
                 <span className="flex items-center gap-2">
                   <Activity className="w-4 h-4 text-indigo-600 animate-spin" />
-                  Gemini 2.5 Flash AI Pipeline Active
+                  Enterprise AI Intelligence Pipeline Active
                 </span>
                 <span>Phase {analyzingStep} / 3</span>
               </div>
@@ -781,8 +781,8 @@ export const AIRiskAnalyzer: React.FC = () => {
       {activeTab === 'bulk_ai' && (
         <div className="space-y-6">
           <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-card space-y-4">
-            <h3 className="text-sm font-bold text-slate-900">✨ Gemini AI Project Risk Profile Generator</h3>
-            <p className="text-xs text-slate-500">Provide a project scope topic and let Gemini generate 3 to 4 structured operational risks automatically.</p>
+            <h3 className="text-sm font-bold text-slate-900">✨ AI Project Risk Profile Generator</h3>
+            <p className="text-xs text-slate-500">Provide a project scope topic and let AI Copilot generate 3 to 4 structured operational risks automatically.</p>
 
             <div className="space-y-2">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
@@ -847,7 +847,7 @@ export const AIRiskAnalyzer: React.FC = () => {
                 onClick={handleRunBulkGeneration}
                 disabled={isGeneratingBulk || !bulkTopic.trim()}
               >
-                {isGeneratingBulk ? 'Generating Project Risks with Gemini...' : 'Generate 3-4 Project Risks'}
+                {isGeneratingBulk ? 'Generating Project Risks with AI...' : 'Generate 3-4 Project Risks'}
               </Button>
             </div>
           </div>

@@ -25,7 +25,7 @@ export const ExecutiveBriefingCard: React.FC = () => {
       });
       const data = await res.json();
       setBriefing(data);
-      addToast('Gemini Briefing Synthesized', 'Generated executive summary & top priority actions.', 'success');
+      addToast('Executive AI Briefing Synthesized', 'Generated executive summary & top priority actions.', 'success');
     } catch (err) {
       console.error('Briefing fetch error:', err);
       addToast('Briefing Error', 'Used cached governance synthesis fallback.', 'warning');
@@ -47,9 +47,9 @@ export const ExecutiveBriefingCard: React.FC = () => {
           </div>
           <div>
             <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
-              <span>Executive Gemini Briefing</span>
+              <span>Executive AI Risk Briefing</span>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                Gemini 2.5 Flash
+                Enterprise AI Copilot
               </span>
             </h3>
             <p className="text-[11px] text-slate-400">AI-synthesized C-Suite operational posture & strategic priority roadmap</p>
@@ -113,7 +113,7 @@ export const ExecutiveBriefingCard: React.FC = () => {
       ) : (
         <div className="py-6 text-center space-y-2">
           <p className="text-xs text-slate-400 max-w-md mx-auto">
-            Click <strong className="text-white">Generate Briefing</strong> to synthesize live risk metrics, estimated USD financial exposure, and strategic priority actions using Gemini 2.5 Flash.
+            Click <strong className="text-white">Generate Briefing</strong> to synthesize live risk metrics, estimated USD financial exposure, and strategic priority actions using Enterprise AI Copilot.
           </p>
         </div>
       )}

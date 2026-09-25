@@ -109,7 +109,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
 
               <div className="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1">
                 <span className="font-bold text-slate-900 flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> Gemini Vision & Voice
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> AI Multimodal Vision & Voice
                 </span>
                 <p className="text-[11px] text-slate-500 leading-relaxed">
                   Upload database error screenshots or speak via microphone to get real-time AI risk analysis.
