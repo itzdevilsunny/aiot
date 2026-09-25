@@ -2,18 +2,46 @@
 
 import React, { useState } from 'react';
 import { useRiskContext } from '../../context/RiskContext';
-import { Sparkles, ShieldCheck, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Sparkles, ShieldCheck, AlertTriangle, RefreshCw, Volume2, VolumeX, Play, Pause } from 'lucide-react';
 import { Button } from '../ui/Button';
 
 export const ExecutiveBriefingCard: React.FC = () => {
   const { risks, addToast } = useRiskContext();
   const [loading, setLoading] = useState(false);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [speechRate, setSpeechRate] = useState<number>(1.0);
   const [briefing, setBriefing] = useState<{
     executiveSummary: string;
     topPriorityActions: string[];
     financialVulnerabilityScore: number;
     governanceRating: string;
   } | null>(null);
+
+  const toggleAudioPlayback = () => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      addToast('Speech API Note', 'Browser text-to-speech API not supported on this device.', 'warning');
+      return;
+    }
+
+    if (isPlayingAudio) {
+      window.speechSynthesis.cancel();
+      setIsPlayingAudio(false);
+      addToast('Audio Paused', 'Executive voice playback stopped.', 'info');
+    } else {
+      if (!briefing) return;
+      window.speechSynthesis.cancel();
+
+      const textToRead = `${briefing.executiveSummary}. Top strategic priority actions: ${briefing.topPriorityActions.join('. ')}`;
+      const utterance = new SpeechSynthesisUtterance(textToRead);
+      utterance.rate = speechRate;
+      utterance.onend = () => setIsPlayingAudio(false);
+      utterance.onerror = () => setIsPlayingAudio(false);
+
+      window.speechSynthesis.speak(utterance);
+      setIsPlayingAudio(true);
+      addToast('AI Voice Briefing Playing', `Playing executive audio summary at ${speechRate}x speed.`, 'success');
+    }
+  };
 
   const fetchBriefing = async () => {
     setLoading(true);
@@ -84,15 +112,36 @@ export const ExecutiveBriefingCard: React.FC = () => {
           </div>
         </div>
 
-        <Button
-          variant="copilot"
-          size="sm"
-          disabled={loading}
-          onClick={fetchBriefing}
-          icon={<RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />}
-        >
-          {loading ? 'Synthesizing...' : briefing ? 'Re-Synthesize' : 'Generate Briefing'}
-        </Button>
+        <div className="flex items-center gap-2">
+          {briefing && (
+            <button
+              onClick={toggleAudioPlayback}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 rounded-lg hover:bg-indigo-500/30 transition-colors cursor-pointer"
+            >
+              {isPlayingAudio ? (
+                <>
+                  <Pause className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Pause Voice</span>
+                </>
+              ) : (
+                <>
+                  <Volume2 className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Play AI Audio</span>
+                </>
+              )}
+            </button>
+          )}
+
+          <Button
+            variant="copilot"
+            size="sm"
+            disabled={loading}
+            onClick={fetchBriefing}
+            icon={<RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />}
+          >
+            {loading ? 'Synthesizing...' : briefing ? 'Re-Synthesize' : 'Generate Briefing'}
+          </Button>
+        </div>
       </div>
 
       {/* Content Area */}
