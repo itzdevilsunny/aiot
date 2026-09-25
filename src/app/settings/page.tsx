@@ -49,6 +49,7 @@ export default function SettingsPage() {
   const [wsPrefix, setWsPrefix] = useState(workspaceSettings.riskIdPrefix);
   const [wsReviewDays, setWsReviewDays] = useState(workspaceSettings.defaultReviewDays);
   const [wsSyncMode, setWsSyncMode] = useState<'auto' | 'manual'>(workspaceSettings.cloudSyncMode);
+  const [wsCurrency, setWsCurrency] = useState<'USD' | 'EUR' | 'GBP' | 'INR'>(workspaceSettings.currency || 'USD');
 
   const [critThresh, setCritThresh] = useState(workspaceSettings.criticalScoreThreshold);
   const [highThresh, setHighThresh] = useState(workspaceSettings.highScoreThreshold);
@@ -77,6 +78,7 @@ export default function SettingsPage() {
     setWsPrefix(workspaceSettings.riskIdPrefix);
     setWsReviewDays(workspaceSettings.defaultReviewDays);
     setWsSyncMode(workspaceSettings.cloudSyncMode);
+    setWsCurrency(workspaceSettings.currency || 'USD');
     setCritThresh(workspaceSettings.criticalScoreThreshold);
     setHighThresh(workspaceSettings.highScoreThreshold);
     setMedThresh(workspaceSettings.mediumScoreThreshold);
@@ -99,6 +101,7 @@ export default function SettingsPage() {
       riskIdPrefix: wsPrefix,
       defaultReviewDays: wsReviewDays,
       cloudSyncMode: wsSyncMode,
+      currency: wsCurrency,
       criticalScoreThreshold: critThresh,
       highScoreThreshold: highThresh,
       mediumScoreThreshold: medThresh
@@ -522,6 +525,20 @@ export default function SettingsPage() {
                 >
                   <option value="auto">⚡ Real-time Cloud Sync (Supabase & Render)</option>
                   <option value="manual">💾 Manual Cache Sync</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-800 mb-1">Portfolio Financial Risk Currency</label>
+                <select 
+                  value={wsCurrency} 
+                  onChange={(e) => setWsCurrency(e.target.value as 'USD' | 'EUR' | 'GBP' | 'INR')}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 font-medium text-slate-900 cursor-pointer"
+                >
+                  <option value="USD">$ USD - United States Dollar ($)</option>
+                  <option value="EUR">€ EUR - Euro (€)</option>
+                  <option value="GBP">£ GBP - British Pound (£)</option>
+                  <option value="INR">₹ INR - Indian Rupee (₹)</option>
                 </select>
               </div>
             </div>

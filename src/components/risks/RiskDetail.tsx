@@ -30,7 +30,7 @@ interface RiskDetailProps {
 
 export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
   const router = useRouter();
-  const { updateRiskStatus, toggleChecklistItem, deleteRisk, addToast, updateRisk } = useRiskContext();
+  const { updateRiskStatus, toggleChecklistItem, deleteRisk, addToast, updateRisk, formatCurrency } = useRiskContext();
 
   const [isEditing, setIsEditing] = useState(false);
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
@@ -233,7 +233,7 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
               <span>2. Quantitative Risk Assessment</span>
             </h3>
 
-            <div className="grid grid-cols-3 gap-3 p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-center">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-center">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Probability</span>
                 <div className="text-xl font-extrabold text-indigo-950 mt-1 font-mono">{risk.probability} / 5</div>
@@ -246,13 +246,21 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
                 <span className="text-[10px] font-semibold text-slate-500">Severity magnitude</span>
               </div>
 
-              <div className="border-l border-slate-200">
+              <div className="sm:border-l border-slate-200">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Risk Score</span>
                 <div className="flex items-center justify-center gap-1.5 mt-1">
-                  <span className="text-2xl font-mono font-extrabold text-slate-900">{risk.score}</span>
+                  <span className="text-xl font-mono font-extrabold text-slate-900">{risk.score}</span>
                   <Badge severity={risk.severity} />
                 </div>
                 <span className="text-[10px] font-semibold text-slate-500">1 to 25 scale</span>
+              </div>
+
+              <div className="border-l border-slate-200">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Financial Exposure</span>
+                <div className="text-xl font-extrabold text-emerald-950 mt-1 font-mono">
+                  {formatCurrency(risk.estimatedImpactUsd || (risk.score * 25000))}
+                </div>
+                <span className="text-[10px] font-semibold text-emerald-600">Loss Estimate</span>
               </div>
             </div>
 

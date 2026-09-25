@@ -34,6 +34,7 @@ export interface WorkspaceSettings {
   riskIdPrefix: string;
   defaultReviewDays: number;
   cloudSyncMode: 'auto' | 'manual';
+  currency: 'USD' | 'EUR' | 'GBP' | 'INR';
   criticalScoreThreshold: number;
   highScoreThreshold: number;
   mediumScoreThreshold: number;
@@ -82,6 +83,7 @@ interface RiskContextType {
   analyzeRiskWithGemini: (naturalLanguagePrompt: string) => Promise<AIRiskAnalysisResult>;
   simulateAIRiskAnalysis: (naturalLanguagePrompt: string) => Promise<AIRiskAnalysisResult>;
   getFilteredRisks: () => RiskItem[];
+  formatCurrency: (val: number, customCurr?: string) => string;
 }
 
 const initialFilterState: FilterState = {
@@ -521,6 +523,21 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
+  const formatCurrency = (val: number, customCurr?: string): string => {
+    const targetCurr = customCurr || workspaceSettings?.currency || 'USD';
+    const rates: Record<string, { symbol: string; rate: number }> = {
+      USD: { symbol: '$', rate: 1.0 },
+      EUR: { symbol: '€', rate: 0.92 },
+      GBP: { symbol: '£', rate: 0.78 },
+      INR: { symbol: '₹', rate: 83.5 }
+    };
+    const config = rates[targetCurr] || rates.USD;
+    const converted = val * config.rate;
+    if (converted >= 1_000_000) return `${config.symbol}${(converted / 1_000_000).toFixed(2)}M`;
+    if (converted >= 1_000) return `${config.symbol}${(converted / 1_000).toFixed(0)}K`;
+    return `${config.symbol}${Math.round(converted).toLocaleString()}`;
+  };
+
   const [currentUser, setCurrentUser] = useState<TeamMember>(MOCK_TEAM_MEMBERS[0]);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
@@ -530,6 +547,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     riskIdPrefix: 'RSK-',
     defaultReviewDays: 30,
     cloudSyncMode: 'auto',
+    currency: 'USD',
     criticalScoreThreshold: 20,
     highScoreThreshold: 12,
     mediumScoreThreshold: 6
@@ -692,7 +710,8 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       removeToast,
       analyzeRiskWithGemini: simulateAIRiskAnalysis,
       simulateAIRiskAnalysis,
-      getFilteredRisks
+      getFilteredRisks,
+      formatCurrency
     }}>
       {children}
     </RiskContext.Provider>
