@@ -23,7 +23,8 @@ import {
   Gauge,
   DollarSign,
   TrendingUp,
-  Network
+  Network,
+  Lock
 } from 'lucide-react';
 import { useRiskContext } from '../../context/RiskContext';
 
@@ -52,6 +53,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
     { label: 'Projects', href: '/projects', icon: FolderKanban },
     { label: 'Analytics', href: '/analytics', icon: BarChart3 },
     { label: 'Compliance Matrix', href: '/compliance', icon: ShieldCheck },
+    { label: 'Cyber Threat Surface', href: '/threat-surface', icon: Lock },
     { label: 'KRI Telemetry', href: '/kri', icon: Gauge },
     { label: 'Mitigation ROI Optimizer', href: '/roi', icon: DollarSign },
     { label: 'Predictive Threat Radar', href: '/radar', icon: TrendingUp },
