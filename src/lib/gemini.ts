@@ -107,7 +107,7 @@ export async function callGeminiAI(options: GeminiCallOptions): Promise<GeminiCa
           'Content-Type': 'application/json',
           'Connection': 'close'
         },
-        signal: AbortSignal.timeout(30000),
+        signal: AbortSignal.timeout(12000),
         body: JSON.stringify(payload)
       });
 
