@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { callGroqAI } from '@/lib/groq';
+import { callGeminiAI } from '@/lib/gemini';
 
 export async function POST(req: NextRequest) {
   try {
@@ -55,6 +56,27 @@ Respond ONLY with valid JSON.`;
         }
       } catch (e) {
         console.warn('Groq Loss Trajectory JSON parse note:', e);
+      }
+    }
+
+    // 2. Secondary: Google Gemini 3.8 Flash
+    const geminiResult = await callGeminiAI({
+      prompt: systemInstruction,
+      jsonMode: true,
+      temperature: 0.2
+    });
+
+    if (geminiResult.success && geminiResult.content) {
+      try {
+        const parsed = JSON.parse(geminiResult.content);
+        if (parsed && parsed.baselineExposure !== undefined) {
+          return NextResponse.json({
+            ...parsed,
+            provider: `Google Gemini (${geminiResult.model})`
+          });
+        }
+      } catch (e) {
+        console.warn('Gemini Loss Trajectory JSON parse note:', e);
       }
     }
 
