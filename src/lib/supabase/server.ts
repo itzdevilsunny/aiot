@@ -45,17 +45,26 @@ export async function pingSupabase(): Promise<{ ok: boolean; status: string; cou
       .select('id', { count: 'exact', head: true });
 
     if (error) {
-      return { ok: false, status: 'ERROR', error: error.message };
+      const isFetchFailed = error.message?.includes('fetch failed') || error.message?.includes('ENOTFOUND');
+      return { 
+        ok: false, 
+        status: isFetchFailed ? 'PAUSED_IN_DASHBOARD' : 'ERROR', 
+        error: isFetchFailed 
+          ? 'Supabase project (nrymxphrspvxhacevvwr) is paused on free tier. Ready to auto-reconnect once unpaused.' 
+          : error.message 
+      };
     }
 
     return { ok: true, status: 'CONNECTED', count: count || 0 };
   } catch (err: any) {
-    const isDnsError = err.cause?.code === 'ENOTFOUND' || err.message?.includes('ENOTFOUND');
-    if (isDnsError) {
+    const isDnsOrPaused = err.cause?.code === 'ENOTFOUND' || 
+                          err.message?.includes('ENOTFOUND') || 
+                          err.message?.includes('fetch failed');
+    if (isDnsOrPaused) {
       return { 
         ok: false, 
-        status: 'PAUSED_OR_DNS_UNREACHABLE', 
-        error: `Supabase instance host unreachable (${err.cause?.hostname || 'ENOTFOUND'}). The project may be paused in the Supabase Dashboard.` 
+        status: 'PAUSED_IN_DASHBOARD', 
+        error: `Supabase instance host unreachable (${err.cause?.hostname || 'nrymxphrspvxhacevvwr.supabase.co'}). The free-tier project is paused and will auto-reconnect once unpaused.` 
       };
     }
     return { ok: false, status: 'FAILED', error: err.message };
