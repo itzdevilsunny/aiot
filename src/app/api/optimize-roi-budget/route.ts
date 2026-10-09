@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { callGroqAI } from '@/lib/groq';
+import { callGeminiAI } from '@/lib/gemini';
+import { getRisks } from '@/lib/server/db';
 
 export async function POST(req: NextRequest) {
   try {
-    const { risks, totalBudget } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    let { risks, totalBudget } = body;
+
+    if (!risks || !Array.isArray(risks) || risks.length === 0) {
+      risks = getRisks();
+    }
 
     const activeRisks = (risks || []).filter((r: any) => r.status !== 'Closed');
 
@@ -58,6 +65,27 @@ Respond ONLY with valid JSON.`;
         }
       } catch (err) {
         console.warn('Groq ROI Optimization parse note:', err);
+      }
+    }
+
+    // 2. Secondary: Google Gemini 3.8 Flash
+    const geminiResult = await callGeminiAI({
+      prompt: systemInstruction,
+      jsonMode: true,
+      temperature: 0.2
+    });
+
+    if (geminiResult.success && geminiResult.content) {
+      try {
+        const parsed = JSON.parse(geminiResult.content);
+        if (parsed && parsed.optimizedRoi !== undefined) {
+          return NextResponse.json({
+            ...parsed,
+            provider: `Google Gemini (${geminiResult.model})`
+          });
+        }
+      } catch (err) {
+        console.warn('Gemini ROI Optimization parse note:', err);
       }
     }
 
