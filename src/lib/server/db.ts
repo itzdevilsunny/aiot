@@ -26,6 +26,51 @@ import {
   MOCK_AUDIT_LOGS,
   calculateSeverity
 } from '../../data/mockData';
+import { getSupabaseServerClient } from '../supabase/server';
+
+async function syncRiskToSupabase(risk: RiskItem): Promise<void> {
+  try {
+    const supabase = getSupabaseServerClient();
+    if (!supabase) return;
+    await supabase.from('risks').upsert({
+      id: risk.id,
+      title: risk.title,
+      description: risk.description,
+      category: risk.category,
+      probability: risk.probability || 3,
+      impact: risk.impact || 3,
+      score: risk.score || 9,
+      severity: risk.severity || 'Medium',
+      inherent_probability: risk.inherentProbability || risk.probability || 3,
+      inherent_impact: risk.inherentImpact || risk.impact || 3,
+      inherent_score: risk.inherentScore || risk.score || 9,
+      inherent_severity: risk.inherentSeverity || risk.severity || 'Medium',
+      residual_probability: risk.residualProbability || 2,
+      residual_impact: risk.residualImpact || 2,
+      residual_score: risk.residualScore || 4,
+      residual_severity: risk.residualSeverity || 'Low',
+      status: risk.status,
+      owner_name: risk.ownerName,
+      owner_role: risk.ownerRole,
+      mitigation_plan: risk.mitigationPlan,
+      mitigation_progress: risk.mitigationProgress || 0,
+      estimated_impact_usd: risk.estimatedImpactUsd || 0,
+      last_updated: risk.lastUpdated
+    });
+  } catch (err) {
+    // Non-blocking sync error
+  }
+}
+
+async function deleteRiskFromSupabase(id: string): Promise<void> {
+  try {
+    const supabase = getSupabaseServerClient();
+    if (!supabase) return;
+    await supabase.from('risks').delete().eq('id', id);
+  } catch (err) {
+    // Non-blocking sync error
+  }
+}
 
 export interface EnterpriseDatabase {
   risks: RiskItem[];
@@ -231,6 +276,7 @@ export function createRisk(input: any): RiskItem {
   });
 
   saveDatabase(db);
+  syncRiskToSupabase(newRisk);
   return newRisk;
 }
 
@@ -284,6 +330,7 @@ export function updateRisk(id: string, updates: Partial<RiskItem>, authorName?: 
   });
 
   saveDatabase(db);
+  syncRiskToSupabase(updatedRisk);
   return updatedRisk;
 }
 
@@ -304,6 +351,7 @@ export function deleteRisk(id: string, authorName?: string): boolean {
   });
 
   saveDatabase(db);
+  deleteRiskFromSupabase(id);
   return true;
 }
 
