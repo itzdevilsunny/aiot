@@ -563,6 +563,32 @@
   ],
   "controls": [
     {
+      "id": "CTRL-108",
+      "name": "Redis VPC Egress Firewall & ACL Restriction",
+      "description": "Automated stateful security group rules preventing unauthorized socket egress.",
+      "category": "Technical",
+      "type": "Preventive",
+      "ownerName": "Sunny Prasad",
+      "testStatus": "Passed",
+      "effectiveness": "Effective",
+      "linkedRiskIds": [
+        "RSK-E2E-0528"
+      ]
+    },
+    {
+      "id": "CTRL-107",
+      "name": "Redis VPC Egress Firewall & ACL Restriction",
+      "description": "Automated stateful security group rules preventing unauthorized socket egress.",
+      "category": "Technical",
+      "type": "Preventive",
+      "ownerName": "Sunny Prasad",
+      "testStatus": "Passed",
+      "effectiveness": "Effective",
+      "linkedRiskIds": [
+        "RSK-E2E-8435"
+      ]
+    },
+    {
       "name": "Automated HSM Key Pool Monitoring & Session Throttling",
       "description": "Hardware Security Module daemon continuously tracks key lifecycle and alerts on pool exhaustion.",
       "category": "Technical",
@@ -669,6 +695,34 @@
   ],
   "actions": [
     {
+      "id": "ACT-107",
+      "riskId": "RSK-E2E-0528",
+      "riskTitle": "Automated E2E Test: Redis Cluster Zero-Day Exploitation",
+      "linkedControlId": "CTRL-E2E-1427",
+      "title": "Deploy Hotfix Patch v7.2.4 across Regional Shards",
+      "description": "Rolling deployment with zero downtime during off-peak window.",
+      "assignedOwnerName": "Sunny Prasad",
+      "priority": "High",
+      "status": "In Progress",
+      "progressPct": 60,
+      "createdAt": "2026-10-09",
+      "lastUpdated": "Just now"
+    },
+    {
+      "id": "ACT-106",
+      "riskId": "RSK-E2E-8435",
+      "riskTitle": "Automated E2E Test: Redis Cluster Zero-Day Exploitation",
+      "linkedControlId": "CTRL-E2E-9638",
+      "title": "Deploy Hotfix Patch v7.2.4 across Regional Shards",
+      "description": "Rolling deployment with zero downtime during off-peak window.",
+      "assignedOwnerName": "Sunny Prasad",
+      "priority": "High",
+      "status": "In Progress",
+      "progressPct": 60,
+      "createdAt": "2026-10-09",
+      "lastUpdated": "Just now"
+    },
+    {
       "riskId": "RSK-201",
       "riskTitle": "Payment Gateway Key Exhaustion",
       "linkedControlId": "CTRL-106",
@@ -761,6 +815,32 @@
     }
   ],
   "evidence": [
+    {
+      "id": "EVD-106",
+      "fileName": "Redis_CVE_Patch_Verification_Log.pdf",
+      "fileType": "application/pdf",
+      "fileSize": 1450000,
+      "fileUrl": "/uploads/evidence/EVD-E2E-1506_log.pdf",
+      "linkedRiskId": "RSK-E2E-0528",
+      "linkedControlId": "CTRL-E2E-1427",
+      "uploadedBy": "Sunny Prasad",
+      "verificationStatus": "Verified",
+      "checksum": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uploadTimestamp": "2026-10-09T15:34:11.527Z"
+    },
+    {
+      "id": "EVD-105",
+      "fileName": "Redis_CVE_Patch_Verification_Log.pdf",
+      "fileType": "application/pdf",
+      "fileSize": 1450000,
+      "fileUrl": "/uploads/evidence/EVD-E2E-9796_log.pdf",
+      "linkedRiskId": "RSK-E2E-8435",
+      "linkedControlId": "CTRL-E2E-9638",
+      "uploadedBy": "Sunny Prasad",
+      "verificationStatus": "Verified",
+      "checksum": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uploadTimestamp": "2026-10-09T15:33:39.838Z"
+    },
     {
       "fileName": "HSM_Key_Cycling_FIPS_140_3_Validation.pdf",
       "fileType": "application/pdf",
@@ -917,6 +997,32 @@
     }
   ],
   "approvals": [
+    {
+      "id": "APP-104",
+      "riskId": "RSK-E2E-0528",
+      "riskTitle": "Automated E2E Test: Redis Cluster Zero-Day Exploitation",
+      "type": "Risk Acceptance",
+      "requestedBy": "Sunny Prasad (Business Operations Intern & Risk Lead)",
+      "approverName": "Yash Raj (Operations Lead)",
+      "residualScore": 6,
+      "reason": "Emergency patch applied and control verified. Residual score reduced from 20 to 6.",
+      "status": "Pending",
+      "decisionComments": "Approved by Yash Raj. Emergency isolation validated.",
+      "createdTimestamp": "2026-10-09T15:34:11.568Z"
+    },
+    {
+      "id": "APP-103",
+      "riskId": "RSK-E2E-8435",
+      "riskTitle": "Automated E2E Test: Redis Cluster Zero-Day Exploitation",
+      "type": "Risk Acceptance",
+      "requestedBy": "Sunny Prasad (Business Operations Intern & Risk Lead)",
+      "approverName": "Yash Raj (Operations Lead)",
+      "residualScore": 6,
+      "reason": "Emergency patch applied and control verified. Residual score reduced from 20 to 6.",
+      "status": "Pending",
+      "decisionComments": "Approved by Yash Raj. Emergency isolation validated.",
+      "createdTimestamp": "2026-10-09T15:33:39.905Z"
+    },
     {
       "riskId": "RSK-201",
       "riskTitle": "Payment Gateway Key Exhaustion",
@@ -1578,5 +1684,6 @@
     "highScoreThreshold": 10,
     "mediumScoreThreshold": 5,
     "riskAppetiteThreshold": 15
-  }
+  },
+  "mitigationActions": []
 }
