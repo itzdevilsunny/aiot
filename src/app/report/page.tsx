@@ -24,7 +24,7 @@ export default function ReportPage() {
   const totalRisks = risks.length;
   const criticalRisks = risks.filter(r => r.severity === 'Critical');
   const highRisks = risks.filter(r => r.severity === 'High');
-  const aboveAppetiteRisks = risks.filter(r => r.aboveAppetite || r.residualScore > workspaceSettings.riskAppetiteThreshold);
+  const aboveAppetiteRisks = risks.filter(r => r.aboveAppetite || ((r.residualScore ?? r.score) > workspaceSettings.riskAppetiteThreshold));
   const now = new Date();
   const overdueActions = actions.filter(a => a.status !== 'Completed' && new Date(a.dueDate) < now);
 

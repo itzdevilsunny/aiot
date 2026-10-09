@@ -46,7 +46,7 @@ export default function DashboardPage() {
   const highCount = filteredRisks.filter(r => r.severity === 'High').length;
   
   // Real database-calculated stats
-  const aboveAppetiteRisks = filteredRisks.filter(r => r.aboveAppetite || r.residualScore > workspaceSettings.riskAppetiteThreshold);
+  const aboveAppetiteRisks = filteredRisks.filter(r => r.aboveAppetite || ((r.residualScore ?? r.score) > workspaceSettings.riskAppetiteThreshold));
   const now = new Date();
   const overdueActionsCount = actions.filter(a => a.status !== 'Completed' && new Date(a.dueDate) < now).length;
   const expiringEvidenceCount = evidence.filter(e => e.validityExpiryDate && new Date(e.validityExpiryDate) < now).length;

@@ -45,3 +45,32 @@ Format: Keep it under 25 words, professional, data-driven.`;
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
+export async function GET() {
+  try {
+    const prompt = `Give a 1-sentence concise enterprise Business Operations executive insight for MNB Research risk portfolio. Keep it under 25 words, professional, data-driven.`;
+    const groqRes = await callGroqAI({
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.3
+    });
+    if (groqRes.success && groqRes.content) {
+      return NextResponse.json({
+        insight: groqRes.content.trim(),
+        provider: `Groq (${groqRes.model})`
+      });
+    }
+    const geminiRes = await callGeminiAI({ prompt, temperature: 0.3 });
+    if (geminiRes.success && geminiRes.content) {
+      return NextResponse.json({
+        insight: geminiRes.content.trim(),
+        provider: `Google Gemini (${geminiRes.model})`
+      });
+    }
+    return NextResponse.json({
+      insight: 'Copilot Telemetry: Risk portfolio within active governance thresholds. Monitor cryptographic key rotation.',
+      provider: 'System Telemetry'
+    });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}

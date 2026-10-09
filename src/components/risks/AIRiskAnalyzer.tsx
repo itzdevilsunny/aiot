@@ -49,7 +49,7 @@ export const AIRiskAnalyzer: React.FC = () => {
   const [editedImp, setEditedImp] = useState<ImpactLevel>(4);
   const [editedMitigation, setEditedMitigation] = useState('');
   const [editedContingency, setEditedContingency] = useState('');
-  const [editedOwner, setEditedOwner] = useState(teamMembers[0].name);
+  const [editedOwner, setEditedOwner] = useState(teamMembers[0]?.name || 'Sunny Prasad');
 
   // Bulk AI state
   const [bulkTopic, setBulkTopic] = useState('Cloud Infrastructure Revamp & Database Migration');
@@ -63,7 +63,7 @@ export const AIRiskAnalyzer: React.FC = () => {
   const [manualCategory, setManualCategory] = useState<RiskCategory>('Technical');
   const [manualProb, setManualProb] = useState<ProbabilityLevel>(3);
   const [manualImp, setManualImp] = useState<ImpactLevel>(4);
-  const [manualOwner, setManualOwner] = useState(teamMembers[0].name);
+  const [manualOwner, setManualOwner] = useState(teamMembers[0]?.name || 'Sunny Prasad');
   const [manualMitigation, setManualMitigation] = useState('');
   const [manualContingency, setManualContingency] = useState('');
   const [manualDueDate, setManualDueDate] = useState('');
@@ -196,13 +196,13 @@ export const AIRiskAnalyzer: React.FC = () => {
     addToast('Gemini AI Synthesis Complete', `Quantified 5x5 threat matrix with ${finalRes.aiConfidence}% confidence.`, 'success');
   };
 
-  const handleSaveSingleToRegister = () => {
+  const handleSaveSingleToRegister = async () => {
     if (!result) return;
 
     const ownerObj = teamMembers.find(m => m.name === editedOwner) || teamMembers[0];
     const projectObj = projects.find(p => p.id === selectedProjectId) || projects[0];
 
-    const newRisk = addRisk({
+    const newRisk = await addRisk({
       title: editedTitle,
       description: promptText,
       category: editedCategory,
@@ -388,14 +388,14 @@ export const AIRiskAnalyzer: React.FC = () => {
     setGeneratedBulkRisks(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleManualSubmit = (e: React.FormEvent) => {
+  const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualTitle.trim()) return;
 
     const ownerObj = teamMembers.find(m => m.name === manualOwner) || teamMembers[0];
     const projectObj = projects.find(p => p.id === selectedProjectId) || projects[0];
 
-    const newRisk = addRisk({
+    const newRisk = await addRisk({
       title: manualTitle,
       description: manualDesc || manualTitle,
       category: manualCategory,

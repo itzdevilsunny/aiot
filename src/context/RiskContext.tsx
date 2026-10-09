@@ -18,21 +18,9 @@ import {
   RiskReviewRecord,
   ApprovalRequest,
   AuditLogItem,
-  UserRole
+  UserRole,
+  calculateSeverity
 } from '../types/risk';
-import { 
-  MOCK_RISKS, 
-  MOCK_PROJECTS, 
-  MOCK_TEAM_MEMBERS, 
-  MOCK_CONTROLS, 
-  MOCK_MITIGATION_ACTIONS, 
-  MOCK_EVIDENCE_RECORDS, 
-  MOCK_KRIS, 
-  MOCK_REVIEWS, 
-  MOCK_APPROVALS, 
-  MOCK_AUDIT_LOGS, 
-  calculateSeverity 
-} from '../data/mockData';
 import { analyzeRiskWithAI } from '../lib/api';
 
 export interface ToastNotice {
@@ -160,17 +148,126 @@ function dedupeById<T extends { id?: string }>(items: T[]): T[] {
   return result;
 }
 
+const DEFAULT_USER: TeamMember = {
+  id: 'usr-1',
+  name: 'Sunny Prasad',
+  role: 'Risk Manager',
+  email: 'sunny.prasad@mnbresearch.com',
+  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256',
+  department: 'Business Operations',
+  assignedRisksCount: 4,
+  openRisksCount: 3,
+  criticalRisksCount: 1,
+  mitigationProgress: 75,
+  userRole: 'Risk Manager'
+};
+
+const DEFAULT_PROJECTS: Project[] = [
+  {
+    id: 'proj-1',
+    name: 'AI Implementation',
+    code: 'AI-IMP',
+    description: 'Enterprise generative AI copilot integration for automated document analysis and risk synthesis.',
+    leadName: 'Sunny Prasad (Business Operations Intern)',
+    totalRisks: 5,
+    criticalRisks: 1,
+    mitigationProgress: 75,
+    status: 'On Track',
+    lastUpdated: 'Just now'
+  },
+  {
+    id: 'proj-2',
+    name: 'Client Onboarding',
+    code: 'CL-ONB',
+    description: 'Standardization of enterprise client onboarding workflow and automated SLA verification.',
+    leadName: 'Yash Raj (Operations Lead)',
+    totalRisks: 3,
+    criticalRisks: 1,
+    mitigationProgress: 80,
+    status: 'On Track',
+    lastUpdated: '1 hour ago'
+  },
+  {
+    id: 'proj-3',
+    name: 'Operations Automation',
+    code: 'OPS-AUTO',
+    description: 'Internal business process automation for cross-departmental compliance auditing.',
+    leadName: 'Ritika (Product Manager)',
+    totalRisks: 3,
+    criticalRisks: 1,
+    mitigationProgress: 60,
+    status: 'At Risk',
+    lastUpdated: '2 hours ago'
+  }
+];
+
+const DEFAULT_TEAM: TeamMember[] = [
+  DEFAULT_USER,
+  {
+    id: 'usr-2',
+    name: 'Yash Raj',
+    role: 'Operations Lead',
+    email: 'yash.raj@mnbresearch.com',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
+    department: 'Business Operations',
+    assignedRisksCount: 5,
+    openRisksCount: 3,
+    criticalRisksCount: 1,
+    mitigationProgress: 65,
+    userRole: 'Risk Manager'
+  },
+  {
+    id: 'usr-3',
+    name: 'Ritika',
+    role: 'Product Manager',
+    email: 'ritika@mnbresearch.com',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=200',
+    department: 'Product Strategy',
+    assignedRisksCount: 5,
+    openRisksCount: 2,
+    criticalRisksCount: 1,
+    mitigationProgress: 82,
+    userRole: 'Risk Owner'
+  },
+  {
+    id: 'usr-4',
+    name: 'Sumit',
+    role: 'Resource Manager',
+    email: 'sumit@mnbresearch.com',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200',
+    department: 'Engineering Resource Operations',
+    assignedRisksCount: 4,
+    openRisksCount: 1,
+    criticalRisksCount: 0,
+    mitigationProgress: 90,
+    userRole: 'Approver'
+  },
+  {
+    id: 'usr-5',
+    name: 'Devyash',
+    role: 'Security & Infrastructure Lead',
+    email: 'devyash@mnbresearch.com',
+    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=200',
+    department: 'Enterprise Security',
+    assignedRisksCount: 4,
+    openRisksCount: 1,
+    criticalRisksCount: 1,
+    mitigationProgress: 88,
+    userRole: 'Risk Owner'
+  }
+];
+
 export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [risks, setRisks] = useState<RiskItem[]>(MOCK_RISKS);
-  const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(MOCK_TEAM_MEMBERS);
-  const [controls, setControls] = useState<Control[]>(MOCK_CONTROLS);
-  const [actions, setActions] = useState<MitigationAction[]>(MOCK_MITIGATION_ACTIONS);
-  const [evidence, setEvidence] = useState<EvidenceRecord[]>(MOCK_EVIDENCE_RECORDS);
-  const [kris, setKris] = useState<KeyRiskIndicator[]>(MOCK_KRIS);
-  const [reviews, setReviews] = useState<RiskReviewRecord[]>(MOCK_REVIEWS);
-  const [approvals, setApprovals] = useState<ApprovalRequest[]>(MOCK_APPROVALS);
-  const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>(MOCK_AUDIT_LOGS);
+  const [risks, setRisks] = useState<RiskItem[]>([]);
+  const [projects, setProjects] = useState<Project[]>(DEFAULT_PROJECTS);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(DEFAULT_TEAM);
+  const [controls, setControls] = useState<Control[]>([]);
+  const [actions, setActions] = useState<MitigationAction[]>([]);
+  const [evidence, setEvidence] = useState<EvidenceRecord[]>([]);
+  const [kris, setKris] = useState<KeyRiskIndicator[]>([]);
+  const [reviews, setReviews] = useState<RiskReviewRecord[]>([]);
+  const [approvals, setApprovals] = useState<ApprovalRequest[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
 
   const [selectedProjectId, setSelectedProjectId] = useState<string>('All');
   const [filterState, setFilterState] = useState<FilterState>(initialFilterState);
@@ -199,7 +296,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     slaBreachAutoEscalation: true
   });
 
-  const [currentUser, setCurrentUser] = useState<TeamMember>(MOCK_TEAM_MEMBERS[0]);
+  const [currentUser, setCurrentUser] = useState<TeamMember>(DEFAULT_USER);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
   const [isAuthLoading, setIsAuthLoading] = useState<boolean>(false);
 
@@ -338,16 +435,16 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fallbackRisk: RiskItem = {
       ...input,
       id: localId,
-      inherentProbability: inhProb,
-      inherentImpact: inhImp,
+      inherentProbability: inhProb as ProbabilityLevel,
+      inherentImpact: inhImp as ImpactLevel,
       inherentScore: inhScore,
       inherentSeverity: calculateSeverity(inhScore),
-      residualProbability: input.residualProbability || Math.max(1, inhProb - 1),
-      residualImpact: input.residualImpact || Math.max(1, inhImp - 1),
-      residualScore: (input.residualProbability || Math.max(1, inhProb - 1)) * (input.residualImpact || Math.max(1, inhImp - 1)),
-      residualSeverity: calculateSeverity((input.residualProbability || Math.max(1, inhProb - 1)) * (input.residualImpact || Math.max(1, inhImp - 1))),
-      probability: inhProb,
-      impact: inhImp,
+      residualProbability: (input.residualProbability || Math.max(1, inhProb - 1)) as ProbabilityLevel,
+      residualImpact: (input.residualImpact || Math.max(1, inhImp - 1)) as ImpactLevel,
+      residualScore: ((input.residualProbability || Math.max(1, inhProb - 1)) as number) * ((input.residualImpact || Math.max(1, inhImp - 1)) as number),
+      residualSeverity: calculateSeverity(((input.residualProbability || Math.max(1, inhProb - 1)) as number) * ((input.residualImpact || Math.max(1, inhImp - 1)) as number)),
+      probability: inhProb as ProbabilityLevel,
+      impact: inhImp as ImpactLevel,
       score: inhScore,
       severity: calculateSeverity(inhScore),
       treatmentStrategy: input.treatmentStrategy || 'Mitigate',

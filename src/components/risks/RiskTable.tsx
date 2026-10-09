@@ -92,7 +92,7 @@ export const RiskTable: React.FC<RiskTableProps> = ({ risks }) => {
             <tbody className="divide-y divide-slate-100 text-xs">
               {paginatedRisks.map((risk, idx) => {
                 const isExpanded = expandedId === risk.id;
-                const isAboveAppetite = risk.aboveAppetite || risk.residualScore > workspaceSettings.riskAppetiteThreshold;
+                const isAboveAppetite = risk.aboveAppetite || ((risk.residualScore ?? risk.score) > workspaceSettings.riskAppetiteThreshold);
 
                 const linkedCtrls = controls.filter(c => c.linkedRiskIds?.includes(risk.id));
                 const linkedActs = actions.filter(a => a.riskId === risk.id);

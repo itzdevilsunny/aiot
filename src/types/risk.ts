@@ -12,6 +12,14 @@ export type ProbabilityLevel = 1 | 2 | 3 | 4 | 5; // 1: Very Low, 2: Low, 3: Med
 export type ImpactLevel = 1 | 2 | 3 | 4 | 5;      // 1: Negligible, 2: Minor, 3: Moderate, 4: Major, 5: Catastrophic
 
 export type SeverityLevel = 'Low' | 'Medium' | 'High' | 'Critical';
+
+export const calculateSeverity = (score: number): SeverityLevel => {
+  if (score >= 17) return 'Critical';
+  if (score >= 10) return 'High';
+  if (score >= 5) return 'Medium';
+  return 'Low';
+};
+
 export type StatusLevel = 'Open' | 'Monitoring' | 'Mitigated' | 'Closed';
 export type TreatmentStrategy = 'Mitigate' | 'Accept' | 'Transfer' | 'Avoid' | 'Escalate';
 export type UserRole = 'Admin' | 'Risk Manager' | 'Risk Owner' | 'Approver' | 'Auditor';
@@ -77,16 +85,16 @@ export interface RiskItem {
   affectedProcess?: string;
   
   // Inherent Risk
-  inherentProbability: ProbabilityLevel;
-  inherentImpact: ImpactLevel;
-  inherentScore: number; // inherentProbability * inherentImpact (1..25)
-  inherentSeverity: SeverityLevel;
+  inherentProbability?: ProbabilityLevel;
+  inherentImpact?: ImpactLevel;
+  inherentScore?: number; // inherentProbability * inherentImpact (1..25)
+  inherentSeverity?: SeverityLevel;
 
   // Residual Risk
-  residualProbability: ProbabilityLevel;
-  residualImpact: ImpactLevel;
-  residualScore: number; // residualProbability * residualImpact (1..25)
-  residualSeverity: SeverityLevel;
+  residualProbability?: ProbabilityLevel;
+  residualImpact?: ImpactLevel;
+  residualScore?: number; // residualProbability * residualImpact (1..25)
+  residualSeverity?: SeverityLevel;
 
   // Compatibility fields
   probability: ProbabilityLevel;
@@ -96,8 +104,8 @@ export interface RiskItem {
 
   // Governance & Appetite
   lifecycleStage?: LifecycleStage;
-  treatmentStrategy: TreatmentStrategy;
-  aboveAppetite: boolean;
+  treatmentStrategy?: TreatmentStrategy;
+  aboveAppetite?: boolean;
   acceptanceStatus?: 'None' | 'Requested' | 'Accepted' | 'Rejected' | 'Expired';
   reviewFrequency?: 'Weekly' | 'Monthly' | 'Quarterly' | 'Annual';
   nextReviewDate?: string;

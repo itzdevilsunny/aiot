@@ -27,8 +27,8 @@ export default function LoginPage() {
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      const success = login(emailInput.trim(), passwordInput.trim());
+    setTimeout(async () => {
+      const success = await login(emailInput.trim(), passwordInput.trim());
       setIsLoading(false);
       if (success) {
         router.push('/dashboard');
@@ -40,8 +40,8 @@ export default function LoginPage() {
     setEmailInput(memberEmail);
     setPasswordInput('password123');
     setIsLoading(true);
-    setTimeout(() => {
-      const success = login(memberEmail, 'password123');
+    setTimeout(async () => {
+      const success = await login(memberEmail, 'password123');
       setIsLoading(false);
       if (success) {
         router.push('/dashboard');

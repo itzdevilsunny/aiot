@@ -11,7 +11,9 @@ import {
   RiskReviewRecord, 
   ApprovalRequest, 
   AuditLogItem,
-  SeverityLevel
+  SeverityLevel,
+  ProbabilityLevel,
+  ImpactLevel
 } from '../../types/risk';
 import {
   MOCK_RISKS,
@@ -292,13 +294,13 @@ export function updateRisk(id: string, updates: Partial<RiskItem>, authorName?: 
 
   const oldRisk = db.risks[index];
   
-  let inhProb = updates.inherentProbability ?? updates.probability ?? oldRisk.inherentProbability;
-  let inhImp = updates.inherentImpact ?? updates.impact ?? oldRisk.inherentImpact;
+  let inhProb = (updates.inherentProbability ?? updates.probability ?? oldRisk.inherentProbability ?? oldRisk.probability ?? 3) as ProbabilityLevel;
+  let inhImp = (updates.inherentImpact ?? updates.impact ?? oldRisk.inherentImpact ?? oldRisk.impact ?? 3) as ImpactLevel;
   let inhScore = inhProb * inhImp;
   let inhSev = calculateSeverity(inhScore);
 
-  let resProb = updates.residualProbability ?? oldRisk.residualProbability;
-  let resImp = updates.residualImpact ?? oldRisk.residualImpact;
+  let resProb = (updates.residualProbability ?? oldRisk.residualProbability ?? Math.max(1, inhProb - 1)) as ProbabilityLevel;
+  let resImp = (updates.residualImpact ?? oldRisk.residualImpact ?? Math.max(1, inhImp - 1)) as ImpactLevel;
   let resScore = resProb * resImp;
   let resSev = calculateSeverity(resScore);
 
