@@ -77,11 +77,11 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
   const [compensatingControls, setCompensatingControls] = useState('Increased audit logging and weekly operational monitoring.');
 
   // Linked Entities
-  const linkedControls = controls.filter(c => c.linkedRiskIds.includes(risk.id));
-  const linkedActions = actions.filter(a => a.riskId === risk.id);
-  const linkedEvidence = evidence.filter(e => e.linkedRiskIds.includes(risk.id));
-  const linkedApprovals = approvals.filter(a => a.riskId === risk.id);
-  const latestApproval = linkedApprovals[linkedApprovals.length - 1];
+  const linkedControls = (controls || []).filter(c => c?.linkedRiskIds?.includes(risk.id) || (c as any)?.linkedRiskId === risk.id);
+  const linkedActions = (actions || []).filter(a => a?.riskId === risk.id || (a as any)?.linkedRiskId === risk.id);
+  const linkedEvidence = (evidence || []).filter(e => e?.linkedRiskId === risk.id || (e as any)?.linkedRiskIds?.includes(risk.id));
+  const linkedApprovals = (approvals || []).filter(a => a?.riskId === risk.id);
+  const latestApproval = linkedApprovals.length > 0 ? linkedApprovals[linkedApprovals.length - 1] : undefined;
 
   const inherentScore = risk.inherentScore || (risk.probability * risk.impact);
   const residualScore = risk.residualScore || risk.score;
@@ -161,10 +161,11 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
     createApprovalRequest({
       riskId: risk.id,
       riskTitle: risk.title,
+      type: 'Risk Acceptance',
       requestedBy: currentUser.name,
-      requesterEmail: currentUser.email,
-      reason: approvalReason,
-      compensatingControls: compensatingControls,
+      approverName: 'Chief Risk Officer',
+      residualScore: residualScore,
+      reason: `${approvalReason} | Compensating Controls: ${compensatingControls}`,
       expiryDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     });
     setIsApprovalModalOpen(false);
@@ -518,7 +519,7 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
                 {linkedControls.map(c => (
                   <div key={c.id} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
                     <div className="flex items-center justify-between">
-                      <span className="font-mono text-[10px] font-bold text-indigo-700">{c.code}</span>
+                      <span className="font-mono text-[10px] font-bold text-indigo-700">{c.id}</span>
                       <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
                         c.testStatus === 'Passed' ? 'bg-emerald-100 text-emerald-800' :
                         c.testStatus === 'Failed' ? 'bg-red-100 text-red-800' : 'bg-slate-200 text-slate-700'
@@ -526,9 +527,9 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
                         {c.testStatus}
                       </span>
                     </div>
-                    <div className="font-bold text-slate-900 mt-1 truncate">{c.title}</div>
+                    <div className="font-bold text-slate-900 mt-1 truncate">{c.name}</div>
                     <div className="text-[10px] text-slate-500 mt-0.5">
-                      {c.type} • {c.effectiveness} Effectiveness
+                      {c.type} • {c.effectiveness}
                     </div>
                   </div>
                 ))}
@@ -557,10 +558,10 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
                   <div key={a.id} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-slate-900 truncate">{a.title}</span>
-                      <span className="font-mono text-[10px] font-extrabold text-indigo-700">{a.progress}%</span>
+                      <span className="font-mono text-[10px] font-extrabold text-indigo-700">{a.progressPct}%</span>
                     </div>
                     <div className="text-[10px] text-slate-500 mt-1 flex items-center justify-between">
-                      <span>Owner: {a.assigneeName}</span>
+                      <span>Owner: {a.assignedOwnerName}</span>
                       <span>Due: {a.dueDate}</span>
                     </div>
                   </div>
@@ -588,7 +589,7 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
               <div className="space-y-2">
                 {linkedEvidence.map(e => (
                   <div key={e.id} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
-                    <div className="font-bold text-slate-900 truncate">{e.title}</div>
+                    <div className="font-bold text-slate-900 truncate">{e.description || e.fileName}</div>
                     <div className="text-[10px] text-slate-500 mt-1 flex items-center justify-between">
                       <span>{e.fileName}</span>
                       <span className="text-emerald-600 font-semibold">{e.verificationStatus}</span>
