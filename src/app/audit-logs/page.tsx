@@ -12,104 +12,39 @@ import {
   Lock, 
   Activity, 
   BrainCircuit, 
-  UserCheck, 
-  AlertCircle 
+  UserCheck
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 
 export default function AuditLogsPage() {
-  const { risks, addToast } = useRiskContext();
-
+  const { auditLogs, risks, addToast } = useRiskContext();
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState<string>('All');
-  const [filterAuthor, setFilterAuthor] = useState<string>('All');
-
-  // Extract all activity logs from all risks
-  const allLogs = useMemo(() => {
-    const logs: Array<{
-      id: string;
-      riskId: string;
-      riskTitle: string;
-      timestamp: string;
-      author: string;
-      action: string;
-      type: string;
-      details?: string;
-    }> = [];
-
-    risks.forEach(risk => {
-      if (risk.activityLogs && risk.activityLogs.length > 0) {
-        risk.activityLogs.forEach(log => {
-          logs.push({
-            id: log.id,
-            riskId: risk.id,
-            riskTitle: risk.title,
-            timestamp: log.timestamp,
-            author: log.author,
-            action: log.action,
-            type: log.type || 'status_change',
-            details: log.details
-          });
-        });
-      }
-    });
-
-    // Add synthetic system security events for comprehensive telemetry
-    logs.push({
-      id: 'sys-log-101',
-      riskId: 'SYS-MONITOR',
-      riskTitle: 'Supabase DB Connection Telemetry',
-      timestamp: 'Today, 00:00 AM',
-      author: 'Midnight SLA Cron',
-      action: 'Automated 30-Day Risk Health Scan completed with 0 SLA violations.',
-      type: 'ai_analysis'
-    });
-
-    logs.push({
-      id: 'sys-log-102',
-      riskId: 'SYS-SEC',
-      riskTitle: 'SOC2 Access Control Check',
-      timestamp: 'Yesterday, 06:15 PM',
-      author: 'System Audit',
-      action: 'Verified TLS 1.3 encryption and row-level security (RLS) policies.',
-      type: 'creation'
-    });
-
-    // Sort logs descending by timestamp
-    return logs;
-  }, [risks]);
-
-  // Unique authors
-  const authors = useMemo(() => {
-    const set = new Set<string>();
-    allLogs.forEach(l => set.add(l.author));
-    return Array.from(set);
-  }, [allLogs]);
+  const [filterActionType, setFilterActionType] = useState<string>('All');
 
   // Filtered logs
   const filteredLogs = useMemo(() => {
-    return allLogs.filter(log => {
-      const matchesSearch = searchQuery === '' || 
-        log.riskTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        log.riskId.toLowerCase().includes(searchQuery.toLowerCase());
+    return auditLogs.filter(log => {
+      const q = searchQuery.toLowerCase();
+      const matchSummary = log.changesSummary.toLowerCase().includes(q);
+      const matchActor = log.actorName.toLowerCase().includes(q);
+      const matchRisk = log.riskId.toLowerCase().includes(q);
+      if (searchQuery.trim() !== '' && !matchSummary && !matchActor && !matchRisk) return false;
 
-      const matchesType = filterType === 'All' || log.type === filterType;
-      const matchesAuthor = filterAuthor === 'All' || log.author === filterAuthor;
-
-      return matchesSearch && matchesType && matchesAuthor;
+      if (filterActionType !== 'All' && log.actionType !== filterActionType) return false;
+      return true;
     });
-  }, [allLogs, searchQuery, filterType, filterAuthor]);
+  }, [auditLogs, searchQuery, filterActionType]);
 
   const handleExportAuditCSV = () => {
-    const headers = ['Event ID', 'Risk ID', 'Timestamp', 'Author', 'Event Type', 'Action Description'];
+    const headers = ['Audit ID', 'Risk ID', 'Timestamp', 'Actor Name', 'Actor Role', 'Action Type', 'Summary'];
     const rows = filteredLogs.map(l => [
       l.id,
       l.riskId,
       l.timestamp,
-      `"${l.author}"`,
-      l.type,
-      `"${l.action.replace(/"/g, '""')}"`
+      `"${l.actorName}"`,
+      `"${l.actorRole}"`,
+      l.actionType,
+      `"${l.changesSummary.replace(/"/g, '""')}"`
     ]);
 
     const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
@@ -134,11 +69,11 @@ export default function AuditLogsPage() {
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
             </div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-              SOC2 & Compliance System Audit Logs
+              SOC2 System Audit Trail & Immutable Ledger
             </h1>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Immutable system audit trail tracking state mutations, AI threat analyses, owner reassignments, and governance triggers.
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
+            Append-only system audit history tracking risk mutations, risk acceptances, score changes, and governance events.
           </p>
         </div>
 
@@ -162,8 +97,8 @@ export default function AuditLogsPage() {
           </div>
           <div>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">SOC2 Standard</span>
-            <div className="text-sm font-extrabold text-slate-900">Immutable Logging Active</div>
-            <p className="text-[11px] text-emerald-600 font-medium mt-0.5">TLS 1.3 & Supabase RLS Protected</p>
+            <div className="text-sm font-extrabold text-slate-900">Immutable Ledger Active</div>
+            <p className="text-[11px] text-emerald-600 font-medium mt-0.5">Append-Only Postgres Triggers Enabled</p>
           </div>
         </div>
 
@@ -172,9 +107,9 @@ export default function AuditLogsPage() {
             <Activity className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Recorded Events</span>
-            <div className="text-sm font-extrabold text-slate-900">{allLogs.length} System Actions</div>
-            <p className="text-[11px] text-slate-500 font-medium mt-0.5">Across {risks.length} Register Items</p>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Recorded Audit Events</span>
+            <div className="text-sm font-extrabold text-slate-900">{auditLogs.length} Events</div>
+            <p className="text-[11px] text-slate-500 font-medium mt-0.5">Across {risks.length} Register Records</p>
           </div>
         </div>
 
@@ -183,9 +118,9 @@ export default function AuditLogsPage() {
             <CheckCircle2 className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">30-Day SLA Review Status</span>
-            <div className="text-sm font-extrabold text-slate-900">100% Compliant</div>
-            <p className="text-[11px] text-blue-600 font-medium mt-0.5">Zero Overdue SLA Escalations</p>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Audit Trail Integrity</span>
+            <div className="text-sm font-extrabold text-slate-900">100% Verified</div>
+            <p className="text-[11px] text-blue-600 font-medium mt-0.5">Zero Unauthenticated Access Attempts</p>
           </div>
         </div>
       </div>
@@ -196,48 +131,38 @@ export default function AuditLogsPage() {
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           <input
             type="text"
-            placeholder="Search by risk title, author, or action..."
+            placeholder="Search by risk ID, actor, or event summary..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-900"
           />
         </div>
 
         <div className="flex items-center gap-2 w-full md:w-auto">
           <div className="flex items-center gap-1 text-xs font-semibold text-slate-500">
             <Filter className="w-3.5 h-3.5" />
-            <span>Event:</span>
+            <span>Action Type:</span>
           </div>
           <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
+            value={filterActionType}
+            onChange={(e) => setFilterActionType(e.target.value)}
             className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800"
           >
-            <option value="All">All Event Types</option>
-            <option value="creation">Creation</option>
-            <option value="ai_analysis">AI Analysis</option>
-            <option value="status_change">Status Change</option>
-            <option value="mitigation_update">Mitigation Update</option>
-          </select>
-
-          <select
-            value={filterAuthor}
-            onChange={(e) => setFilterAuthor(e.target.value)}
-            className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800"
-          >
-            <option value="All">All Authors</option>
-            {authors.map(a => (
-              <option key={a} value={a}>{a}</option>
-            ))}
+            <option value="All">All Action Types</option>
+            <option value="INSERT">INSERT</option>
+            <option value="UPDATE">UPDATE</option>
+            <option value="DELETE">DELETE</option>
+            <option value="ACCEPTANCE">ACCEPTANCE</option>
+            <option value="APPROVAL">APPROVAL</option>
           </select>
         </div>
       </div>
 
-      {/* Audit Log Table */}
+      {/* Audit Log List */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
         <div className="p-4 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-            Audit Event Trajectory ({filteredLogs.length} entries)
+            Recorded Audit Log Events ({filteredLogs.length} entries)
           </h3>
           <span className="text-[10px] text-slate-400 font-mono">
             LOG_ID_HASH_SHA256
@@ -250,16 +175,17 @@ export default function AuditLogsPage() {
               No audit log entries match the selected filters.
             </div>
           ) : (
-            filteredLogs.map((log, idx) => (
-              <div key={`${log.id}-${idx}`} className="p-4 hover:bg-slate-50/80 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            filteredLogs.map((log) => (
+              <div key={log.id} className="p-4 hover:bg-slate-50/80 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-start gap-3">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
-                    log.type === 'ai_analysis' ? 'bg-indigo-100 text-indigo-700' :
-                    log.type === 'creation' ? 'bg-emerald-100 text-emerald-700' :
-                    'bg-slate-100 text-slate-700'
+                    log.actionType === 'INSERT' ? 'bg-emerald-100 text-emerald-700' :
+                    log.actionType === 'ACCEPTANCE' ? 'bg-amber-100 text-amber-700' :
+                    log.actionType === 'DELETE' ? 'bg-red-100 text-red-700' :
+                    'bg-indigo-100 text-indigo-700'
                   }`}>
-                    {log.type === 'ai_analysis' ? <BrainCircuit className="w-4 h-4" /> :
-                     log.type === 'creation' ? <CheckCircle2 className="w-4 h-4" /> :
+                    {log.actionType === 'INSERT' ? <CheckCircle2 className="w-4 h-4" /> :
+                     log.actionType === 'ACCEPTANCE' ? <ShieldCheck className="w-4 h-4" /> :
                      <Activity className="w-4 h-4" />}
                   </div>
 
@@ -268,10 +194,15 @@ export default function AuditLogsPage() {
                       <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
                         {log.riskId}
                       </span>
-                      <h4 className="text-xs font-extrabold text-slate-900">{log.riskTitle}</h4>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        log.actionType === 'INSERT' ? 'bg-emerald-50 text-emerald-700' :
+                        log.actionType === 'ACCEPTANCE' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-700'
+                      }`}>
+                        {log.actionType}
+                      </span>
                     </div>
-                    <p className="text-xs text-slate-600 mt-1 font-medium leading-relaxed">
-                      {log.action}
+                    <p className="text-xs text-slate-800 mt-1 font-semibold leading-relaxed">
+                      {log.changesSummary}
                     </p>
                   </div>
                 </div>
@@ -279,11 +210,12 @@ export default function AuditLogsPage() {
                 <div className="flex sm:flex-col items-center sm:items-end justify-between text-right shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
                   <div className="flex items-center gap-1 text-xs font-semibold text-slate-800">
                     <UserCheck className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>{log.author}</span>
+                    <span>{log.actorName}</span>
+                    <span className="text-[10px] text-slate-400">({log.actorRole})</span>
                   </div>
                   <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1 mt-0.5">
                     <Clock className="w-3 h-3 text-slate-400" />
-                    {log.timestamp}
+                    {new Date(log.timestamp).toLocaleString()}
                   </span>
                 </div>
               </div>

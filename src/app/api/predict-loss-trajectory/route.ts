@@ -21,7 +21,7 @@ ${JSON.stringify(activeRisks.map((r: any) => ({
   category: r.category,
   severity: r.severity,
   score: r.score,
-  estimatedImpactUsd: r.estimatedImpactUsd || (r.score * 25000)
+  estimatedImpactUsd: r.estimatedImpactUsd || (r.score * 2500)
 })), null, 2)}
 
 Provide a strict JSON response with:
@@ -92,8 +92,8 @@ Respond ONLY with valid JSON.`;
       }
     }
 
-    // Tier 3: High-Precision Smart Dynamic Engine
-    const baselineExposure = activeRisks.reduce((acc: number, r: any) => acc + (r.estimatedImpactUsd || (r.score * 25000)), 0);
+    // Tier 3: Deterministic High-Precision Dynamic Engine
+    const baselineExposure = activeRisks.reduce((acc: number, r: any) => acc + (r.estimatedImpactUsd || (r.score * 2500)), 0);
     const v = Number(velocity) || 3;
 
     const months = ['Month 1', 'Month 2', 'Month 3', 'Month 4', 'Month 5', 'Month 6', 'Month 7', 'Month 8', 'Month 9', 'Month 10', 'Month 11', 'Month 12'];
@@ -106,7 +106,7 @@ Respond ONLY with valid JSON.`;
 
     const categoryTotals: Record<string, number> = {};
     activeRisks.forEach((r: any) => {
-      categoryTotals[r.category] = (categoryTotals[r.category] || 0) + (r.estimatedImpactUsd || (r.score * 25000));
+      categoryTotals[r.category] = (categoryTotals[r.category] || 0) + (r.estimatedImpactUsd || (r.score * 2500));
     });
 
     const categoryRadar = Object.entries(categoryTotals).map(([cat, total]) => ({

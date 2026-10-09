@@ -13,6 +13,8 @@ export type ImpactLevel = 1 | 2 | 3 | 4 | 5;      // 1: Negligible, 2: Minor, 3:
 
 export type SeverityLevel = 'Low' | 'Medium' | 'High' | 'Critical';
 export type StatusLevel = 'Open' | 'Monitoring' | 'Mitigated' | 'Closed';
+export type TreatmentStrategy = 'Mitigate' | 'Accept' | 'Transfer' | 'Avoid' | 'Escalate';
+export type UserRole = 'Admin' | 'Risk Manager' | 'Risk Owner' | 'Approver' | 'Auditor';
 
 export interface ActionChecklistItem {
   id: string;
@@ -29,18 +31,43 @@ export interface ActivityLog {
   avatar?: string;
   action: string;
   details?: string;
-  type: 'creation' | 'ai_analysis' | 'status_change' | 'mitigation_update' | 'owner_assignment';
+  type: 'creation' | 'ai_analysis' | 'status_change' | 'mitigation_update' | 'owner_assignment' | 'approval' | 'acceptance';
 }
 
 export interface RiskItem {
-  id: string; // e.g. "RSK-104"
+  id: string; // e.g. "RSK-101"
   title: string;
   description: string;
   category: RiskCategory;
+  subcategory?: string;
+  department?: string;
+  affectedProcess?: string;
+  
+  // Inherent Risk
+  inherentProbability: ProbabilityLevel;
+  inherentImpact: ImpactLevel;
+  inherentScore: number; // inherentProbability * inherentImpact (1..25)
+  inherentSeverity: SeverityLevel;
+
+  // Residual Risk
+  residualProbability: ProbabilityLevel;
+  residualImpact: ImpactLevel;
+  residualScore: number; // residualProbability * residualImpact (1..25)
+  residualSeverity: SeverityLevel;
+
+  // Compatibility fields
   probability: ProbabilityLevel;
   impact: ImpactLevel;
-  score: number; // probability * impact (1..25)
+  score: number;
   severity: SeverityLevel;
+
+  // Governance & Appetite
+  treatmentStrategy: TreatmentStrategy;
+  aboveAppetite: boolean;
+  acceptanceStatus?: 'None' | 'Requested' | 'Accepted' | 'Rejected' | 'Expired';
+  reviewFrequency?: 'Weekly' | 'Monthly' | 'Quarterly' | 'Annual';
+  nextReviewDate?: string;
+
   status: StatusLevel;
   projectId: string; // e.g. "proj-1"
   projectName: string;
@@ -50,17 +77,150 @@ export interface RiskItem {
   ownerAvatar?: string;
   coOwnerName?: string;
   coOwnerRole?: string;
+  
   mitigationPlan: string;
   contingencyPlan: string;
   mitigationProgress: number; // 0..100 %
   dueDate?: string;
+  
   checklist: ActionChecklistItem[];
   activityLogs: ActivityLog[];
+
+  // Connected entity counters & IDs
+  linkedControlIds?: string[];
+  linkedActionIds?: string[];
+  linkedEvidenceIds?: string[];
+  
   aiSuggested?: boolean;
   aiConfidence?: number; // e.g. 94%
   estimatedImpactUsd?: number;
   lastUpdated: string;
   createdAt: string;
+}
+
+export interface Control {
+  id: string; // e.g. "CTRL-101"
+  name: string;
+  description: string;
+  category: string;
+  type: 'Preventive' | 'Detective' | 'Corrective';
+  objective: string;
+  ownerName: string;
+  ownerRole: string;
+  implementationStatus: 'Implemented' | 'In Progress' | 'Planned' | 'Deprecated';
+  effectiveness: 'Effective' | 'Partially Effective' | 'Ineffective';
+  testStatus: 'Passed' | 'Failed' | 'Pending Test';
+  lastTestDate?: string;
+  nextTestDate?: string;
+  linkedRiskIds: string[];
+}
+
+export interface MitigationAction {
+  id: string; // e.g. "ACT-101"
+  riskId: string;
+  riskTitle?: string;
+  title: string;
+  description: string;
+  linkedControlId?: string;
+  assignedOwnerName: string;
+  assignedOwnerRole: string;
+  priority: 'High' | 'Medium' | 'Low';
+  startDate: string;
+  dueDate: string;
+  status: 'Not Started' | 'In Progress' | 'Blocked' | 'Pending Verification' | 'Completed';
+  progressPct: number;
+  completionEvidence?: string;
+  verificationStatus: 'Verified' | 'Pending Verification' | 'Unverified';
+  createdAt: string;
+  lastUpdated: string;
+}
+
+export interface EvidenceRecord {
+  id: string; // e.g. "EVD-101"
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  fileUrl: string;
+  linkedRiskId?: string;
+  linkedControlId?: string;
+  linkedActionId?: string;
+  uploadedBy: string;
+  uploadTimestamp: string;
+  description: string;
+  validityExpiryDate?: string;
+  verificationStatus: 'Verified' | 'Pending' | 'Expired';
+  verifierName?: string;
+}
+
+export interface KRIObservation {
+  id: string;
+  timestamp: string;
+  value: number;
+  recordedBy: string;
+  note?: string;
+}
+
+export interface KeyRiskIndicator {
+  id: string; // e.g. "KRI-101"
+  name: string;
+  description: string;
+  linkedRiskId: string;
+  linkedRiskTitle?: string;
+  linkedControlId?: string;
+  ownerName: string;
+  measurementUnit: string;
+  dataSource: 'Manual Entry' | 'Telemetry Script' | 'System Metric';
+  currentValue: number;
+  warningThreshold: number;
+  criticalThreshold: number;
+  reportingFrequency: 'Daily' | 'Weekly' | 'Monthly' | 'Quarterly';
+  trendDirection: 'Up' | 'Down' | 'Stable';
+  triggerStatus: 'Normal' | 'Warning' | 'Critical';
+  observations: KRIObservation[];
+  lastUpdated: string;
+}
+
+export interface RiskReviewRecord {
+  id: string; // e.g. "REV-101"
+  riskId: string;
+  riskTitle?: string;
+  reviewDate: string;
+  reviewerName: string;
+  reviewerRole: string;
+  previousScore: number;
+  newScore: number;
+  summary: string;
+  findings: string;
+  nextReviewDate: string;
+  status: 'Completed' | 'Pending' | 'Overdue';
+}
+
+export interface ApprovalRequest {
+  id: string; // e.g. "APR-101"
+  riskId: string;
+  riskTitle?: string;
+  type: 'Risk Acceptance' | 'Score Change' | 'Treatment Sign-off';
+  requestedBy: string;
+  approverName: string;
+  residualScore: number;
+  reason: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  decisionComments?: string;
+  expiryDate?: string;
+  createdTimestamp: string;
+  decidedTimestamp?: string;
+}
+
+export interface AuditLogItem {
+  id: string;
+  riskId: string;
+  actorName: string;
+  actorRole: string;
+  actionType: 'INSERT' | 'UPDATE' | 'DELETE' | 'APPROVAL' | 'ACCEPTANCE' | 'IMPORT' | 'EXPORT';
+  changesSummary: string;
+  oldData?: any;
+  newData?: any;
+  timestamp: string;
 }
 
 export interface Project {
@@ -87,6 +247,7 @@ export interface TeamMember {
   openRisksCount: number;
   criticalRisksCount: number;
   mitigationProgress: number;
+  userRole?: UserRole;
 }
 
 export interface FilterState {
@@ -97,7 +258,7 @@ export interface FilterState {
   owner: string;    // 'All' or specific
   department?: string; // 'All' or specific
   projectId: string; // 'All' or specific
-  sortBy: 'score_desc' | 'score_asc' | 'date_desc' | 'title_asc' | 'probability_desc';
+  sortBy: 'score_desc' | 'score_asc' | 'date_desc' | 'title_asc' | 'probability_desc' | 'residual_desc';
 }
 
 export interface AIRiskAnalysisResult {
@@ -108,10 +269,18 @@ export interface AIRiskAnalysisResult {
   impact: ImpactLevel;
   score: number;
   severity: SeverityLevel;
+  inherentProbability?: ProbabilityLevel;
+  inherentImpact?: ImpactLevel;
+  residualProbability?: ProbabilityLevel;
+  residualImpact?: ImpactLevel;
+  treatmentStrategy?: TreatmentStrategy;
   suggestedOwnerName: string;
   suggestedOwnerRole: string;
   mitigationPlan: string;
   contingencyPlan: string;
   aiConfidence: number;
   estimatedImpactUsd: number;
+  suggestedControls?: string[];
+  suggestedActions?: string[];
+  suggestedKRIs?: string[];
 }

@@ -38,12 +38,12 @@ export const PredictiveRiskRadar: React.FC = () => {
 
   const trajectoryData = useMemo(() => {
     const activeRisks = risks.filter(r => r.status !== 'Closed');
-    const totalBaselineExposure = activeRisks.reduce((acc, r) => acc + (r.estimatedImpactUsd || (r.score * 25000)), 0);
+    const totalBaselineExposure = activeRisks.reduce((acc, r) => acc + (r.estimatedImpactUsd || (r.score * 2500)), 0);
 
     const months = ['Month 1', 'Month 2', 'Month 3', 'Month 4', 'Month 5', 'Month 6', 'Month 7', 'Month 8', 'Month 9', 'Month 10', 'Month 11', 'Month 12'];
 
     const monthlyTrajectory = months.map((month, idx) => {
-      // Unmitigated exposure continues to grow slightly (+2% compound risk drift per month)
+      // Unmitigated exposure grows slightly (+2% compound risk drift per month)
       const unmitigated = Math.round(totalBaselineExposure * Math.pow(1.02, idx));
       // Mitigated exposure decreases proportionally with mitigation velocity
       const reductionFactor = Math.max(0, 1 - (idx + 1) * (mitigationVelocity * 0.08));
@@ -59,7 +59,7 @@ export const PredictiveRiskRadar: React.FC = () => {
     // Category Radar distribution
     const categoryTotals: Record<string, number> = {};
     activeRisks.forEach(r => {
-      categoryTotals[r.category] = (categoryTotals[r.category] || 0) + (r.estimatedImpactUsd || (r.score * 25000));
+      categoryTotals[r.category] = (categoryTotals[r.category] || 0) + (r.estimatedImpactUsd || (r.score * 2500));
     });
 
     const radarData = Object.entries(categoryTotals).map(([cat, total]) => ({

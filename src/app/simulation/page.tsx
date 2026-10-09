@@ -7,18 +7,14 @@ import {
   TrendingUp, 
   AlertTriangle, 
   ShieldAlert, 
-  Sparkles, 
   DollarSign, 
   RotateCcw,
-  Activity,
-  CheckCircle2,
-  BrainCircuit,
-  BarChart3,
-  FolderKanban,
-  Download,
-  ShieldCheck,
-  Zap,
-  FileSpreadsheet
+  CheckCircle2, 
+  BrainCircuit, 
+  BarChart3, 
+  FolderKanban, 
+  Zap, 
+  FileSpreadsheet 
 } from 'lucide-react';
 import { 
   XAxis, 
@@ -27,10 +23,7 @@ import {
   Tooltip, 
   ResponsiveContainer, 
   BarChart, 
-  Bar,
-  PieChart,
-  Pie,
-  Cell
+  Bar 
 } from 'recharts';
 import { Button } from '../../components/ui/Button';
 
@@ -46,23 +39,21 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export default function SimulationPage() {
-  const { risks, projects, selectedProjectId, addToast } = useRiskContext();
+  const { risks, projects, addToast } = useRiskContext();
 
   // Filters & Stress Controls
   const [activeProjectFilter, setActiveProjectFilter] = useState<string>('All');
-  const [cyberSpike, setCyberSpike] = useState<number>(0); // 0% to +100%
-  const [financialInflation, setFinancialInflation] = useState<number>(0); // 0% to +50%
-  const [vendorDelayMultiplier, setVendorDelayMultiplier] = useState<number>(1.0); // 1.0x to 2.5x
-  const [simIterations, setSimIterations] = useState<number>(1000); // 1000, 5000, 10000
+  const [cyberSpike, setCyberSpike] = useState<number>(0);
+  const [financialInflation, setFinancialInflation] = useState<number>(0);
+  const [vendorDelayMultiplier, setVendorDelayMultiplier] = useState<number>(1.0);
+  const [simIterations, setSimIterations] = useState<number>(1000);
 
-  // Format currency helper
   const formatUSD = (val: number) => {
     if (val >= 1_000_000) return `$${(val / 1_000_000).toFixed(2)}M`;
     if (val >= 1_000) return `$${(val / 1_000).toFixed(0)}K`;
     return `$${Math.round(val).toLocaleString()}`;
   };
 
-  // Run 100% Live Monte Carlo Stochastic Simulation
   const simulationResults = useMemo(() => {
     const targetRisks = risks.filter(r => {
       if (r.status === 'Closed' || r.status === 'Mitigated') return false;
@@ -79,25 +70,21 @@ export default function SimulationPage() {
       let iterLoss = 0;
 
       activeRiskList.forEach(risk => {
-        // Base probability scaled (1-5 -> 0.15 to 0.85)
-        let prob = risk.probability * 0.17;
+        let prob = (risk.residualProbability || risk.probability) * 0.17;
 
-        // Apply stress multipliers
         if (risk.category === 'Security' || risk.category === 'Technical') {
           prob = Math.min(0.95, prob * (1 + cyberSpike / 100));
         } else if (risk.category === 'Operational' || risk.category === 'External' || risk.category === 'Schedule') {
           prob = Math.min(0.95, prob * vendorDelayMultiplier);
         }
 
-        // Event occurrence check
         if (Math.random() <= prob) {
-          let baseImpact = risk.estimatedImpactUsd || (risk.score * 25000);
+          let baseImpact = risk.estimatedImpactUsd || ((risk.residualScore || risk.score) * 2500);
 
           if (risk.category === 'Financial' || risk.category === 'Compliance' || risk.category === 'Operational') {
             baseImpact *= (1 + financialInflation / 100);
           }
 
-          // Stochastic triangular variation (+/- 25%)
           const variation = (Math.random() + Math.random() - 1) * 0.25;
           const lossValue = Math.max(0, baseImpact * (1 + variation));
 
@@ -117,7 +104,6 @@ export default function SimulationPage() {
     const p99 = losses[Math.floor(losses.length * 0.99)] || 0;
     const maxLoss = losses[losses.length - 1] || 0;
 
-    // Build Histogram (15 buckets)
     const bucketCount = 15;
     const minL = losses[0] || 0;
     const maxL = maxLoss || 100000;
@@ -135,17 +121,9 @@ export default function SimulationPage() {
       });
     }
 
-    // Category Loss Distribution data for Pie Chart
-    const categoryPieData = Object.entries(categoryTotals).map(([cat, total]) => ({
-      name: cat,
-      value: Math.round(total / simIterations),
-      color: CATEGORY_COLORS[cat] || '#64748b'
-    })).sort((a, b) => b.value - a.value);
-
-    // Top 5 Contributing Risks to VaR
     const topContributors = activeRiskList.map(r => {
-      const impact = r.estimatedImpactUsd || (r.score * 25000);
-      const expectedExp = r.probability * 0.2 * impact;
+      const impact = r.estimatedImpactUsd || ((r.residualScore || r.score) * 2500);
+      const expectedExp = (r.residualProbability || r.probability) * 0.2 * impact;
       return {
         ...r,
         expectedExp
@@ -160,7 +138,6 @@ export default function SimulationPage() {
       p99,
       maxLoss,
       histogram,
-      categoryPieData,
       topContributors,
       contingencyReserve: p90 * 1.15
     };
@@ -303,8 +280,8 @@ export default function SimulationPage() {
           <div className="text-2xl font-black text-amber-900 mt-2 font-mono">
             {formatUSD(simulationResults.p90)}
           </div>
-          <p className="text-[11px] text-amber-600 mt-1 flex items-center gap-1">
-            <span>90th percentile worst-case risk exposure</span>
+          <p className="text-[11px] text-amber-600 mt-1">
+            90th percentile worst-case risk exposure
           </p>
         </div>
 
@@ -325,7 +302,7 @@ export default function SimulationPage() {
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">P99 Black Swan Extreme</span>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">P99 Tail Risk Extreme</span>
             <div className="w-7 h-7 rounded-lg bg-red-50 text-red-600 flex items-center justify-center font-bold">
               <ShieldAlert className="w-4 h-4" />
             </div>
@@ -341,7 +318,6 @@ export default function SimulationPage() {
 
       {/* Main Grid: Stress Controls + Live Histogram Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
         {/* Stress Controls Panel */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-6">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -354,7 +330,6 @@ export default function SimulationPage() {
             </span>
           </div>
 
-          {/* Slider 1: Cyber Spike */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
@@ -374,12 +349,8 @@ export default function SimulationPage() {
               onChange={e => setCyberSpike(Number(e.target.value))}
               className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600"
             />
-            <p className="text-[11px] text-slate-500">
-              Increases probability of security & IT infrastructure threats.
-            </p>
           </div>
 
-          {/* Slider 2: Inflation */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
@@ -399,17 +370,13 @@ export default function SimulationPage() {
               onChange={e => setFinancialInflation(Number(e.target.value))}
               className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-emerald-600"
             />
-            <p className="text-[11px] text-slate-500">
-              Escalates financial & operational damage per risk event.
-            </p>
           </div>
 
-          {/* Slider 3: Vendor Delay */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                 <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-                Vendor & Third-Party Delay Index
+                Vendor Delay Multiplier
               </label>
               <span className="text-xs font-extrabold text-amber-600 bg-amber-50 px-2 py-0.5 rounded">
                 {vendorDelayMultiplier.toFixed(1)}x
@@ -424,12 +391,8 @@ export default function SimulationPage() {
               onChange={e => setVendorDelayMultiplier(Number(e.target.value))}
               className="w-full bg-slate-100 rounded-lg appearance-none cursor-pointer accent-amber-600 h-2"
             />
-            <p className="text-[11px] text-slate-500">
-              Multiplies failure probability across operational dependencies.
-            </p>
           </div>
 
-          {/* AI Guidance Box */}
           <div className="p-3.5 rounded-xl bg-gradient-to-br from-indigo-900 to-slate-900 text-white space-y-2">
             <div className="flex items-center gap-2">
               <BrainCircuit className="w-4 h-4 text-emerald-400" />
@@ -461,48 +424,23 @@ export default function SimulationPage() {
                 Frequency histogram of simulated financial outcomes over {simIterations.toLocaleString()} iterations.
               </p>
             </div>
-
-            <div className="flex items-center gap-3 text-[11px] font-semibold text-slate-600">
-              <span className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
-                Iteration Frequency
-              </span>
-            </div>
           </div>
 
           <div className="h-[320px] w-full pt-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={simulationResults.histogram} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis 
-                  dataKey="rangeLabel" 
-                  tick={{ fontSize: 10, fill: '#64748b' }} 
-                  axisLine={{ stroke: '#cbd5e1' }}
-                />
-                <YAxis 
-                  tick={{ fontSize: 10, fill: '#64748b' }} 
-                  axisLine={{ stroke: '#cbd5e1' }}
-                />
+                <XAxis dataKey="rangeLabel" tick={{ fontSize: 10, fill: '#64748b' }} axisLine={{ stroke: '#cbd5e1' }} />
+                <YAxis tick={{ fontSize: 10, fill: '#64748b' }} axisLine={{ stroke: '#cbd5e1' }} />
                 <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#0f172a', 
-                    borderRadius: '8px', 
-                    color: '#fff', 
-                    fontSize: '11px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    border: 'none'
-                  }}
-                  formatter={(value: any) => [
-                    `${value} simulation runs`,
-                    'Frequency'
-                  ]}
+                  contentStyle={{ backgroundColor: '#0f172a', borderRadius: '8px', color: '#fff', fontSize: '11px', border: 'none' }}
+                  formatter={(value: any) => [`${value} simulation runs`, 'Frequency']}
                 />
                 <Bar dataKey="frequency" fill="#6366f1" radius={[4, 4, 0, 0]} name="frequency" />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
-
       </div>
 
       {/* Top 5 Risk Exposure Contributors Table */}

@@ -24,7 +24,12 @@ import {
   DollarSign,
   TrendingUp,
   Network,
-  Lock
+  Lock,
+  FileCheck,
+  CheckSquare,
+  FileText,
+  Clock,
+  ClipboardList
 } from 'lucide-react';
 import { useRiskContext } from '../../context/RiskContext';
 
@@ -36,12 +41,14 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseMobile }) => {
   const pathname = usePathname();
   const router = useRouter();
-  const { risks, currentUser, teamMembers, login, logout } = useRiskContext();
+  const { risks, controls, actions, evidence, kris, approvals, currentUser, teamMembers, login, logout } = useRiskContext();
 
   const [showUserDropdown, setShowUserDropdown] = useState(false);
 
   const openRisksCount = risks.filter(r => r.status === 'Open').length;
   const criticalCount = risks.filter(r => r.severity === 'Critical').length;
+  const pendingApprovalsCount = approvals.filter(a => a.status === 'Pending').length;
+  const overdueActionsCount = actions.filter(a => a.status !== 'Completed' && new Date(a.dueDate) < new Date()).length;
 
   const overviewNav = [
     { label: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -50,15 +57,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
   const riskManagementNav = [
     { label: 'Risk Register', href: '/register', icon: ShieldAlert, badge: openRisksCount },
     { label: 'My Risks', href: '/my-risks', icon: UserCheck, badge: criticalCount ? `${criticalCount} crit` : undefined },
+    { label: 'Controls', href: '/controls', icon: ShieldCheck, badge: controls.length },
+    { label: 'Mitigation Actions', href: '/actions', icon: CheckSquare, badge: overdueActionsCount ? `${overdueActionsCount} overdue` : undefined },
+    { label: 'Evidence Library', href: '/evidence', icon: FileText, badge: evidence.length },
+    { label: 'KRI Telemetry', href: '/kri', icon: Gauge, badge: kris.length },
+    { label: 'Reviews & Approvals', href: '/approvals', icon: Clock, badge: pendingApprovalsCount ? `${pendingApprovalsCount} req` : undefined },
     { label: 'Projects', href: '/projects', icon: FolderKanban },
-    { label: 'Analytics', href: '/analytics', icon: BarChart3 },
-    { label: 'Compliance Matrix', href: '/compliance', icon: ShieldCheck },
-    { label: 'Cyber Threat Surface', href: '/threat-surface', icon: Lock },
-    { label: 'KRI Telemetry', href: '/kri', icon: Gauge },
-    { label: 'Mitigation ROI Optimizer', href: '/roi', icon: DollarSign },
-    { label: 'Predictive Threat Radar', href: '/radar', icon: TrendingUp },
-    { label: 'Cascading Threat Graph', href: '/cascade', icon: Network },
-    { label: 'Monte Carlo Stress Test', href: '/simulation', icon: SlidersHorizontal },
+    { label: 'Analytics & Heatmap', href: '/analytics', icon: BarChart3 },
+    { label: 'Compliance Matrix', href: '/compliance', icon: FileCheck },
+  ];
+
+  const intelligenceNav = [
+    { label: 'Predictive Radar', href: '/radar', icon: TrendingUp },
+    { label: 'Monte Carlo Engine', href: '/simulation', icon: SlidersHorizontal },
+    { label: 'Threat Surface', href: '/threat-surface', icon: ShieldAlert },
+    { label: 'Cascade Propagation', href: '/cascade', icon: Network },
   ];
 
   const workspaceNav = [
@@ -67,8 +80,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
 
   const systemNav = [
     { label: 'Executive Report', href: '/report', icon: Printer },
-    { label: 'Blockchain Ledger', href: '/audit-ledger', icon: Lock, badge: 'On-Chain' },
-    { label: 'Audit Logs', href: '/audit-logs', icon: ShieldCheck },
+    { label: 'Audit Trail / Logs', href: '/audit-logs', icon: ClipboardList },
     { label: 'Settings', href: '/settings', icon: Settings },
   ];
 
@@ -95,11 +107,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
           <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
             isActive 
               ? 'bg-white/20 text-white' 
-              : item.label === 'Blockchain Ledger'
-                ? 'bg-emerald-100 text-emerald-800 border border-emerald-200 font-mono'
-                : item.label === 'My Risks' && criticalCount > 0 
-                  ? 'bg-red-100 text-red-700' 
-                  : 'bg-slate-200 text-slate-700'
+              : item.label === 'Mitigation Actions' && overdueActionsCount > 0
+                ? 'bg-red-100 text-red-700 font-bold'
+                : item.label === 'Reviews & Approvals' && pendingApprovalsCount > 0
+                  ? 'bg-amber-100 text-amber-800 border border-amber-200 font-bold'
+                  : item.label === 'My Risks' && criticalCount > 0 
+                    ? 'bg-red-100 text-red-700' 
+                    : 'bg-slate-200 text-slate-700'
           }`}>
             {item.badge}
           </span>
@@ -169,9 +183,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
           </div>
 
           <div>
-            <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Risk Management</h3>
+            <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Risk Operating System</h3>
             <nav className="space-y-1">
               {riskManagementNav.map(renderNavLink)}
+            </nav>
+          </div>
+
+          <div>
+            <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Simulation & Threats</h3>
+            <nav className="space-y-1">
+              {intelligenceNav.map(renderNavLink)}
             </nav>
           </div>
 
@@ -183,7 +204,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
           </div>
 
           <div>
-            <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">System</h3>
+            <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">System & Audit</h3>
             <nav className="space-y-1">
               {systemNav.map(renderNavLink)}
             </nav>
@@ -196,7 +217,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
             <div className="absolute bottom-16 left-3 right-3 rounded-2xl bg-white border border-slate-200 shadow-popover p-2 z-50 animate-in fade-in-50 zoom-in-95 text-xs">
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 mb-1.5">
                 <div className="font-bold text-slate-900 truncate">{currentUser.name}</div>
-                <div className="text-[10px] text-indigo-600 font-semibold truncate">{currentUser.role}</div>
+                <div className="text-[10px] text-indigo-600 font-semibold truncate">{currentUser.role} ({currentUser.userRole || 'User'})</div>
               </div>
 
               <div className="space-y-1">
