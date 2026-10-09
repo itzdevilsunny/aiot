@@ -120,9 +120,9 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({ risks }) => {
 
           {selectedCellRisks.length > 0 ? (
             <div className="space-y-1.5 max-h-32 overflow-y-auto">
-              {selectedCellRisks.map(r => (
+              {selectedCellRisks.map((r, idx) => (
                 <div 
-                  key={r.id} 
+                  key={`${r.id}-${idx}`} 
                   onClick={() => router.push(`/risk/${r.id}`)}
                   className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200/80 hover:border-indigo-300 text-left cursor-pointer transition-colors"
                 >

@@ -103,11 +103,11 @@ export const RiskDependencyGraph: React.FC = () => {
           </span>
 
           <div className="space-y-1.5 max-h-[320px] overflow-y-auto pr-1">
-            {risks.map(r => {
+            {risks.map((r, idx) => {
               const isSelected = r.id === selectedRiskId;
               return (
                 <div
-                  key={r.id}
+                  key={`${r.id}-${idx}`}
                   onClick={() => setSelectedRiskId(r.id)}
                   className={`p-3 rounded-xl border text-xs cursor-pointer transition-all ${
                     isSelected

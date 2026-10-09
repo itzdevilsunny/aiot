@@ -143,6 +143,23 @@ const initialFilterState: FilterState = {
 
 const RiskContext = createContext<RiskContextType | undefined>(undefined);
 
+function dedupeById<T extends { id?: string }>(items: T[]): T[] {
+  if (!Array.isArray(items)) return [];
+  const seen = new Set<string>();
+  const result: T[] = [];
+  for (const item of items) {
+    if (item && item.id) {
+      if (!seen.has(item.id)) {
+        seen.add(item.id);
+        result.push(item);
+      }
+    } else if (item) {
+      result.push(item);
+    }
+  }
+  return result;
+}
+
 export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [risks, setRisks] = useState<RiskItem[]>(MOCK_RISKS);
   const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
@@ -215,18 +232,18 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ]);
 
         if (risksRes && Array.isArray(risksRes.risks)) {
-          setRisks(risksRes.risks);
+          setRisks(dedupeById(risksRes.risks));
           setSupabaseStatus('⚡ Server DB Connected & Synchronized');
         }
-        if (controlsRes?.controls) setControls(controlsRes.controls);
-        if (actionsRes?.actions) setActions(actionsRes.actions);
-        if (evidenceRes?.evidence) setEvidence(evidenceRes.evidence);
-        if (krisRes?.kris) setKris(krisRes.kris);
-        if (reviewsRes?.reviews) setReviews(reviewsRes.reviews);
-        if (approvalsRes?.approvals) setApprovals(approvalsRes.approvals);
-        if (logsRes?.auditLogs) setAuditLogs(logsRes.auditLogs);
-        if (projectsRes?.projects) setProjects(projectsRes.projects);
-        if (teamRes?.teamMembers) setTeamMembers(teamRes.teamMembers);
+        if (controlsRes?.controls) setControls(dedupeById(controlsRes.controls));
+        if (actionsRes?.actions) setActions(dedupeById(actionsRes.actions));
+        if (evidenceRes?.evidence) setEvidence(dedupeById(evidenceRes.evidence));
+        if (krisRes?.kris) setKris(dedupeById(krisRes.kris));
+        if (reviewsRes?.reviews) setReviews(dedupeById(reviewsRes.reviews));
+        if (approvalsRes?.approvals) setApprovals(dedupeById(approvalsRes.approvals));
+        if (logsRes?.auditLogs) setAuditLogs(dedupeById(logsRes.auditLogs));
+        if (projectsRes?.projects) setProjects(dedupeById(projectsRes.projects));
+        if (teamRes?.teamMembers) setTeamMembers(dedupeById(teamRes.teamMembers));
 
       } catch (err) {
         console.warn('Initial data load notice:', err);

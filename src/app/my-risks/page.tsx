@@ -52,9 +52,9 @@ export default function MyRisksPage() {
 
       {/* Risks Stream */}
       <div className="space-y-3">
-        {myRisks.map(risk => (
+        {myRisks.map((risk, idx) => (
           <div
-            key={risk.id}
+            key={`${risk.id}-${idx}`}
             onClick={() => router.push(`/risk/${risk.id}`)}
             className="p-4 rounded-xl bg-white border border-slate-200/80 hover:border-indigo-300 hover:shadow-subtle transition-all cursor-pointer group"
           >

@@ -459,7 +459,7 @@ export default function SimulationPage() {
 
         <div className="divide-y divide-slate-100">
           {simulationResults.topContributors.map((r, idx) => (
-            <div key={r.id} className="py-3 flex items-center justify-between text-xs gap-4">
+            <div key={`${r.id}-${idx}`} className="py-3 flex items-center justify-between text-xs gap-4">
               <div className="flex items-center gap-3 min-w-0">
                 <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-700 font-extrabold text-[10px] flex items-center justify-center shrink-0">
                   #{idx + 1}

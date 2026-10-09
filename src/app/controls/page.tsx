@@ -271,8 +271,8 @@ export default function ControlsPage() {
                     <td className="px-4 py-4">
                       <div className="flex flex-wrap gap-1">
                         {linkedRisks.length > 0 ? (
-                          linkedRisks.map(r => (
-                            <span key={r.id} className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px] font-mono font-bold text-slate-700">
+                          linkedRisks.map((r, idx) => (
+                            <span key={`${r.id}-${idx}`} className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px] font-mono font-bold text-slate-700">
                               {r.id}
                             </span>
                           ))
@@ -412,8 +412,8 @@ export default function ControlsPage() {
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Link to Active Risks</label>
                 <div className="max-h-32 overflow-y-auto border border-slate-200 rounded-xl p-2 space-y-1.5">
-                  {risks.map(r => (
-                    <label key={r.id} className="flex items-center gap-2 text-[11px] text-slate-800 cursor-pointer">
+                  {risks.map((r, idx) => (
+                    <label key={`${r.id}-${idx}`} className="flex items-center gap-2 text-[11px] text-slate-800 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={selectedRiskIds.includes(r.id)}

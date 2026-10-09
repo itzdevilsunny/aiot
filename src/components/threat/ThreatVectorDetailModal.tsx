@@ -201,8 +201,8 @@ export const ThreatVectorDetailModal: React.FC<ThreatVectorDetailModalProps> = (
               </div>
             ) : (
               <div className="space-y-2">
-                {linkedRisks.map(risk => (
-                  <div key={risk.id} className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-2">
+                {linkedRisks.map((risk, idx) => (
+                  <div key={`${risk.id}-${idx}`} className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="font-mono font-bold text-slate-900 text-xs">{risk.id}</span>

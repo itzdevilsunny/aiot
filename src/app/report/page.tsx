@@ -176,8 +176,8 @@ export default function ReportPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {aboveAppetiteRisks.map(r => (
-                <tr key={r.id} className="align-top">
+              {aboveAppetiteRisks.map((r, idx) => (
+                <tr key={`${r.id}-${idx}`} className="align-top">
                   <td className="py-2.5 pr-2 font-mono font-bold text-slate-900">{r.id}</td>
                   <td className="py-2.5 px-2">
                     <div className="font-bold text-slate-900">{r.title}</div>

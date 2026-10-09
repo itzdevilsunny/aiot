@@ -74,7 +74,7 @@ export const BoardroomPresentationModal: React.FC<BoardroomPresentationModalProp
         <div className="space-y-3 text-xs">
           {criticalRisks.length > 0 ? (
             criticalRisks.slice(0, 4).map((r, idx) => (
-              <div key={r.id} className="p-4 rounded-xl bg-slate-900 border border-red-900/50 flex items-start justify-between gap-4">
+              <div key={`${r.id}-${idx}`} className="p-4 rounded-xl bg-slate-900 border border-red-900/50 flex items-start justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-xs font-bold text-red-400 bg-red-950 px-2.5 py-0.5 rounded">
