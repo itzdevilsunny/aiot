@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { callGroqAI } from '@/lib/groq';
+import { callGeminiAI } from '@/lib/gemini';
 
 export async function POST(req: NextRequest) {
   let bodyData: any = {};
@@ -88,7 +89,53 @@ Return ONLY valid JSON with no markdown formatting.`;
     }
   }
 
-  // 2. High-Precision Smart Dynamic NLP Analysis Engine Fallback
+  // 2. Try Google Gemini Multimodal/Reasoning Engine (Secondary Failover)
+  const geminiResult = await callGeminiAI({
+    systemInstruction,
+    prompt: `Analyze this project risk description:\n"${prompt}"`,
+    jsonMode: true,
+    temperature: 0.2
+  });
+
+  if (geminiResult.success && geminiResult.content) {
+    try {
+      const data = JSON.parse(geminiResult.content);
+      if (data && data.title) {
+        const prob = Math.min(5, Math.max(1, Number(data.probability) || 3));
+        const imp = Math.min(5, Math.max(1, Number(data.impact) || 3));
+        const score = prob * imp;
+
+        let severity = 'Low';
+        if (score >= 17) severity = 'Critical';
+        else if (score >= 10) severity = 'High';
+        else if (score >= 5) severity = 'Medium';
+
+        let ownerName = data.suggestedOwnerName || 'Sunny Prasad';
+        let ownerRole = data.suggestedOwnerRole || 'Business Operations Intern & Risk Lead';
+
+        return NextResponse.json({
+          title: data.title,
+          description: prompt,
+          category: data.category || 'Operational',
+          probability: prob,
+          impact: imp,
+          score,
+          severity,
+          suggestedOwnerName: ownerName,
+          suggestedOwnerRole: ownerRole,
+          mitigationPlan: data.mitigationPlan || 'Conduct technical discovery spike and establish monitoring safeguards.',
+          contingencyPlan: data.contingencyPlan || 'Activate fallback procedure and trigger manual review.',
+          aiConfidence: data.aiConfidence || 95,
+          estimatedImpactUsd: data.estimatedImpactUsd || score * 3000,
+          provider: `Google Gemini (${geminiResult.model})`
+        });
+      }
+    } catch (parseErr) {
+      console.warn('JSON parse error from Gemini response:', parseErr);
+    }
+  }
+
+  // 3. High-Precision Smart Dynamic NLP Analysis Engine Fallback
   const p = prompt.toLowerCase();
   
   let category = 'Operational';

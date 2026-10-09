@@ -82,34 +82,38 @@ CREATE INDEX IF NOT EXISTS idx_risks_category ON risks(category);
 CREATE INDEX IF NOT EXISTS idx_risks_project_id ON risks(project_id);
 CREATE INDEX IF NOT EXISTS idx_risks_status ON risks(status);
 
--- 7. ROW LEVEL SECURITY (RLS) POLICIES
+-- 7. ROW LEVEL SECURITY (RLS) POLICIES (ZERO TRUST)
 ALTER TABLE risks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_members ENABLE ROW LEVEL SECURITY;
 
--- Drop existing policies if re-executing
+-- Drop obsolete policies
 DROP POLICY IF EXISTS "Allow public select on risks" ON risks;
 DROP POLICY IF EXISTS "Allow public insert on risks" ON risks;
 DROP POLICY IF EXISTS "Allow public update on risks" ON risks;
 DROP POLICY IF EXISTS "Allow public delete on risks" ON risks;
-
 DROP POLICY IF EXISTS "Allow public select on projects" ON projects;
 DROP POLICY IF EXISTS "Allow public insert on projects" ON projects;
 DROP POLICY IF EXISTS "Allow public update on projects" ON projects;
-
 DROP POLICY IF EXISTS "Allow public select on team_members" ON team_members;
 
--- Grant Anonymous & Authenticated full access for API Operations
-CREATE POLICY "Allow public select on risks" ON risks FOR SELECT USING (true);
-CREATE POLICY "Allow public insert on risks" ON risks FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public update on risks" ON risks FOR UPDATE USING (true);
-CREATE POLICY "Allow public delete on risks" ON risks FOR DELETE USING (true);
+-- Service Role (Render Backend / Cloud Functions) Full Administrative Access
+CREATE POLICY "service_role_all_risks" ON risks FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "service_role_all_projects" ON projects FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "service_role_all_team_members" ON team_members FOR ALL TO service_role USING (true) WITH CHECK (true);
 
-CREATE POLICY "Allow public select on projects" ON projects FOR SELECT USING (true);
-CREATE POLICY "Allow public insert on projects" ON projects FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public update on projects" ON projects FOR UPDATE USING (true);
+-- Authenticated Users (Read & Controlled Write)
+CREATE POLICY "authenticated_select_risks" ON risks FOR SELECT TO authenticated USING (true);
+CREATE POLICY "authenticated_insert_risks" ON risks FOR INSERT TO authenticated WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "authenticated_update_risks" ON risks FOR UPDATE TO authenticated USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
 
-CREATE POLICY "Allow public select on team_members" ON team_members FOR SELECT USING (true);
+CREATE POLICY "authenticated_select_projects" ON projects FOR SELECT TO authenticated USING (true);
+CREATE POLICY "authenticated_select_team_members" ON team_members FOR SELECT TO authenticated USING (true);
+
+-- Anonymous Public Read Only (No mutations allowed)
+CREATE POLICY "anon_select_risks" ON risks FOR SELECT TO anon USING (true);
+CREATE POLICY "anon_select_projects" ON projects FOR SELECT TO anon USING (true);
+CREATE POLICY "anon_select_team_members" ON team_members FOR SELECT TO anon USING (true);
 
 -- 8. INITIAL REAL WORKABLE DATA SEED
 INSERT INTO projects (id, name, code, description, lead_name, total_risks, critical_risks, mitigation_progress, status, last_updated)

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { callGroqAI } from '@/lib/groq';
-import { GoogleGenAI } from '@google/genai';
+import { callGeminiAI } from '@/lib/gemini';
 import { getRisks, logAuditEvent } from '@/lib/server/db';
 
 export async function GET(request: Request) {
@@ -42,19 +42,17 @@ Return valid JSON without markdown code fences.`;
 
     // 2. Try Gemini (Secondary)
     if (!auditResult) {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (apiKey && apiKey.startsWith('AIzaSy')) {
+      const geminiRes = await callGeminiAI({
+        prompt,
+        jsonMode: true,
+        temperature: 0.2
+      });
+      if (geminiRes.success && geminiRes.content) {
         try {
-          const ai = new GoogleGenAI({ apiKey });
-          const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt
-          });
-          const cleanText = (response.text || '').replace(/```json/g, '').replace(/```/g, '').trim();
-          auditResult = JSON.parse(cleanText);
-          providerName = 'Google Gemini (gemini-2.5-flash)';
+          auditResult = JSON.parse(geminiRes.content);
+          providerName = `Google Gemini (${geminiRes.model})`;
         } catch (geminiErr) {
-          console.warn('Gemini attempt note:', geminiErr);
+          console.warn('Gemini parse note:', geminiErr);
         }
       }
     }

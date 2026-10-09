@@ -62,6 +62,61 @@
       "createdAt": "2026-10-09"
     },
     {
+      "id": "RSK-201",
+      "title": "Legacy Payment Gateway Key Exhaustion",
+      "description": "Our primary payment gateway uses legacy RSA-2048 keys with high session concurrency. During peak transaction bursts, cryptographic key exhaustion causes timeout errors and potential transaction drops.",
+      "category": "Technical",
+      "subcategory": "",
+      "department": "MNB Research · Business Operations",
+      "affectedProcess": "Core Payment Settlement & Tokenization Engine",
+      "inherentProbability": 4,
+      "inherentImpact": 5,
+      "inherentScore": 20,
+      "inherentSeverity": "Critical",
+      "residualProbability": 3,
+      "residualImpact": 4,
+      "residualScore": 12,
+      "residualSeverity": "High",
+      "probability": 4,
+      "impact": 5,
+      "score": 20,
+      "severity": "Critical",
+      "lifecycleStage": "Assess",
+      "treatmentStrategy": "Mitigate",
+      "aboveAppetite": false,
+      "acceptanceStatus": "None",
+      "reviewFrequency": "Monthly",
+      "nextReviewDate": "2026-10-09",
+      "status": "Open",
+      "projectId": "proj-1",
+      "projectName": "Enterprise Operations",
+      "ownerId": "usr-1",
+      "ownerName": "Sunny Prasad",
+      "ownerRole": "Business Operations Intern & Risk Lead",
+      "mitigationPlan": "Initiate an immediate technical audit of the payment gateway's cryptographic infrastructure to assess current key rotation policies and concurrency limits. Implement a phased migration strategy to modern elliptic curve cryptography (ECC) or RSA-4096 to reduce computational overhead per transaction. Deploy load balancing mechanisms specifically optimized for cryptographic operations and establish real-time monitoring alerts for key exhaustion thresholds to prevent service degradation during peak loads.",
+      "contingencyPlan": "If key exhaustion occurs during a peak burst, immediately activate a failover to a secondary, pre-provisioned payment gateway instance with independent key pools. Implement a temporary rate-limiting protocol to throttle non-critical transactions and prioritize high-value payments. Engage the vendor support team for emergency key regeneration and patch application, while communicating potential delays to stakeholders and initiating manual reconciliation processes for any dropped transactions to ensure financial integrity.",
+      "mitigationProgress": 0,
+      "dueDate": "2026-10-09",
+      "checklist": [],
+      "activityLogs": [
+        {
+          "id": "act-1791546915181",
+          "timestamp": "Just now",
+          "author": "Sunny Prasad",
+          "action": "Created new risk record. Inherent score: 20, Residual score: 12.",
+          "type": "creation"
+        }
+      ],
+      "linkedControlIds": [],
+      "linkedActionIds": [],
+      "linkedEvidenceIds": [],
+      "aiSuggested": false,
+      "aiConfidence": 95,
+      "estimatedImpactUsd": 85000,
+      "lastUpdated": "Just now",
+      "createdAt": "2026-10-09"
+    },
+    {
       "id": "RSK-168",
       "title": "Automated E2E Test Risk - Cloud Failover Verification",
       "description": "",
@@ -891,6 +946,21 @@
     }
   ],
   "auditLogs": [
+    {
+      "id": "aud-1791547763212-88yj",
+      "riskId": "RSK-201",
+      "actionType": "UPDATE",
+      "actorName": "AI Risk Health Guard",
+      "actorRole": "Automated Cron Engine",
+      "changesSummary": "Health Audit: The risk portfolio exhibits critical exposure with three unmitigated items scoring 20, indicating severe potential impact and high probability. Immediate intervention is required to address payment gateway key exhaustion and database locking issues to prevent service disruption. (Groq (qwen/qwen3.8-27b))",
+      "newData": {
+        "auditStatus": "ACTION_REQUIRED",
+        "healthSummary": "The risk portfolio exhibits critical exposure with three unmitigated items scoring 20, indicating severe potential impact and high probability. Immediate intervention is required to address payment gateway key exhaustion and database locking issues to prevent service disruption.",
+        "escalationsTriggered": 3,
+        "recommendedMitigationPriority": "RSK-201 Payment Gateway Key Exhaustion"
+      },
+      "timestamp": "2026-10-09T12:09:23.213Z"
+    },
     {
       "id": "aud-1791547089436-kwak",
       "riskId": "RSK-201",

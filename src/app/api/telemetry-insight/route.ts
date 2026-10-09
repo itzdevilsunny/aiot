@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { callGroqAI } from '@/lib/groq';
-import { GoogleGenAI } from '@google/genai';
+import { callGeminiAI } from '@/lib/gemini';
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,28 +21,21 @@ Format: Keep it under 25 words, professional, data-driven.`;
     if (groqRes.success && groqRes.content) {
       return NextResponse.json({
         insight: groqRes.content.trim(),
-        provider: 'Groq (qwen/qwen3.8-27b)'
+        provider: `Groq (${groqRes.model})`
       });
     }
 
-    // 2. Try Gemini fallback if configured with valid key
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (apiKey && apiKey.startsWith('AIzaSy')) {
-      try {
-        const ai = new GoogleGenAI({ apiKey });
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: prompt
-        });
-        if (response.text) {
-          return NextResponse.json({
-            insight: response.text.trim(),
-            provider: 'Google Gemini (gemini-2.5-flash)'
-          });
-        }
-      } catch (geminiErr) {
-        console.warn('Gemini attempt note:', geminiErr);
-      }
+    // 2. Try Gemini fallback (Secondary AI Engine)
+    const geminiRes = await callGeminiAI({
+      prompt,
+      temperature: 0.3
+    });
+
+    if (geminiRes.success && geminiRes.content) {
+      return NextResponse.json({
+        insight: geminiRes.content.trim(),
+        provider: `Google Gemini (${geminiRes.model})`
+      });
     }
 
     return NextResponse.json({

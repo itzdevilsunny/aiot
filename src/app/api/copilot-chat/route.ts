@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { callGroqAI } from '@/lib/groq';
+import { callGeminiAI } from '@/lib/gemini';
 import { getRisks, getControls, getActions, getKRIs, getApprovals, getTeamMembers } from '@/lib/server/db';
 
 export async function POST(request: Request) {
@@ -118,7 +119,25 @@ INSTRUCTIONS FOR COPILOT:
       });
     }
 
-    // 2. Intelligent Dynamic Calculation Fallback (If Groq endpoint unreachable)
+    // 2. Secondary: Google Gemini Multimodal / Reasoning Engine Fallback
+    const geminiResult = await callGeminiAI({
+      systemInstruction: systemPrompt,
+      prompt: imageBase64 
+        ? `[Attached Screenshot/Log] ${userQuery || 'Please diagnose this system issue screenshot against our enterprise risk register.'}`
+        : userQuery || 'Perform a comprehensive risk inventory audit.',
+      temperature: 0.3,
+      maxTokens: 1500
+    });
+
+    if (geminiResult.success && geminiResult.content) {
+      return NextResponse.json({
+        reply: geminiResult.content,
+        provider: `Google Gemini (${geminiResult.model})`,
+        success: true
+      });
+    }
+
+    // 3. Intelligent Dynamic Calculation Fallback (If both cloud AI providers unreachable)
     const q = String(userQuery || '').toLowerCase();
     let dynamicReply = '';
 

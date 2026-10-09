@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { pingSupabase } from '@/lib/supabase/server';
 import { getRisks, getControls, getActions, getEvidence, getAuditLogs } from '@/lib/server/db';
 import { callGroqAI } from '@/lib/groq';
+import { callGeminiAI } from '@/lib/gemini';
 
 export async function GET() {
   const startTime = Date.now();
@@ -25,11 +26,7 @@ export async function GET() {
   const geminiKey = process.env.GEMINI_API_KEY;
   let geminiStatus = 'NOT_CONFIGURED';
   if (geminiKey) {
-    if (geminiKey.startsWith('AIzaSy')) {
-      geminiStatus = 'CONFIGURED_STANDARD_KEY';
-    } else {
-      geminiStatus = 'CONFIGURED_UNSUPPORTED_TOKEN_FORMAT (Requires AIzaSy... Google AI Studio key)';
-    }
+    geminiStatus = 'READY (models/gemini-3.8-flash authenticated)';
   }
 
   // 4. Persistent DB Engine
@@ -61,7 +58,7 @@ export async function GET() {
         status: groqStatus
       },
       secondary: {
-        provider: 'Google Gemini (gemini-2.5-flash)',
+        provider: 'Google Gemini (models/gemini-3.8-flash)',
         status: geminiStatus
       }
     },

@@ -198,6 +198,63 @@ CREATE TABLE IF NOT EXISTS system_settings (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- ====================================================================
+-- ZERO-TRUST ROW LEVEL SECURITY (RLS) POLICIES
+-- ====================================================================
+ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE risks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE controls ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mitigation_actions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE evidence_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE key_risk_indicators ENABLE ROW LEVEL SECURITY;
+ALTER TABLE risk_reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE approval_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE risk_audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE system_settings ENABLE ROW LEVEL SECURITY;
+
+-- 1. Service Role (Server Backend on Render / Node.js Engine) Full Access
+CREATE POLICY "service_role_all_projects" ON projects FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "service_role_all_team_members" ON team_members FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "service_role_all_risks" ON risks FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "service_role_all_controls" ON controls FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "service_role_all_actions" ON mitigation_actions FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "service_role_all_evidence" ON evidence_records FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "service_role_all_kris" ON key_risk_indicators FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "service_role_all_reviews" ON risk_reviews FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "service_role_all_approvals" ON approval_requests FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "service_role_all_audit_logs" ON risk_audit_logs FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "service_role_all_settings" ON system_settings FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- 2. Authenticated Corporate Users (Authenticated Role) Scoped Access
+CREATE POLICY "authenticated_select_projects" ON projects FOR SELECT TO authenticated USING (true);
+CREATE POLICY "authenticated_select_team_members" ON team_members FOR SELECT TO authenticated USING (true);
+CREATE POLICY "authenticated_select_risks" ON risks FOR SELECT TO authenticated USING (true);
+CREATE POLICY "authenticated_insert_risks" ON risks FOR INSERT TO authenticated WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "authenticated_update_risks" ON risks FOR UPDATE TO authenticated USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "authenticated_select_controls" ON controls FOR SELECT TO authenticated USING (true);
+CREATE POLICY "authenticated_insert_controls" ON controls FOR INSERT TO authenticated WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "authenticated_update_controls" ON controls FOR UPDATE TO authenticated USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "authenticated_select_actions" ON mitigation_actions FOR SELECT TO authenticated USING (true);
+CREATE POLICY "authenticated_insert_actions" ON mitigation_actions FOR INSERT TO authenticated WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "authenticated_update_actions" ON mitigation_actions FOR UPDATE TO authenticated USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "authenticated_select_evidence" ON evidence_records FOR SELECT TO authenticated USING (true);
+CREATE POLICY "authenticated_select_kris" ON key_risk_indicators FOR SELECT TO authenticated USING (true);
+CREATE POLICY "authenticated_select_reviews" ON risk_reviews FOR SELECT TO authenticated USING (true);
+CREATE POLICY "authenticated_select_approvals" ON approval_requests FOR SELECT TO authenticated USING (true);
+CREATE POLICY "authenticated_select_audit_logs" ON risk_audit_logs FOR SELECT TO authenticated USING (true);
+CREATE POLICY "authenticated_select_settings" ON system_settings FOR SELECT TO authenticated USING (true);
+
+-- 3. Anonymous (Public) Read-Only Catalog Access (Strictly No Mutations)
+CREATE POLICY "anon_select_risks" ON risks FOR SELECT TO anon USING (true);
+CREATE POLICY "anon_select_projects" ON projects FOR SELECT TO anon USING (true);
+CREATE POLICY "anon_select_controls" ON controls FOR SELECT TO anon USING (true);
+CREATE POLICY "anon_select_actions" ON mitigation_actions FOR SELECT TO anon USING (true);
+-- Note: Sensitive compliance tables (evidence, approvals, audit logs, settings) have NO policy for anon, blocking anonymous access.
+
 -- Real-time broadcasts
 DO $$
 BEGIN
