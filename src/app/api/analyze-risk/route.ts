@@ -10,10 +10,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 });
   }
 
-  const { prompt } = bodyData;
+  const rawPrompt = bodyData.prompt || (bodyData.title ? `${bodyData.title}${bodyData.description ? ': ' + bodyData.description : ''}` : bodyData.description);
+  const prompt = typeof rawPrompt === 'string' ? rawPrompt.trim() : '';
 
-  if (!prompt || typeof prompt !== 'string') {
-    return NextResponse.json({ error: 'Prompt string is required' }, { status: 400 });
+  if (!prompt) {
+    return NextResponse.json({ error: 'Prompt, title, or description string is required' }, { status: 400 });
   }
 
   const systemInstruction = `You are Risk Register Copilot, an enterprise AI Business Operations assistant for MNB Research.
