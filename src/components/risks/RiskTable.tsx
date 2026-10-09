@@ -90,7 +90,7 @@ export const RiskTable: React.FC<RiskTableProps> = ({ risks }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
-              {paginatedRisks.map((risk) => {
+              {paginatedRisks.map((risk, idx) => {
                 const isExpanded = expandedId === risk.id;
                 const isAboveAppetite = risk.aboveAppetite || risk.residualScore > workspaceSettings.riskAppetiteThreshold;
 
@@ -99,7 +99,7 @@ export const RiskTable: React.FC<RiskTableProps> = ({ risks }) => {
                 const linkedEvs = evidence.filter(e => e.linkedRiskId === risk.id);
 
                 return (
-                  <React.Fragment key={risk.id}>
+                  <React.Fragment key={`${risk.id}-${idx}`}>
                     <tr className={`hover:bg-slate-50/80 transition-colors ${isExpanded ? 'bg-slate-50/60' : ''}`}>
                       {/* Toggle Expand */}
                       <td className="py-3.5 px-4 font-mono font-bold text-slate-500 text-center">

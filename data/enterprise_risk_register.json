@@ -62,7 +62,7 @@
       "createdAt": "2026-10-09"
     },
     {
-      "id": "RSK-201",
+      "id": "RSK-202",
       "title": "Legacy Payment Gateway Key Exhaustion",
       "description": "Our primary payment gateway uses legacy RSA-2048 keys with high session concurrency. During peak transaction bursts, cryptographic key exhaustion causes timeout errors and potential transaction drops.",
       "category": "Technical",
@@ -688,7 +688,7 @@
     },
     {
       "id": "ACT-104",
-      "riskId": "RSK-201",
+      "riskId": "RSK-202",
       "riskTitle": "Legacy Payment Gateway Key Exhaustion",
       "linkedControlId": "CTRL-201",
       "title": "Implement Ephemeral Session Key Cycling in Production API",

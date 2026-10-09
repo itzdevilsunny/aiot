@@ -36,9 +36,9 @@ export const RecentRisks: React.FC<RecentRisksProps> = ({ risks }) => {
       </div>
 
       <div className="space-y-3">
-        {recentList.map(risk => (
+        {recentList.map((risk, idx) => (
           <div
-            key={risk.id}
+            key={`${risk.id}-${idx}`}
             onClick={() => router.push(`/risk/${risk.id}`)}
             className="p-3.5 rounded-xl border border-slate-200/80 hover:border-slate-300 hover:shadow-subtle transition-all bg-white hover:bg-slate-50/50 cursor-pointer group"
           >

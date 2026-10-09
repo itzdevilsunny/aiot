@@ -168,10 +168,10 @@ export const WhatIfSimulator: React.FC = () => {
         </h4>
 
         <div className="divide-y divide-slate-100 max-h-80 overflow-y-auto pr-1">
-          {risks.map(r => {
+          {risks.map((r, idx) => {
             const currentVal = simulatedProgress[r.id] !== undefined ? simulatedProgress[r.id] : (r.mitigationProgress || 0);
             return (
-              <div key={r.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div key={`${r.id}-${idx}`} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="font-mono-code text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700">

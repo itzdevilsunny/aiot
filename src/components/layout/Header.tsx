@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
@@ -55,12 +55,14 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
   const [hasUnreadAlerts, setHasUnreadAlerts] = useState(true);
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return document.documentElement.classList.contains('dark') || localStorage.getItem('theme') === 'dark';
-    }
-    return false;
-  });
+  const [mounted, setMounted] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const isDark = document.documentElement.classList.contains('dark') || localStorage.getItem('theme') === 'dark';
+    setIsDarkMode(isDark);
+  }, []);
 
   const toggleDarkMode = () => {
     const newMode = !isDarkMode;
@@ -220,10 +222,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
           <button
             onClick={toggleDarkMode}
             className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors border border-slate-200 dark:border-slate-700 cursor-pointer"
-            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            title={mounted ? (isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode') : 'Toggle Dark Mode'}
             aria-label="Toggle Dark Mode"
+            suppressHydrationWarning
           >
-            {isDarkMode ? (
+            {mounted && isDarkMode ? (
               <Sun className="w-4 h-4 text-amber-400" />
             ) : (
               <Moon className="w-4 h-4 text-slate-600" />
