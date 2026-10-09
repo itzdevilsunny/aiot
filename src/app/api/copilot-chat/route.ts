@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { callGroqAI } from '@/lib/groq';
+import { getRisks, getControls, getActions, getKRIs, getApprovals, getTeamMembers } from '@/lib/server/db';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const {
+    let {
       userQuery = '',
       risks = [],
       controls = [],
@@ -17,6 +18,14 @@ export async function POST(request: Request) {
       imageBase64,
       imageMimeType
     } = body;
+
+    // Fallback to persistent database records if not supplied in payload
+    if (!risks || risks.length === 0) risks = getRisks();
+    if (!controls || controls.length === 0) controls = getControls();
+    if (!actions || actions.length === 0) actions = getActions();
+    if (!kris || kris.length === 0) kris = getKRIs();
+    if (!approvals || approvals.length === 0) approvals = getApprovals();
+    if (!teamMembers || teamMembers.length === 0) teamMembers = getTeamMembers();
 
     const totalRisks = risks.length;
     const criticalRisks = risks.filter((r: any) => r.severity === 'Critical');
