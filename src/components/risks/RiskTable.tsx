@@ -172,12 +172,17 @@ export const RiskTable: React.FC<RiskTableProps> = ({ risks }) => {
                         </div>
                       </td>
 
-                      {/* Strategy & Appetite */}
+                      {/* Strategy, Appetite & Lifecycle Stage */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <div className="space-y-1">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200 block w-fit">
-                            {risk.treatmentStrategy || 'Mitigate'}
-                          </span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200 block w-fit">
+                              {risk.treatmentStrategy || 'Mitigate'}
+                            </span>
+                            <span className="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                              {risk.lifecycleStage || (risk.status === 'Closed' ? 'Close' : isAboveAppetite ? 'Approve' : 'Monitor')}
+                            </span>
+                          </div>
                           {isAboveAppetite ? (
                             <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-red-100 text-red-700 inline-flex items-center gap-1">
                               <AlertTriangle className="w-2.5 h-2.5" /> Above Appetite

@@ -8,6 +8,7 @@ import { RiskMatrix } from '../components/dashboard/RiskMatrix';
 import { RiskDistribution } from '../components/dashboard/RiskDistribution';
 import { RecentRisks } from '../components/dashboard/RecentRisks';
 import { ExecutiveBriefingCard } from '../components/dashboard/ExecutiveBriefingCard';
+import { LifecyclePipelineCard } from '../components/dashboard/LifecyclePipelineCard';
 import { WhatIfSimulator } from '../components/dashboard/WhatIfSimulator';
 import { Button } from '../components/ui/Button';
 import { 
@@ -176,6 +177,9 @@ export default function DashboardPage() {
 
       {/* Executive Briefing Card */}
       <ExecutiveBriefingCard />
+
+      {/* 10-STAGE CONTINUOUS OPERATING LIFECYCLE PIPELINE */}
+      <LifecyclePipelineCard />
 
       {/* 6 OPERATIONAL KPI CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">

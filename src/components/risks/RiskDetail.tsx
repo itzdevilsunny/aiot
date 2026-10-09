@@ -3,13 +3,14 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { RiskItem, StatusLevel, TreatmentStrategy } from '../../types/risk';
+import { RiskItem, StatusLevel, TreatmentStrategy, LifecycleStage } from '../../types/risk';
 import { useRiskContext } from '../../context/RiskContext';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { JiraTicketModal } from './JiraTicketModal';
 import { AIRedTeamerModal } from './AIRedTeamerModal';
 import { SLABreachGuardModal } from './SLABreachGuardModal';
+import { RiskLifecycleStepper } from './RiskLifecycleStepper';
 import { 
   ArrowLeft, 
   CheckCircle2, 
@@ -46,6 +47,7 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
     actions,
     evidence,
     approvals,
+    kris,
     workspaceSettings,
     currentUser,
     createApprovalRequest,
@@ -80,8 +82,14 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
   const linkedControls = (controls || []).filter(c => c?.linkedRiskIds?.includes(risk.id) || (c as any)?.linkedRiskId === risk.id);
   const linkedActions = (actions || []).filter(a => a?.riskId === risk.id || (a as any)?.linkedRiskId === risk.id);
   const linkedEvidence = (evidence || []).filter(e => e?.linkedRiskId === risk.id || (e as any)?.linkedRiskIds?.includes(risk.id));
+  const linkedKris = (kris || []).filter(k => k?.linkedRiskId === risk.id);
   const linkedApprovals = (approvals || []).filter(a => a?.riskId === risk.id);
   const latestApproval = linkedApprovals.length > 0 ? linkedApprovals[linkedApprovals.length - 1] : undefined;
+
+  const handleUpdateLifecycleStage = (stage: LifecycleStage) => {
+    updateRisk(risk.id, { lifecycleStage: stage });
+    addToast('Lifecycle Stage Advanced', `Risk transitioned to ${stage} stage.`, 'success');
+  };
 
   const inherentScore = risk.inherentScore || (risk.probability * risk.impact);
   const residualScore = risk.residualScore || risk.score;
@@ -438,6 +446,17 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
             </div>
           )}
         </div>
+
+        {/* 10-STEP CONTINUOUS OPERATING LIFECYCLE & RELATIONSHIP CHAIN */}
+        <RiskLifecycleStepper
+          risk={risk}
+          linkedControls={linkedControls}
+          linkedActions={linkedActions}
+          linkedEvidence={linkedEvidence}
+          linkedKris={linkedKris}
+          linkedApproval={latestApproval}
+          onUpdateStage={handleUpdateLifecycleStage}
+        />
 
         {/* INHERENT VS RESIDUAL SCORING GAUGE */}
         <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-card space-y-4">

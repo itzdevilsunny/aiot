@@ -437,6 +437,7 @@ export const MOCK_RISKS: RiskItem[] = [
     score: 20,
     severity: 'Critical',
 
+    lifecycleStage: 'Approve',
     treatmentStrategy: 'Mitigate',
     aboveAppetite: true,
     acceptanceStatus: 'Requested',
@@ -494,6 +495,7 @@ export const MOCK_RISKS: RiskItem[] = [
     score: 16,
     severity: 'High',
 
+    lifecycleStage: 'Monitor',
     treatmentStrategy: 'Mitigate',
     aboveAppetite: true,
     acceptanceStatus: 'None',
@@ -551,6 +553,7 @@ export const MOCK_RISKS: RiskItem[] = [
     score: 16,
     severity: 'High',
 
+    lifecycleStage: 'Review',
     treatmentStrategy: 'Mitigate',
     aboveAppetite: false,
     acceptanceStatus: 'Accepted',
@@ -607,6 +610,7 @@ export const MOCK_RISKS: RiskItem[] = [
     score: 12,
     severity: 'High',
 
+    lifecycleStage: 'Treat',
     treatmentStrategy: 'Mitigate',
     aboveAppetite: false,
     acceptanceStatus: 'None',

@@ -16,6 +16,39 @@ export type StatusLevel = 'Open' | 'Monitoring' | 'Mitigated' | 'Closed';
 export type TreatmentStrategy = 'Mitigate' | 'Accept' | 'Transfer' | 'Avoid' | 'Escalate';
 export type UserRole = 'Admin' | 'Risk Manager' | 'Risk Owner' | 'Approver' | 'Auditor';
 
+export type LifecycleStage = 
+  | 'Identify'
+  | 'Assess'
+  | 'Prioritise'
+  | 'Treat'
+  | 'Assign'
+  | 'Monitor'
+  | 'Review'
+  | 'Approve'
+  | 'Report'
+  | 'Close';
+
+export interface LifecycleStepInfo {
+  stage: LifecycleStage;
+  label: string;
+  step: number;
+  description: string;
+  category: 'Assessment' | 'Treatment' | 'Governance' | 'Closure';
+}
+
+export const LIFECYCLE_STAGES: LifecycleStepInfo[] = [
+  { stage: 'Identify', label: 'Identify', step: 1, description: 'Threat discovery, category, and affected process', category: 'Assessment' },
+  { stage: 'Assess', label: 'Assess', step: 2, description: 'Inherent 5x5 probability, impact & exposure math', category: 'Assessment' },
+  { stage: 'Prioritise', label: 'Prioritise', step: 3, description: 'Severity grading & risk appetite breach check', category: 'Assessment' },
+  { stage: 'Treat', label: 'Treat', step: 4, description: 'Treatment strategy selection (Mitigate/Avoid/Transfer/Accept)', category: 'Treatment' },
+  { stage: 'Assign', label: 'Assign', step: 5, description: 'Primary owner & accountable lead allocation', category: 'Treatment' },
+  { stage: 'Monitor', label: 'Monitor', step: 6, description: 'Controls, mitigation actions, evidence & KRI telemetry', category: 'Treatment' },
+  { stage: 'Review', label: 'Review', step: 7, description: 'Scheduled cadence audit & residual score recalculation', category: 'Governance' },
+  { stage: 'Approve', label: 'Approve', step: 8, description: 'Formal Risk Acceptance & CRO governance decision', category: 'Governance' },
+  { stage: 'Report', label: 'Report', step: 9, description: 'Executive brief, Board packet & SOC 2 audit trail', category: 'Governance' },
+  { stage: 'Close', label: 'Close', step: 10, description: 'Resolution verification & verified lifecycle sign-off', category: 'Closure' },
+];
+
 export interface ActionChecklistItem {
   id: string;
   title: string;
@@ -62,6 +95,7 @@ export interface RiskItem {
   severity: SeverityLevel;
 
   // Governance & Appetite
+  lifecycleStage?: LifecycleStage;
   treatmentStrategy: TreatmentStrategy;
   aboveAppetite: boolean;
   acceptanceStatus?: 'None' | 'Requested' | 'Accepted' | 'Rejected' | 'Expired';
