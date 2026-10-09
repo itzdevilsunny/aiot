@@ -29,7 +29,17 @@ interface ChatMessage {
 }
 
 export const CopilotChatDrawer: React.FC = () => {
-  const { risks, addToast } = useRiskContext();
+  const { 
+    risks, 
+    controls, 
+    actions, 
+    evidence, 
+    approvals, 
+    kris, 
+    teamMembers, 
+    currentUser, 
+    addToast 
+  } = useRiskContext();
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [inputQuery, setInputQuery] = useState('');
@@ -266,6 +276,13 @@ export const CopilotChatDrawer: React.FC = () => {
         body: JSON.stringify({
           userQuery: q || 'Analyze attached issue screenshot and identify operational threats.',
           risks,
+          controls,
+          actions,
+          evidence,
+          approvals,
+          kris,
+          teamMembers,
+          currentUser,
           imageBase64: currentImg || undefined,
           imageMimeType: currentImg?.startsWith('data:image/jpeg') ? 'image/jpeg' : 'image/png'
         })

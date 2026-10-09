@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
+import { callGroqAI } from '@/lib/groq';
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,11 +9,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Project topic string is required' }, { status: 400 });
     }
 
-    const groqApiKey = process.env.GROQ_API_KEY;
-    const geminiApiKey = process.env.GEMINI_API_KEY;
-
     const systemInstruction = `You are Risk Register Copilot for MNB Research.
 Generate an array of 3 to 4 realistic operational project risks based on the user's project context.
+
+Team Context for Suggested Owners:
+- Sunny Prasad (Business Operations Intern & Risk Lead - Technical, Operational, Infrastructure)
+- Yash Raj (Operations Lead - Financial, External, Governance)
+- Ritika (Product Manager - Schedule, Product Features, Velocity)
+- Sumit (Resource Manager - Resource, Workforce, Capacity)
+- Priya Sharma (Compliance & Audit Lead - Compliance, Security, Audit)
+
 Return a strict JSON object matching this schema:
 {
   "risks": [
@@ -22,7 +27,7 @@ Return a strict JSON object matching this schema:
       "category": "Technical" | "Resource" | "Financial" | "Schedule" | "Operational" | "Security" | "Compliance" | "External",
       "probability": integer from 1 to 5,
       "impact": integer from 1 to 5,
-      "suggestedOwnerName": "Name of assigned lead",
+      "suggestedOwnerName": "Sunny Prasad" | "Yash Raj" | "Ritika" | "Sumit" | "Priya Sharma",
       "suggestedOwnerRole": "Role title",
       "mitigationPlan": "Actionable proactive mitigation strategy paragraph",
       "contingencyPlan": "Actionable fallback contingency plan paragraph",
@@ -33,119 +38,55 @@ Return a strict JSON object matching this schema:
 }
 Return ONLY valid JSON with no markdown syntax.`;
 
-    // 1. Try Groq LLaMA 3.3 70B Engine (Sub 200ms)
-    if (groqApiKey && groqApiKey.trim().length > 10) {
+    // 1. Primary: Groq Qwen (qwen/qwen3.8-27b)
+    const groqResult = await callGroqAI({
+      messages: [
+        { role: 'system', content: systemInstruction },
+        { role: 'user', content: `Generate 3 to 4 project risks for project "${projectName || 'Enterprise Project'}" with context:\n"${topic}"` }
+      ],
+      jsonMode: true,
+      temperature: 0.3
+    });
+
+    if (groqResult.success && groqResult.content) {
       try {
-        const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${groqApiKey.trim()}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
-            messages: [
-              { role: 'system', content: systemInstruction },
-              { role: 'user', content: `Generate 3 to 4 project risks for project "${projectName || 'Enterprise Project'}" with context:\n"${topic}"` }
-            ],
-            response_format: { type: 'json_object' },
-            temperature: 0.3
-          })
-        });
+        const data = JSON.parse(groqResult.content);
+        if (data && Array.isArray(data.risks) && data.risks.length > 0) {
+          const generatedRisks = data.risks.map((item: any, idx: number) => {
+            const prob = Math.min(5, Math.max(1, Number(item.probability) || 4));
+            const imp = Math.min(5, Math.max(1, Number(item.impact) || 4));
+            const score = prob * imp;
 
-        if (groqRes.ok) {
-          const groqData = await groqRes.json();
-          const contentStr = groqData.choices?.[0]?.message?.content?.trim();
-          if (contentStr) {
-            const data = JSON.parse(contentStr);
-            const generatedRisks = (data.risks || []).map((item: any, idx: number) => {
-              const prob = Math.min(5, Math.max(1, Number(item.probability) || 4));
-              const imp = Math.min(5, Math.max(1, Number(item.impact) || 4));
-              const score = prob * imp;
+            let severity = 'Low';
+            if (score >= 17) severity = 'Critical';
+            else if (score >= 10) severity = 'High';
+            else if (score >= 5) severity = 'Medium';
 
-              let severity = 'Low';
-              if (score >= 17) severity = 'Critical';
-              else if (score >= 10) severity = 'High';
-              else if (score >= 5) severity = 'Medium';
+            return {
+              title: item.title || `Operational Risk ${idx + 1}`,
+              description: `Identified risk threat for ${projectName || 'Project'}: ${item.title}`,
+              category: item.category || 'Technical',
+              probability: prob,
+              impact: imp,
+              score,
+              severity,
+              suggestedOwnerName: item.suggestedOwnerName || 'Sunny Prasad',
+              suggestedOwnerRole: item.suggestedOwnerRole || 'Business Operations Intern & Risk Lead',
+              mitigationPlan: item.mitigationPlan || 'Implement technical discovery spike and automated validation checks.',
+              contingencyPlan: item.contingencyPlan || 'Activate fallback contingency window and execute manual review.',
+              aiConfidence: item.aiConfidence || 96,
+              estimatedImpactUsd: item.estimatedImpactUsd || score * 2500
+            };
+          });
 
-              return {
-                title: item.title || `Operational Risk ${idx + 1}`,
-                description: `Identified risk threat for ${projectName || 'Project'}: ${item.title}`,
-                category: item.category || 'Technical',
-                probability: prob,
-                impact: imp,
-                score,
-                severity,
-                suggestedOwnerName: item.suggestedOwnerName || 'Sunny Prasad',
-                suggestedOwnerRole: item.suggestedOwnerRole || 'Business Operations Intern',
-                mitigationPlan: item.mitigationPlan || 'Implement technical discovery spike and automated validation checks.',
-                contingencyPlan: item.contingencyPlan || 'Activate fallback contingency window and execute manual review.',
-                aiConfidence: item.aiConfidence || 96,
-                estimatedImpactUsd: item.estimatedImpactUsd || score * 2500
-              };
-            });
-
-            return NextResponse.json({ risks: generatedRisks, provider: 'Groq (LLaMA 3.3 70B)' });
-          }
+          return NextResponse.json({ risks: generatedRisks, provider: `Groq (${groqResult.model})` });
         }
       } catch (err: any) {
-        console.warn('Groq bulk generation note:', err?.message || err);
+        console.warn('Groq bulk generation parse note:', err?.message || err);
       }
     }
 
-    // 2. Gemini Fallback
-    if (geminiApiKey && geminiApiKey.trim().length > 10) {
-      try {
-        const ai = new GoogleGenAI({ apiKey: geminiApiKey });
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: [
-            { role: 'user', parts: [{ text: `Generate 3 to 4 project risks for project "${projectName || 'Enterprise Project'}" with context:\n"${topic}"` }] }
-          ],
-          config: {
-            systemInstruction,
-            responseMimeType: 'application/json',
-          }
-        });
-
-        const responseText = response.text?.trim() || '';
-        const cleanJsonText = responseText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-        const data = JSON.parse(cleanJsonText);
-
-        const generatedRisks = (data.risks || []).map((item: any, idx: number) => {
-          const prob = Math.min(5, Math.max(1, Number(item.probability) || 4));
-          const imp = Math.min(5, Math.max(1, Number(item.impact) || 4));
-          const score = prob * imp;
-
-          let severity = 'Low';
-          if (score >= 17) severity = 'Critical';
-          else if (score >= 10) severity = 'High';
-          else if (score >= 5) severity = 'Medium';
-
-          return {
-            title: item.title || `Operational Risk ${idx + 1}`,
-            description: `Identified risk threat for ${projectName || 'Project'}: ${item.title}`,
-            category: item.category || 'Technical',
-            probability: prob,
-            impact: imp,
-            score,
-            severity,
-            suggestedOwnerName: item.suggestedOwnerName || 'Sunny Prasad',
-            suggestedOwnerRole: item.suggestedOwnerRole || 'Business Operations Intern',
-            mitigationPlan: item.mitigationPlan || 'Implement technical discovery spike and automated validation checks.',
-            contingencyPlan: item.contingencyPlan || 'Activate fallback contingency window and execute manual review.',
-            aiConfidence: item.aiConfidence || 94,
-            estimatedImpactUsd: item.estimatedImpactUsd || score * 2500
-          };
-        });
-
-        return NextResponse.json({ risks: generatedRisks, provider: 'Gemini 2.5' });
-      } catch (err: any) {
-        console.warn('Gemini bulk generation note:', err?.message || err);
-      }
-    }
-
-    // 3. Fallback Output
+    // 2. High-Quality Dynamic Fallback
     return NextResponse.json({
       risks: [
         {
@@ -157,7 +98,7 @@ Return ONLY valid JSON with no markdown syntax.`;
           score: 16,
           severity: 'High',
           suggestedOwnerName: 'Sunny Prasad',
-          suggestedOwnerRole: 'Business Operations Intern',
+          suggestedOwnerRole: 'Business Operations Intern & Risk Lead',
           mitigationPlan: 'Reserve spot instance fallback pools and request cloud regional quota increase.',
           contingencyPlan: 'Shift non-critical evaluations to quantization pipelines to reduce compute footprint.',
           aiConfidence: 95,
@@ -172,7 +113,7 @@ Return ONLY valid JSON with no markdown syntax.`;
           score: 12,
           severity: 'High',
           suggestedOwnerName: 'Yash Raj',
-          suggestedOwnerRole: 'Operations Lead',
+          suggestedOwnerRole: 'Operations Lead & Governance Officer',
           mitigationPlan: 'Implement exponential backoff queue with jitter and request higher rate limits.',
           contingencyPlan: 'Route traffic to secondary open-source endpoint model.',
           aiConfidence: 92,
@@ -186,14 +127,15 @@ Return ONLY valid JSON with no markdown syntax.`;
           impact: 4,
           score: 8,
           severity: 'Medium',
-          suggestedOwnerName: 'Devyash',
-          suggestedOwnerRole: 'Data Quality & Security Analyst',
+          suggestedOwnerName: 'Priya Sharma',
+          suggestedOwnerRole: 'Compliance, Regulatory & Audit Lead',
           mitigationPlan: 'Enforce Object Lock in compliance mode with 365-day retention policies.',
           contingencyPlan: 'Engage compliance auditor for 1-week extension window with mitigation memo.',
           aiConfidence: 94,
           estimatedImpactUsd: 20000
         }
-      ]
+      ],
+      provider: 'Dynamic Context Engine'
     });
   } catch (err: any) {
     console.error('Bulk API Error:', err);

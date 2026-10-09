@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
+import { callGroqAI } from '@/lib/groq';
 
 export async function POST(req: NextRequest) {
   try {
     const { risks, framework } = await req.json();
 
-    const groqApiKey = process.env.GROQ_API_KEY;
-    const geminiApiKey = process.env.GEMINI_API_KEY;
-
     const activeRisks = (risks || []).filter((r: any) => r.status !== 'Closed');
 
-    const systemInstruction = `You are a Senior Lead Cybersecurity & Governance Auditor (ISO 27001, ISO 31000, NIST SP 800-30, SOC 2 Type II, GDPR, PCI DSS 4.0).
+    const systemInstruction = `You are Priya Sharma, Senior Lead Governance & Compliance Auditor (ISO 27001, ISO 31000, NIST SP 800-30, SOC 2 Type II, GDPR, PCI DSS 4.0) for MNB Research.
 Perform a comprehensive AI Compliance & Governance Audit on the live enterprise risk register.
 
 Target Framework Filter: ${framework || 'All Frameworks'}
@@ -23,12 +20,13 @@ ${JSON.stringify(activeRisks.map((r: any) => ({
   likelihood: r.likelihood || r.probability,
   impact: r.impact,
   mitigationProgress: r.mitigationProgress,
+  ownerName: r.ownerName,
   status: r.status
 })), null, 2)}
 
 Provide a strict, professional audit report in JSON format with:
 1. "healthScore": number between 0 and 100 representing audit readiness.
-2. "executiveSummary": string detailing overall governance readiness, strengths, and vulnerabilities.
+2. "executiveSummary": string detailing overall governance readiness, strengths, and vulnerabilities for MNB Research leadership (Sunny Prasad, Yash Raj, Ritika).
 3. "frameworkScores": object mapping framework names ("ISO 31000", "NIST SP 800-30", "SOC 2 Type II", "GDPR", "PCI DSS 4.0") to numeric scores 0-100.
 4. "gaps": array of objects containing:
    - "controlId": string (e.g. "ISO-6.4", "NIST-RA-1", "SOC2-CC6.1", "GDPR-Art32")
@@ -38,64 +36,32 @@ Provide a strict, professional audit report in JSON format with:
    - "issue": detailed description of compliance gap
    - "remediation": actionable step-by-step mitigation task
    - "associatedRiskIds": string[]
-5. "auditorMemo": official auditor sign-off statement.
+5. "auditorMemo": official auditor sign-off statement signed by Priya Sharma (Compliance & Audit Lead).
 
 Respond ONLY with valid JSON.`;
 
-    // Tier 1: Groq LLaMA 3.3 70B
-    if (groqApiKey && groqApiKey.trim().length > 10) {
-      try {
-        const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${groqApiKey.trim()}`
-          },
-          body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
-            messages: [{ role: 'user', content: systemInstruction }],
-            temperature: 0.2,
-            response_format: { type: 'json_object' }
-          })
-        });
+    // 1. Primary: Groq Qwen (qwen/qwen3.8-27b)
+    const groqResult = await callGroqAI({
+      messages: [{ role: 'user', content: systemInstruction }],
+      jsonMode: true,
+      temperature: 0.2
+    });
 
-        if (groqRes.ok) {
-          const data = await groqRes.json();
-          const content = data.choices[0]?.message?.content || '{}';
-          const parsed = JSON.parse(content);
+    if (groqResult.success && groqResult.content) {
+      try {
+        const parsed = JSON.parse(groqResult.content);
+        if (parsed && parsed.healthScore !== undefined) {
           return NextResponse.json({
             ...parsed,
-            provider: 'Groq (LLaMA 3.3 70B Versatile)'
+            provider: `Groq (${groqResult.model})`
           });
         }
       } catch (err) {
-        console.warn('Groq Compliance Audit note:', err);
+        console.warn('Groq Compliance Audit JSON parse note:', err);
       }
     }
 
-    // Tier 2: Gemini 2.5 Flash
-    if (geminiApiKey && geminiApiKey.trim().length > 10) {
-      try {
-        const ai = new GoogleGenAI({ apiKey: geminiApiKey.trim() });
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: [{ role: 'user', parts: [{ text: systemInstruction }] }],
-          config: { responseMimeType: 'application/json' }
-        });
-
-        const text = response.text?.trim() || '{}';
-        const cleanJson = text.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-        const parsed = JSON.parse(cleanJson);
-        return NextResponse.json({
-          ...parsed,
-          provider: 'Gemini 2.5 Flash'
-        });
-      } catch (err) {
-        console.warn('Gemini Compliance Audit note:', err);
-      }
-    }
-
-    // Tier 3: High-Precision Smart Dynamic Compliance Audit Engine
+    // 2. High-Precision Smart Dynamic Compliance Audit Fallback
     const totalRisks = activeRisks.length;
     const criticalCount = activeRisks.filter((r: any) => r.severity === 'Critical' || r.score >= 17).length;
     const highCount = activeRisks.filter((r: any) => r.severity === 'High' || (r.score >= 10 && r.score < 17)).length;
@@ -153,8 +119,8 @@ Respond ONLY with valid JSON.`;
         'PCI DSS 4.0': Math.max(65, baseScore - 2)
       },
       gaps,
-      auditorMemo: `Official Auditor Sign-off: Live telemetry demonstrates an enterprise readiness rating of ${baseScore}%. Mandatory control remediations are tracked under internal CISO governance protocols.`,
-      provider: 'Enterprise Dynamic AI Engine'
+      auditorMemo: `Official Auditor Sign-off by Priya Sharma (Compliance & Audit Lead): Live telemetry demonstrates an enterprise readiness rating of ${baseScore}%. Mandatory control remediations are tracked under internal CISO governance protocols.`,
+      provider: 'Dynamic Context Engine'
     });
   } catch (error: any) {
     console.error('Compliance Audit API error:', error);

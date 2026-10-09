@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
+import { callGroqAI } from '@/lib/groq';
 
 export async function POST(req: NextRequest) {
   try {
     const { kris, risks } = await req.json();
 
-    const groqApiKey = process.env.GROQ_API_KEY;
-    const geminiApiKey = process.env.GEMINI_API_KEY;
-
-    const systemInstruction = `You are a Chief Risk Officer and SRE Reliability Telemetry Specialist.
+    const systemInstruction = `You are a Chief Risk Officer and SRE Reliability Telemetry Specialist for MNB Research.
 Perform an AI Early-Warning KRI Telemetry & SLA Breach Anomaly Scan on live metrics and risk data:
 
 Current KRIs:
@@ -20,7 +17,7 @@ ${JSON.stringify((risks || []).slice(0, 5), null, 2)}
 Provide a strict JSON response with:
 1. "overallHealthScore": integer 0-100 (100 = optimal telemetry stability).
 2. "anomalyRating": "Low Risk" | "Moderate Anomaly" | "Critical SLA Breach Risk".
-3. "executiveSummary": string summarizing telemetry trend and breach risks.
+3. "executiveSummary": string summarizing telemetry trend and breach risks for leadership (Sunny Prasad, Yash Raj, Ritika).
 4. "kriAnalyses": array of objects for each KRI:
    - "kriId": string
    - "predicted30DayValue": number
@@ -31,60 +28,28 @@ Provide a strict JSON response with:
 
 Respond ONLY with valid JSON.`;
 
-    // Tier 1: Groq LLaMA 3.3 70B
-    if (groqApiKey && groqApiKey.trim().length > 10) {
-      try {
-        const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${groqApiKey.trim()}`
-          },
-          body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
-            messages: [{ role: 'user', content: systemInstruction }],
-            temperature: 0.2,
-            response_format: { type: 'json_object' }
-          })
-        });
+    // 1. Primary: Groq Qwen (qwen/qwen3.8-27b)
+    const groqResult = await callGroqAI({
+      messages: [{ role: 'user', content: systemInstruction }],
+      jsonMode: true,
+      temperature: 0.2
+    });
 
-        if (groqRes.ok) {
-          const data = await groqRes.json();
-          const content = data.choices[0]?.message?.content || '{}';
-          const parsed = JSON.parse(content);
+    if (groqResult.success && groqResult.content) {
+      try {
+        const parsed = JSON.parse(groqResult.content);
+        if (parsed && parsed.overallHealthScore !== undefined) {
           return NextResponse.json({
             ...parsed,
-            provider: 'Groq (LLaMA 3.3 70B Versatile)'
+            provider: `Groq (${groqResult.model})`
           });
         }
       } catch (err) {
-        console.warn('Groq KRI Telemetry note:', err);
+        console.warn('Groq KRI Telemetry parse note:', err);
       }
     }
 
-    // Tier 2: Gemini 2.5 Flash
-    if (geminiApiKey && geminiApiKey.trim().length > 10) {
-      try {
-        const ai = new GoogleGenAI({ apiKey: geminiApiKey.trim() });
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: [{ role: 'user', parts: [{ text: systemInstruction }] }],
-          config: { responseMimeType: 'application/json' }
-        });
-
-        const text = response.text?.trim() || '{}';
-        const cleanJson = text.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-        const parsed = JSON.parse(cleanJson);
-        return NextResponse.json({
-          ...parsed,
-          provider: 'Gemini 2.5 Flash'
-        });
-      } catch (err) {
-        console.warn('Gemini KRI Telemetry note:', err);
-      }
-    }
-
-    // Tier 3: High-Precision Smart Dynamic Engine
+    // 2. High-Precision Smart Dynamic Fallback
     const totalKris = (kris || []).length;
     const breachedCount = (kris || []).filter((k: any) => k.status === 'Breached').length;
     const warningCount = (kris || []).filter((k: any) => k.status === 'Warning').length;
@@ -115,7 +80,7 @@ Respond ONLY with valid JSON.`;
         'Optimize API gateway caching layers to reduce p99 latency below 150ms.',
         'Execute cloud infrastructure cost optimization audit.'
       ],
-      provider: 'Enterprise Dynamic AI Engine'
+      provider: 'Dynamic Context Engine'
     });
   } catch (error: any) {
     console.error('KRI Telemetry API error:', error);

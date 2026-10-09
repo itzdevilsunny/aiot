@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
+import { callGroqAI } from '@/lib/groq';
 
 export async function POST(req: NextRequest) {
   try {
     const { risks, velocity } = await req.json();
 
-    const groqApiKey = process.env.GROQ_API_KEY;
-    const geminiApiKey = process.env.GEMINI_API_KEY;
-
     const activeRisks = (risks || []).filter((r: any) => r.status !== 'Closed');
 
-    const systemInstruction = `You are an Enterprise Risk Actuary and Quantitative Financial Modeler.
+    const systemInstruction = `You are an Enterprise Risk Actuary and Quantitative Financial Modeler for MNB Research.
 Perform an AI 12-Month Loss Trajectory & Threat Radar Projection based on live risk telemetry:
 
 Mitigation Velocity: ${velocity || 3} risks resolved per month.
@@ -21,14 +18,15 @@ ${JSON.stringify(activeRisks.map((r: any) => ({
   category: r.category,
   severity: r.severity,
   score: r.score,
+  ownerName: r.ownerName,
   estimatedImpactUsd: r.estimatedImpactUsd || (r.score * 2500)
 })), null, 2)}
 
 Provide a strict JSON response with:
-1. "baselineExposure": total current baseline financial risk ($ USD).
-2. "projectedYearEndExposure": estimated year-end loss exposure at ${velocity || 3} risks/month resolution velocity.
+1. "baselineExposure": total current baseline financial risk ($ USD integer).
+2. "projectedYearEndExposure": estimated year-end loss exposure ($ USD integer) at ${velocity || 3} risks/month resolution velocity.
 3. "netRiskReductionPercent": integer 0-100%.
-4. "executiveSummary": string summarizing the 12-month financial exposure curve and key threat concentrations.
+4. "executiveSummary": string summarizing the 12-month financial exposure curve and key threat concentrations for leadership (Sunny Prasad, Yash Raj, Ritika).
 5. "trajectory": array of 12 month objects:
    - "month": string ("Month 1" through "Month 12")
    - "unmitigated": number exposure with compound drift
@@ -39,60 +37,28 @@ Provide a strict JSON response with:
 
 Respond ONLY with valid JSON.`;
 
-    // Tier 1: Groq LLaMA 3.3 70B
-    if (groqApiKey && groqApiKey.trim().length > 10) {
-      try {
-        const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${groqApiKey.trim()}`
-          },
-          body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
-            messages: [{ role: 'user', content: systemInstruction }],
-            temperature: 0.2,
-            response_format: { type: 'json_object' }
-          })
-        });
+    // 1. Primary: Groq Qwen (qwen/qwen3.8-27b)
+    const groqResult = await callGroqAI({
+      messages: [{ role: 'user', content: systemInstruction }],
+      jsonMode: true,
+      temperature: 0.2
+    });
 
-        if (groqRes.ok) {
-          const data = await groqRes.json();
-          const content = data.choices[0]?.message?.content || '{}';
-          const parsed = JSON.parse(content);
+    if (groqResult.success && groqResult.content) {
+      try {
+        const parsed = JSON.parse(groqResult.content);
+        if (parsed && parsed.baselineExposure !== undefined) {
           return NextResponse.json({
             ...parsed,
-            provider: 'Groq (LLaMA 3.3 70B Versatile)'
+            provider: `Groq (${groqResult.model})`
           });
         }
-      } catch (err) {
-        console.warn('Groq Loss Trajectory note:', err);
+      } catch (e) {
+        console.warn('Groq Loss Trajectory JSON parse note:', e);
       }
     }
 
-    // Tier 2: Gemini 2.5 Flash
-    if (geminiApiKey && geminiApiKey.trim().length > 10) {
-      try {
-        const ai = new GoogleGenAI({ apiKey: geminiApiKey.trim() });
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: [{ role: 'user', parts: [{ text: systemInstruction }] }],
-          config: { responseMimeType: 'application/json' }
-        });
-
-        const text = response.text?.trim() || '{}';
-        const cleanJson = text.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-        const parsed = JSON.parse(cleanJson);
-        return NextResponse.json({
-          ...parsed,
-          provider: 'Gemini 2.5 Flash'
-        });
-      } catch (err) {
-        console.warn('Gemini Loss Trajectory note:', err);
-      }
-    }
-
-    // Tier 3: Deterministic High-Precision Dynamic Engine
+    // 2. High-Precision Dynamic Fallback Engine
     const baselineExposure = activeRisks.reduce((acc: number, r: any) => acc + (r.estimatedImpactUsd || (r.score * 2500)), 0);
     const v = Number(velocity) || 3;
 
@@ -124,7 +90,7 @@ Respond ONLY with valid JSON.`;
       executiveSummary: `12-month trajectory model projects baseline financial risk of $${baselineExposure.toLocaleString()} reducing to $${projectedYearEndExposure.toLocaleString()} at a mitigation velocity of ${v} risks/month. Yields a net risk reduction efficiency of ${netRiskReductionPercent}%.`,
       trajectory,
       categoryRadar,
-      provider: 'Enterprise Dynamic AI Engine'
+      provider: 'Dynamic Context Engine'
     });
   } catch (error: any) {
     console.error('Loss Trajectory API error:', error);

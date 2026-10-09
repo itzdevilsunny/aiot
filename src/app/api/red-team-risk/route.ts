@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { callGroqAI } from '@/lib/groq';
 
 export async function POST(req: NextRequest) {
   try {
@@ -8,45 +9,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Risk details missing' }, { status: 400 });
     }
 
-    const groqApiKey = process.env.GROQ_API_KEY;
-
-    if (!groqApiKey) {
-      return NextResponse.json({
-        blindSpots: [
-          'Underestimating single point of failure in secondary database failover SLA.',
-          'Assumes third-party vendor will provide 24/7 on-call support during holiday freeze.',
-          'Missing automated roll-back script execution timing verification.'
-        ],
-        challengedLikelihood: Math.min(5, (risk.probability || 3) + 1),
-        challengedImpact: Math.min(5, (risk.impact || 3) + 1),
-        challengedScore: Math.min(25, ((risk.probability || 3) + 1) * ((risk.impact || 3) + 1)),
-        strategies: {
-          preventative: [
-            'Implement mandatory multi-region database read-replica auto-failover.',
-            'Enforce zero-trust credential rotation every 14 days.',
-            'Contract dedicated SLA extension with primary cloud infrastructure vendor.'
-          ],
-          detective: [
-            'Set up synthetic ping monitors probing API endpoints every 10 seconds.',
-            'Deploy anomaly detection rule for uncharacteristic query volume spikes.',
-            'Enable continuous real-time audit log streaming to S3 cold storage.'
-          ],
-          corrective: [
-            'Automate snapshot rollback script triggering within 60 seconds of failure.',
-            'Activate secondary DNS routing to standby cluster.',
-            'Initiate post-mortem incident RCA memo within 24 hours.'
-          ]
-        },
-        source: 'fallback'
-      });
-    }
-
-    const prompt = `You are an Adversarial Enterprise Security Auditor and Red-Teamer. Stress-test this risk item:
+    const prompt = `You are an Adversarial Enterprise Security Auditor and Red-Teamer for MNB Research. Stress-test this risk item:
 Title: "${risk.title}"
 Category: "${risk.category}"
-Description: "${risk.description}"
-Current Likelihood (1-5): ${risk.probability}
-Current Impact (1-5): ${risk.impact}
+Description: "${risk.description || risk.title}"
+Current Likelihood (1-5): ${risk.probability || 3}
+Current Impact (1-5): ${risk.impact || 3}
+Owner: "${risk.ownerName || 'Sunny Prasad'}"
 
 Provide an aggressive red-team audit evaluation. Identify blind spots, challenge current rating if underestimated, and formulate a 3-tier defense strategy (Preventative, Detective, Corrective).
 
@@ -63,34 +32,58 @@ Respond ONLY with a valid JSON object matching this structure:
   }
 }`;
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${groqApiKey}`
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.3,
-        response_format: { type: 'json_object' }
-      })
+    // 1. Primary: Groq Qwen (qwen/qwen3.8-27b)
+    const groqResult = await callGroqAI({
+      messages: [{ role: 'user', content: prompt }],
+      jsonMode: true,
+      temperature: 0.2
     });
 
-    if (!response.ok) {
-      throw new Error(`Groq API returned status ${response.status}`);
+    if (groqResult.success && groqResult.content) {
+      try {
+        const parsed = JSON.parse(groqResult.content);
+        return NextResponse.json({
+          ...parsed,
+          source: `Groq (${groqResult.model})`
+        });
+      } catch (e) {
+        console.warn('Groq Red-Team parse note:', e);
+      }
     }
 
-    const data = await response.json();
-    const content = data.choices[0]?.message?.content || '{}';
-    const parsed = JSON.parse(content);
-
+    // 2. Dynamic Fallback
+    const chLikelihood = Math.min(5, (risk.probability || 3) + 1);
+    const chImpact = Math.min(5, (risk.impact || 3) + 1);
     return NextResponse.json({
-      ...parsed,
-      source: 'groq-llama-3.3-70b'
+      blindSpots: [
+        `Underestimating single point of failure in [${risk.id || 'RSK'}] failover SLA.`,
+        'Assumes external third-party vendor will provide 24/7 on-call response during weekend freeze.',
+        'Missing automated automated roll-back validation verification.'
+      ],
+      challengedLikelihood: chLikelihood,
+      challengedImpact: chImpact,
+      challengedScore: chLikelihood * chImpact,
+      strategies: {
+        preventative: [
+          'Implement mandatory multi-region database read-replica auto-failover.',
+          'Enforce zero-trust credential rotation every 14 days.',
+          'Contract dedicated SLA extension with primary cloud infrastructure vendor.'
+        ],
+        detective: [
+          'Set up synthetic ping monitors probing API endpoints every 10 seconds.',
+          'Deploy anomaly detection rule for uncharacteristic query volume spikes.',
+          'Enable continuous real-time audit log streaming to cold storage.'
+        ],
+        corrective: [
+          'Automate snapshot rollback script triggering within 60 seconds of failure.',
+          'Activate secondary DNS routing to standby cluster.',
+          'Initiate post-mortem incident RCA memo within 24 hours.'
+        ]
+      },
+      source: 'Dynamic Context Engine'
     });
   } catch (error: any) {
-    console.error('Red team API error:', error);
+    console.error('Red-Team API error:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
 }

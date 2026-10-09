@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
+import { callGroqAI } from '@/lib/groq';
 
 export async function POST(req: NextRequest) {
   try {
     const { triggerRiskId, risks } = await req.json();
-
-    const groqApiKey = process.env.GROQ_API_KEY;
-    const geminiApiKey = process.env.GEMINI_API_KEY;
 
     const activeRisks = (risks || []).filter((r: any) => r.status !== 'Closed');
     const triggerRisk = activeRisks.find((r: any) => r.id === triggerRiskId) || activeRisks[0] || {
@@ -16,13 +13,14 @@ export async function POST(req: NextRequest) {
       category: 'Technical'
     };
 
-    const systemInstruction = `You are a Principal Reliability Architect and System Dependency Modeler.
+    const systemInstruction = `You are a Principal Reliability Architect and System Dependency Modeler for MNB Research.
 Perform an AI Cascading Threat Propagation & Topological Blast-Radius Analysis for the following trigger risk:
 
 Trigger Risk:
 ID: ${triggerRisk.id}
 Title: ${triggerRisk.title}
 Category: ${triggerRisk.category}
+Owner: ${triggerRisk.ownerName || 'Sunny Prasad'}
 
 All Active Risks (${activeRisks.length} items):
 ${JSON.stringify(activeRisks.map((r: any) => ({ id: r.id, title: r.title, category: r.category, severity: r.severity })), null, 2)}
@@ -51,60 +49,28 @@ Return a strict JSON response with:
 
 Respond ONLY with valid JSON.`;
 
-    // Tier 1: Groq LLaMA 3.3 70B
-    if (groqApiKey && groqApiKey.trim().length > 10) {
-      try {
-        const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${groqApiKey.trim()}`
-          },
-          body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
-            messages: [{ role: 'user', content: systemInstruction }],
-            temperature: 0.2,
-            response_format: { type: 'json_object' }
-          })
-        });
+    // 1. Primary: Groq Qwen (qwen/qwen3.8-27b)
+    const groqResult = await callGroqAI({
+      messages: [{ role: 'user', content: systemInstruction }],
+      jsonMode: true,
+      temperature: 0.2
+    });
 
-        if (groqRes.ok) {
-          const data = await groqRes.json();
-          const content = data.choices[0]?.message?.content || '{}';
-          const parsed = JSON.parse(content);
+    if (groqResult.success && groqResult.content) {
+      try {
+        const parsed = JSON.parse(groqResult.content);
+        if (parsed && parsed.triggerNode) {
           return NextResponse.json({
             ...parsed,
-            provider: 'Groq (LLaMA 3.3 70B Versatile)'
+            provider: `Groq (${groqResult.model})`
           });
         }
       } catch (err) {
-        console.warn('Groq Cascade Simulation note:', err);
+        console.warn('Groq Cascade Simulation parse note:', err);
       }
     }
 
-    // Tier 2: Gemini 2.5 Flash
-    if (geminiApiKey && geminiApiKey.trim().length > 10) {
-      try {
-        const ai = new GoogleGenAI({ apiKey: geminiApiKey.trim() });
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: [{ role: 'user', parts: [{ text: systemInstruction }] }],
-          config: { responseMimeType: 'application/json' }
-        });
-
-        const text = response.text?.trim() || '{}';
-        const cleanJson = text.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-        const parsed = JSON.parse(cleanJson);
-        return NextResponse.json({
-          ...parsed,
-          provider: 'Gemini 2.5 Flash'
-        });
-      } catch (err) {
-        console.warn('Gemini Cascade Simulation note:', err);
-      }
-    }
-
-    // Tier 3: High-Precision Smart Dynamic Engine
+    // 2. Dynamic Fallback
     const baseLoss = triggerRisk.estimatedImpactUsd || ((triggerRisk.score || 16) * 15000);
     const sub1Loss = Math.round(baseLoss * 0.55);
     const sub2Loss = Math.round(baseLoss * 0.30);
@@ -146,7 +112,7 @@ Respond ONLY with valid JSON.`;
         'Enable fallback response caching to prevent API gateway 504 timeouts.',
         'Isolate database read replicas and autoscale connection pool.'
       ],
-      provider: 'Enterprise Dynamic AI Engine'
+      provider: 'Dynamic Context Engine'
     });
   } catch (error: any) {
     console.error('Cascade Simulation API error:', error);

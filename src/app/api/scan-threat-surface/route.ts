@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
+import { callGroqAI } from '@/lib/groq';
 
 export async function POST(req: NextRequest) {
   try {
     const { risks } = await req.json();
 
-    const groqApiKey = process.env.GROQ_API_KEY;
-    const geminiApiKey = process.env.GEMINI_API_KEY;
-
     const activeRisks = (risks || []).filter((r: any) => r.status !== 'Closed');
 
-    const systemInstruction = `You are a Principal Security Architect and Offensive Cyber Red Teamer.
+    const systemInstruction = `You are a Principal Security Architect and Offensive Cyber Red Teamer for MNB Research.
 Perform a comprehensive Enterprise Cyber Threat Surface & Attack Surface Scan on live risk register data:
 
 Active Risks (${activeRisks.length} items):
@@ -21,6 +18,7 @@ ${JSON.stringify(activeRisks.map((r: any) => ({
   severity: r.severity,
   likelihood: r.likelihood || r.probability,
   impact: r.impact,
+  ownerName: r.ownerName,
   mitigationProgress: r.mitigationProgress
 })), null, 2)}
 
@@ -35,7 +33,7 @@ Evaluate exposure across 6 core attack surface domains:
 Return a strict JSON object with:
 1. "overallScore": integer 0-100 (0 = fully hardened, 100 = critical breach risk).
 2. "postureRating": "Strong" | "Moderate" | "Elevated Risk" | "Critical Vulnerability".
-3. "executiveSummary": string summarizing current attack surface posture and key attack vectors.
+3. "executiveSummary": string summarizing current attack surface posture and key attack vectors for leadership (Sunny Prasad, Yash Raj, Ritika).
 4. "vectors": array of 6 domain objects:
    - "id": string ("VEC-1" through "VEC-6")
    - "name": string
@@ -48,60 +46,28 @@ Return a strict JSON object with:
 
 Respond ONLY with valid JSON.`;
 
-    // Tier 1: Groq LLaMA 3.3 70B
-    if (groqApiKey && groqApiKey.trim().length > 10) {
-      try {
-        const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${groqApiKey.trim()}`
-          },
-          body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
-            messages: [{ role: 'user', content: systemInstruction }],
-            temperature: 0.2,
-            response_format: { type: 'json_object' }
-          })
-        });
+    // 1. Primary: Groq Qwen (qwen/qwen3.8-27b)
+    const groqResult = await callGroqAI({
+      messages: [{ role: 'user', content: systemInstruction }],
+      jsonMode: true,
+      temperature: 0.2
+    });
 
-        if (groqRes.ok) {
-          const data = await groqRes.json();
-          const content = data.choices[0]?.message?.content || '{}';
-          const parsed = JSON.parse(content);
+    if (groqResult.success && groqResult.content) {
+      try {
+        const parsed = JSON.parse(groqResult.content);
+        if (parsed && parsed.overallScore !== undefined) {
           return NextResponse.json({
             ...parsed,
-            provider: 'Groq (LLaMA 3.3 70B Versatile)'
+            provider: `Groq (${groqResult.model})`
           });
         }
       } catch (err) {
-        console.warn('Groq Threat Surface Scan note:', err);
+        console.warn('Groq Threat Surface Scan parse note:', err);
       }
     }
 
-    // Tier 2: Gemini 2.5 Flash
-    if (geminiApiKey && geminiApiKey.trim().length > 10) {
-      try {
-        const ai = new GoogleGenAI({ apiKey: geminiApiKey.trim() });
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: [{ role: 'user', parts: [{ text: systemInstruction }] }],
-          config: { responseMimeType: 'application/json' }
-        });
-
-        const text = response.text?.trim() || '{}';
-        const cleanJson = text.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-        const parsed = JSON.parse(cleanJson);
-        return NextResponse.json({
-          ...parsed,
-          provider: 'Gemini 2.5 Flash'
-        });
-      } catch (err) {
-        console.warn('Gemini Threat Surface Scan note:', err);
-      }
-    }
-
-    // Tier 3: High-Precision Smart Dynamic Engine
+    // 2. High-Precision Smart Dynamic Fallback
     const secRisks = activeRisks.filter((r: any) => r.category === 'Security');
     const techRisks = activeRisks.filter((r: any) => r.category === 'Technical');
     const extRisks = activeRisks.filter((r: any) => r.category === 'External');
@@ -182,7 +148,7 @@ Respond ONLY with valid JSON.`;
         'Enable automated daily CVE dependency scanning in GitHub Actions CI/CD.',
         'Verify KMS CMEK database key rotation policies.'
       ],
-      provider: 'Enterprise Dynamic AI Engine'
+      provider: 'Dynamic Context Engine'
     });
   } catch (error: any) {
     console.error('Threat Surface Scan API error:', error);
