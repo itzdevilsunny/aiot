@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { callGroqAI } from '@/lib/groq';
+import { callGeminiAI } from '@/lib/gemini';
 
 export async function POST(req: NextRequest) {
   try {
@@ -86,7 +87,52 @@ Return ONLY valid JSON with no markdown syntax.`;
       }
     }
 
-    // 2. High-Quality Dynamic Fallback
+    // 2. Secondary: Google Gemini 3.8 Flash
+    const geminiResult = await callGeminiAI({
+      prompt: `${systemInstruction}\n\nGenerate 3 to 4 project risks for project "${projectName || 'Enterprise Project'}" with context:\n"${topic}"`,
+      jsonMode: true,
+      temperature: 0.3
+    });
+
+    if (geminiResult.success && geminiResult.content) {
+      try {
+        const data = JSON.parse(geminiResult.content);
+        if (data && Array.isArray(data.risks) && data.risks.length > 0) {
+          const generatedRisks = data.risks.map((item: any, idx: number) => {
+            const prob = Math.min(5, Math.max(1, Number(item.probability) || 4));
+            const imp = Math.min(5, Math.max(1, Number(item.impact) || 4));
+            const score = prob * imp;
+
+            let severity = 'Low';
+            if (score >= 17) severity = 'Critical';
+            else if (score >= 10) severity = 'High';
+            else if (score >= 5) severity = 'Medium';
+
+            return {
+              title: item.title || `Operational Risk ${idx + 1}`,
+              description: `Identified risk threat for ${projectName || 'Project'}: ${item.title}`,
+              category: item.category || 'Technical',
+              probability: prob,
+              impact: imp,
+              score,
+              severity,
+              suggestedOwnerName: item.suggestedOwnerName || 'Sunny Prasad',
+              suggestedOwnerRole: item.suggestedOwnerRole || 'Business Operations Intern & Risk Lead',
+              mitigationPlan: item.mitigationPlan || 'Implement technical discovery spike and automated validation checks.',
+              contingencyPlan: item.contingencyPlan || 'Activate fallback contingency window and execute manual review.',
+              aiConfidence: item.aiConfidence || 96,
+              estimatedImpactUsd: item.estimatedImpactUsd || score * 2500
+            };
+          });
+
+          return NextResponse.json({ risks: generatedRisks, provider: `Google Gemini (${geminiResult.model})` });
+        }
+      } catch (err: any) {
+        console.warn('Gemini bulk generation parse note:', err?.message || err);
+      }
+    }
+
+    // 3. High-Quality Dynamic Fallback
     return NextResponse.json({
       risks: [
         {

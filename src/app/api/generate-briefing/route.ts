@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { callGroqAI } from '@/lib/groq';
+import { callGeminiAI } from '@/lib/gemini';
+import { getRisks } from '@/lib/server/db';
 
 export async function POST(request: Request) {
   let body: any = {};
@@ -9,7 +11,7 @@ export async function POST(request: Request) {
     body = {};
   }
 
-  const risks = Array.isArray(body.risks) ? body.risks : [];
+  let risks = Array.isArray(body.risks) && body.risks.length > 0 ? body.risks : getRisks();
 
   const totalRisks = risks.length;
   const criticalCount = risks.filter((r: any) => r && (r.severity === 'Critical' || r.score >= 17)).length;
@@ -81,6 +83,25 @@ Respond strictly in valid JSON format without markdown code fences.
       });
     } catch (parseErr) {
       console.warn('Groq briefing parse note:', parseErr);
+    }
+  }
+
+  // Secondary: Google Gemini 3.8 Flash
+  const geminiResult = await callGeminiAI({
+    prompt,
+    jsonMode: true,
+    temperature: 0.2
+  });
+
+  if (geminiResult.success && geminiResult.content) {
+    try {
+      const parsed = JSON.parse(geminiResult.content);
+      return NextResponse.json({
+        ...sanitizeResponse(parsed),
+        provider: `Google Gemini (${geminiResult.model})`
+      });
+    } catch (parseErr) {
+      console.warn('Gemini briefing parse note:', parseErr);
     }
   }
 
