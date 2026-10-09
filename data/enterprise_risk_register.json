@@ -998,32 +998,6 @@
   ],
   "approvals": [
     {
-      "id": "APP-104",
-      "riskId": "RSK-E2E-0528",
-      "riskTitle": "Automated E2E Test: Redis Cluster Zero-Day Exploitation",
-      "type": "Risk Acceptance",
-      "requestedBy": "Sunny Prasad (Business Operations Intern & Risk Lead)",
-      "approverName": "Yash Raj (Operations Lead)",
-      "residualScore": 6,
-      "reason": "Emergency patch applied and control verified. Residual score reduced from 20 to 6.",
-      "status": "Pending",
-      "decisionComments": "Approved by Yash Raj. Emergency isolation validated.",
-      "createdTimestamp": "2026-10-09T15:34:11.568Z"
-    },
-    {
-      "id": "APP-103",
-      "riskId": "RSK-E2E-8435",
-      "riskTitle": "Automated E2E Test: Redis Cluster Zero-Day Exploitation",
-      "type": "Risk Acceptance",
-      "requestedBy": "Sunny Prasad (Business Operations Intern & Risk Lead)",
-      "approverName": "Yash Raj (Operations Lead)",
-      "residualScore": 6,
-      "reason": "Emergency patch applied and control verified. Residual score reduced from 20 to 6.",
-      "status": "Pending",
-      "decisionComments": "Approved by Yash Raj. Emergency isolation validated.",
-      "createdTimestamp": "2026-10-09T15:33:39.905Z"
-    },
-    {
       "riskId": "RSK-201",
       "riskTitle": "Payment Gateway Key Exhaustion",
       "type": "Risk Acceptance",
