@@ -129,26 +129,34 @@ function getInitialDatabase(): EnterpriseDatabase {
   };
 }
 
-// In-memory cache + persistent disk synchronization
 let memoryDb: EnterpriseDatabase | null = null;
+let lastDbMtime = 0;
 
 export function getDatabase(): EnterpriseDatabase {
-  if (memoryDb) {
-    return memoryDb;
-  }
-
   ensureDataDir();
 
   if (fs.existsSync(DB_FILE)) {
     try {
+      const current = memoryDb;
+      const stat = fs.statSync(DB_FILE);
+      if (current && stat.mtimeMs <= lastDbMtime) {
+        return current;
+      }
       const raw = fs.readFileSync(DB_FILE, 'utf8');
-      memoryDb = JSON.parse(raw);
-      if (memoryDb && Array.isArray(memoryDb.risks)) {
-        return memoryDb;
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.risks)) {
+        memoryDb = parsed;
+        lastDbMtime = stat.mtimeMs;
+        return parsed as EnterpriseDatabase;
       }
     } catch (err) {
-      console.warn('[Server DB] Corrupt database file, initializing from baseline:', err);
+      console.warn('[Server DB] Corrupt or unreadable database file:', err);
     }
+  }
+
+  const existing = memoryDb;
+  if (existing) {
+    return existing;
   }
 
   // Initialize and write to disk
