@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { callGroqAI } from '@/lib/groq';
 import { callGeminiAI } from '@/lib/gemini';
+import { getRisks } from '@/lib/server/db';
 
 export async function POST(req: NextRequest) {
   try {
-    const { risks, velocity } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    let { risks, velocity } = body;
+
+    if (!risks || !Array.isArray(risks) || risks.length === 0) {
+      risks = getRisks();
+    }
 
     const activeRisks = (risks || []).filter((r: any) => r.status !== 'Closed');
 
