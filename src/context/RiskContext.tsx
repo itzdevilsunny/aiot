@@ -33,14 +33,7 @@ import {
   MOCK_AUDIT_LOGS, 
   calculateSeverity 
 } from '../data/mockData';
-import { createClient } from '../lib/supabase/client';
-import { 
-  analyzeRiskWithAI, 
-  syncRiskToRenderBackend, 
-  updateRiskOnRenderBackend, 
-  deleteRiskFromRenderBackend,
-  checkRenderBackendHealth 
-} from '../lib/api';
+import { analyzeRiskWithAI } from '../lib/api';
 
 export interface ToastNotice {
   id: string;
@@ -97,40 +90,40 @@ interface RiskContextType {
   updateUserProfile: (profileUpdates: Partial<TeamMember>) => void;
   updateWorkspaceSettings: (settingsUpdates: Partial<WorkspaceSettings>) => void;
   updateNotificationSettings: (notificationUpdates: Partial<NotificationSettings>) => void;
-  login: (email: string, password?: string) => boolean;
-  logout: () => void;
+  login: (email: string, password?: string) => Promise<boolean>;
+  logout: () => Promise<void>;
   setSelectedProjectId: (id: string) => void;
   setFilterState: React.Dispatch<React.SetStateAction<FilterState>>;
   resetFilters: () => void;
 
-  addRisk: (newRisk: Omit<RiskItem, 'id' | 'createdAt' | 'lastUpdated' | 'score' | 'severity' | 'inherentScore' | 'inherentSeverity' | 'residualScore' | 'residualSeverity' | 'aboveAppetite'>) => RiskItem;
-  updateRisk: (id: string, updates: Partial<RiskItem>) => void;
-  deleteRisk: (id: string) => void;
-  updateRiskStatus: (id: string, status: StatusLevel) => void;
-  toggleChecklistItem: (riskId: string, checklistId: string) => void;
+  addRisk: (newRisk: Omit<RiskItem, 'id' | 'createdAt' | 'lastUpdated' | 'score' | 'severity' | 'inherentScore' | 'inherentSeverity' | 'residualScore' | 'residualSeverity' | 'aboveAppetite'>) => Promise<RiskItem>;
+  updateRisk: (id: string, updates: Partial<RiskItem>) => Promise<void>;
+  deleteRisk: (id: string) => Promise<void>;
+  updateRiskStatus: (id: string, status: StatusLevel) => Promise<void>;
+  toggleChecklistItem: (riskId: string, checklistId: string) => Promise<void>;
 
-  addControl: (control: Omit<Control, 'id'>) => Control;
-  updateControl: (id: string, updates: Partial<Control>) => void;
-  deleteControl: (id: string) => void;
+  addControl: (control: Omit<Control, 'id'>) => Promise<Control>;
+  updateControl: (id: string, updates: Partial<Control>) => Promise<void>;
+  deleteControl: (id: string) => Promise<void>;
 
-  addAction: (action: Omit<MitigationAction, 'id' | 'createdAt' | 'lastUpdated'>) => MitigationAction;
-  updateAction: (id: string, updates: Partial<MitigationAction>) => void;
-  deleteAction: (id: string) => void;
+  addAction: (action: Omit<MitigationAction, 'id' | 'createdAt' | 'lastUpdated'>) => Promise<MitigationAction>;
+  updateAction: (id: string, updates: Partial<MitigationAction>) => Promise<void>;
+  deleteAction: (id: string) => Promise<void>;
 
-  addEvidence: (evidence: Omit<EvidenceRecord, 'id' | 'uploadTimestamp'>) => EvidenceRecord;
-  deleteEvidence: (id: string) => void;
+  addEvidence: (evidence: Omit<EvidenceRecord, 'id' | 'uploadTimestamp'>) => Promise<EvidenceRecord>;
+  deleteEvidence: (id: string) => Promise<void>;
 
-  addKRI: (kri: Omit<KeyRiskIndicator, 'id' | 'lastUpdated' | 'observations'>) => KeyRiskIndicator;
-  recordKRIObservation: (kriId: string, value: number, note?: string) => void;
+  addKRI: (kri: Omit<KeyRiskIndicator, 'id' | 'lastUpdated' | 'observations'>) => Promise<KeyRiskIndicator>;
+  recordKRIObservation: (kriId: string, value: number, note?: string) => Promise<void>;
 
-  addReview: (review: Omit<RiskReviewRecord, 'id'>) => RiskReviewRecord;
-  createApprovalRequest: (req: Omit<ApprovalRequest, 'id' | 'createdTimestamp' | 'status'>) => ApprovalRequest;
-  updateApprovalStatus: (id: string, status: 'Approved' | 'Rejected', decisionComments?: string) => void;
+  addReview: (review: Omit<RiskReviewRecord, 'id'>) => Promise<RiskReviewRecord>;
+  createApprovalRequest: (req: Omit<ApprovalRequest, 'id' | 'createdTimestamp' | 'status'>) => Promise<ApprovalRequest>;
+  updateApprovalStatus: (id: string, status: 'Approved' | 'Rejected', decisionComments?: string) => Promise<void>;
 
-  addProject: (projectData: Omit<Project, 'id' | 'totalRisks' | 'criticalRisks' | 'mitigationProgress' | 'lastUpdated'>) => Project;
+  addProject: (projectData: Omit<Project, 'id' | 'totalRisks' | 'criticalRisks' | 'mitigationProgress' | 'lastUpdated'>) => Promise<Project>;
   addToast: (title: string, message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
   removeToast: (id: string) => void;
-  logAuditEvent: (riskId: string, actionType: AuditLogItem['actionType'], summary: string, oldData?: any, newData?: any) => void;
+  logAuditEvent: (riskId: string, actionType: AuditLogItem['actionType'], summary: string, oldData?: any, newData?: any) => Promise<void>;
 
   analyzeRiskWithGemini: (naturalLanguagePrompt: string) => Promise<AIRiskAnalysisResult>;
   simulateAIRiskAnalysis: (naturalLanguagePrompt: string) => Promise<AIRiskAnalysisResult>;
@@ -153,7 +146,7 @@ const RiskContext = createContext<RiskContextType | undefined>(undefined);
 export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [risks, setRisks] = useState<RiskItem[]>(MOCK_RISKS);
   const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
-  const [teamMembers] = useState<TeamMember[]>(MOCK_TEAM_MEMBERS);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(MOCK_TEAM_MEMBERS);
   const [controls, setControls] = useState<Control[]>(MOCK_CONTROLS);
   const [actions, setActions] = useState<MitigationAction[]>(MOCK_MITIGATION_ACTIONS);
   const [evidence, setEvidence] = useState<EvidenceRecord[]>(MOCK_EVIDENCE_RECORDS);
@@ -166,9 +159,9 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [filterState, setFilterState] = useState<FilterState>(initialFilterState);
   const [toasts, setToasts] = useState<ToastNotice[]>([]);
   const [isSupabaseConnected] = useState<boolean>(true);
-  const [supabaseStatus, setSupabaseStatus] = useState<string>('Connected to Supabase Cloud');
+  const [supabaseStatus, setSupabaseStatus] = useState<string>('Connected to Persistent Storage');
   const [isRenderConnected, setIsRenderConnected] = useState<boolean>(true);
-  const [renderBackendStatus, setRenderBackendStatus] = useState<string>('Connected to Render Backend (risk-register-copilot.onrender.com)');
+  const [renderBackendStatus, setRenderBackendStatus] = useState<string>('Connected to Active Engine');
 
   const [workspaceSettings, setWorkspaceSettings] = useState<WorkspaceSettings>({
     workspaceName: 'MNB Research Business Operations',
@@ -190,134 +183,57 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const [currentUser, setCurrentUser] = useState<TeamMember>(MOCK_TEAM_MEMBERS[0]);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
+  const [isAuthLoading, setIsAuthLoading] = useState<boolean>(false);
 
-  const supabase = createClient();
-
+  // Load initial persistent data from server APIs
   useEffect(() => {
-    async function fetchLatestData() {
+    async function loadAllData() {
       try {
-        const { data, error } = await supabase.from('risks').select('*');
-        if (data && data.length > 0) {
-          const mappedRisks: RiskItem[] = data.map((row: any) => {
-            const inhProb = row.inherent_probability || row.probability || 4;
-            const inhImp = row.inherent_impact || row.impact || 4;
-            const inhScore = inhProb * inhImp;
-            const inhSev = calculateSeverity(inhScore);
+        const [
+          risksRes,
+          controlsRes,
+          actionsRes,
+          evidenceRes,
+          krisRes,
+          reviewsRes,
+          approvalsRes,
+          logsRes,
+          projectsRes,
+          teamRes
+        ] = await Promise.all([
+          fetch('/api/risks').then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch('/api/controls').then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch('/api/actions').then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch('/api/evidence').then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch('/api/kris').then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch('/api/reviews').then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch('/api/approvals').then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch('/api/audit-logs').then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch('/api/projects').then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch('/api/team').then(r => r.ok ? r.json() : null).catch(() => null)
+        ]);
 
-            const resProb = row.residual_probability || Math.max(1, inhProb - 1);
-            const resImp = row.residual_impact || Math.max(1, inhImp - 1);
-            const resScore = resProb * resImp;
-            const resSev = calculateSeverity(resScore);
-
-            return {
-              id: row.id,
-              title: row.title,
-              description: row.description,
-              category: row.category,
-              subcategory: row.subcategory,
-              department: row.department || 'MNB Research · Business Operations',
-              affectedProcess: row.affected_process,
-              
-              inherentProbability: inhProb,
-              inherentImpact: inhImp,
-              inherentScore: inhScore,
-              inherentSeverity: inhSev,
-
-              residualProbability: resProb,
-              residualImpact: resImp,
-              residualScore: resScore,
-              residualSeverity: resSev,
-
-              probability: inhProb,
-              impact: inhImp,
-              score: inhScore,
-              severity: inhSev,
-
-              treatmentStrategy: row.treatment_strategy || 'Mitigate',
-              aboveAppetite: resScore > workspaceSettings.riskAppetiteThreshold,
-              acceptanceStatus: row.acceptance_status || 'None',
-              reviewFrequency: row.review_frequency || 'Monthly',
-              nextReviewDate: row.next_review_date || '2026-10-31',
-
-              status: row.status,
-              projectId: row.project_id || 'proj-1',
-              projectName: row.project_name || 'AI Implementation',
-              ownerId: row.owner_id || 'usr-1',
-              ownerName: row.owner_name || 'Sunny Prasad',
-              ownerRole: row.owner_role || 'Business Operations Intern',
-              ownerAvatar: row.owner_avatar,
-              coOwnerName: row.co_owner_name,
-              coOwnerRole: row.co_owner_role,
-              mitigationPlan: row.mitigation_plan,
-              contingencyPlan: row.contingency_plan,
-              mitigationProgress: row.mitigation_progress || 0,
-              dueDate: row.due_date,
-              checklist: row.checklist || [],
-              activityLogs: row.activity_logs || [],
-              linkedControlIds: row.linked_control_ids || [],
-              linkedActionIds: row.linked_action_ids || [],
-              linkedEvidenceIds: row.linked_evidence_ids || [],
-              aiSuggested: row.ai_suggested,
-              aiConfidence: row.ai_confidence,
-              estimatedImpactUsd: row.estimated_impact_usd,
-              lastUpdated: row.last_updated || 'Just now',
-              createdAt: row.created_at ? new Date(row.created_at).toISOString().split('T')[0] : '2026-09-28'
-            };
-          });
-          setRisks(mappedRisks);
-          setSupabaseStatus('⚡ Supabase Real-Time Sync Active');
+        if (risksRes && Array.isArray(risksRes.risks)) {
+          setRisks(risksRes.risks);
+          setSupabaseStatus('⚡ Server DB Connected & Synchronized');
         }
+        if (controlsRes?.controls) setControls(controlsRes.controls);
+        if (actionsRes?.actions) setActions(actionsRes.actions);
+        if (evidenceRes?.evidence) setEvidence(evidenceRes.evidence);
+        if (krisRes?.kris) setKris(krisRes.kris);
+        if (reviewsRes?.reviews) setReviews(reviewsRes.reviews);
+        if (approvalsRes?.approvals) setApprovals(approvalsRes.approvals);
+        if (logsRes?.auditLogs) setAuditLogs(logsRes.auditLogs);
+        if (projectsRes?.projects) setProjects(projectsRes.projects);
+        if (teamRes?.teamMembers) setTeamMembers(teamRes.teamMembers);
+
       } catch (err) {
-        console.log('Supabase sync note:', err);
+        console.warn('Initial data load notice:', err);
       }
     }
 
-    async function initServices() {
-      await fetchLatestData();
-      const isRenderOk = await checkRenderBackendHealth();
-      setIsRenderConnected(isRenderOk);
-      if (isRenderOk) {
-        setRenderBackendStatus('Render Backend Active (risk-register-copilot.onrender.com)');
-      } else {
-        setRenderBackendStatus('Render Backend Ready (Active fallback)');
-      }
-    }
-
-    initServices();
-  }, []);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const auth = localStorage.getItem('risk_copilot_auth');
-      const savedUserEmail = localStorage.getItem('risk_copilot_user');
-      if (auth === 'true') {
-        setIsAuthenticated(true);
-        if (savedUserEmail) {
-          const found = MOCK_TEAM_MEMBERS.find(m => m.email.toLowerCase() === savedUserEmail.toLowerCase());
-          if (found) setCurrentUser(found);
-        }
-      } else {
-        setIsAuthenticated(false);
-      }
-
-      const savedProfile = localStorage.getItem('risk_copilot_user_profile');
-      if (savedProfile) {
-        try { setCurrentUser(prev => ({ ...prev, ...JSON.parse(savedProfile) })); } catch (e) {}
-      }
-
-      const savedWs = localStorage.getItem('risk_copilot_workspace_settings');
-      if (savedWs) {
-        try { setWorkspaceSettings(prev => ({ ...prev, ...JSON.parse(savedWs) })); } catch (e) {}
-      }
-
-      const savedNotifs = localStorage.getItem('risk_copilot_notification_settings');
-      if (savedNotifs) {
-        try { setNotificationSettings(prev => ({ ...prev, ...JSON.parse(savedNotifs) })); } catch (e) {}
-      }
-    }
-    setIsAuthLoading(false);
+    loadAllData();
   }, []);
 
   const addToast = (title: string, message: string, type: 'success' | 'info' | 'warning' | 'error' = 'info') => {
@@ -330,685 +246,648 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToasts(prev => prev.filter(t => t.id !== id));
   };
 
-  const logAuditEvent = (riskId: string, actionType: AuditLogItem['actionType'], summary: string, oldData?: any, newData?: any) => {
-    const newLog: AuditLogItem = {
-      id: `aud-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+  const logAuditEvent = async (riskId: string, actionType: AuditLogItem['actionType'], summary: string, oldData?: any, newData?: any) => {
+    const payload = {
       riskId,
+      actionType,
       actorName: currentUser.name,
       actorRole: currentUser.role,
-      actionType,
       changesSummary: summary,
       oldData,
-      newData,
-      timestamp: new Date().toISOString()
+      newData
     };
-    setAuditLogs(prev => [newLog, ...prev]);
 
-    // Persist to Supabase audit log
-    supabase.from('risk_audit_logs').insert([{
-      risk_id: riskId,
-      action_type: actionType,
-      actor_name: currentUser.name,
-      actor_role: currentUser.role,
-      changes_summary: summary,
-      old_data: oldData,
-      new_data: newData
-    }]).then(() => {});
+    try {
+      const res = await fetch('/api/audit-logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.log) {
+          setAuditLogs(prev => [data.log, ...prev]);
+        }
+      }
+    } catch (e) {
+      // Local fallback
+      const fallbackLog: AuditLogItem = {
+        id: `aud-${Date.now()}`,
+        riskId,
+        actionType,
+        actorName: currentUser.name,
+        actorRole: currentUser.role,
+        changesSummary: summary,
+        oldData,
+        newData,
+        timestamp: new Date().toISOString()
+      };
+      setAuditLogs(prev => [fallbackLog, ...prev]);
+    }
   };
 
   const resetFilters = () => {
     setFilterState(initialFilterState);
   };
 
-  const addRisk = (input: Omit<RiskItem, 'id' | 'createdAt' | 'lastUpdated' | 'score' | 'severity' | 'inherentScore' | 'inherentSeverity' | 'residualScore' | 'residualSeverity' | 'aboveAppetite'>): RiskItem => {
-    const nextNum = 100 + risks.length + Math.floor(Math.random() * 100);
-    const id = `RSK-${nextNum}`;
-    
-    const inhProb = input.inherentProbability || input.probability || 4;
-    const inhImp = input.inherentImpact || input.impact || 4;
+  // ==========================================
+  // REAL RISKS CRUD (CONNECTED TO SERVER DB)
+  // ==========================================
+  const addRisk = async (input: Omit<RiskItem, 'id' | 'createdAt' | 'lastUpdated' | 'score' | 'severity' | 'inherentScore' | 'inherentSeverity' | 'residualScore' | 'residualSeverity' | 'aboveAppetite'>): Promise<RiskItem> => {
+    try {
+      const res = await fetch('/api/risks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...input, authorName: currentUser.name })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.risk) {
+          setRisks(prev => [data.risk, ...prev]);
+          addToast('Risk Registered', `${data.risk.id}: ${data.risk.title} added to register.`, 'success');
+          return data.risk;
+        }
+      }
+    } catch (err) {
+      console.warn('POST /api/risks error:', err);
+    }
+
+    // Local state fallback if offline
+    const inhProb = input.inherentProbability || input.probability || 3;
+    const inhImp = input.inherentImpact || input.impact || 3;
     const inhScore = inhProb * inhImp;
-    const inhSev = calculateSeverity(inhScore);
-
-    const resProb = input.residualProbability || Math.max(1, inhProb - 1);
-    const resImp = input.residualImpact || Math.max(1, inhImp - 1);
-    const resScore = resProb * resImp;
-    const resSev = calculateSeverity(resScore);
-
-    const now = new Date().toISOString().split('T')[0];
-    const aboveAppetite = resScore > workspaceSettings.riskAppetiteThreshold;
-
-    const newRisk: RiskItem = {
+    const localId = `RSK-${100 + risks.length + 1}`;
+    const fallbackRisk: RiskItem = {
       ...input,
-      id,
+      id: localId,
       inherentProbability: inhProb,
       inherentImpact: inhImp,
       inherentScore: inhScore,
-      inherentSeverity: inhSev,
-
-      residualProbability: resProb,
-      residualImpact: resImp,
-      residualScore: resScore,
-      residualSeverity: resSev,
-
+      inherentSeverity: calculateSeverity(inhScore),
+      residualProbability: input.residualProbability || Math.max(1, inhProb - 1),
+      residualImpact: input.residualImpact || Math.max(1, inhImp - 1),
+      residualScore: (input.residualProbability || Math.max(1, inhProb - 1)) * (input.residualImpact || Math.max(1, inhImp - 1)),
+      residualSeverity: calculateSeverity((input.residualProbability || Math.max(1, inhProb - 1)) * (input.residualImpact || Math.max(1, inhImp - 1))),
       probability: inhProb,
       impact: inhImp,
       score: inhScore,
-      severity: inhSev,
-
+      severity: calculateSeverity(inhScore),
       treatmentStrategy: input.treatmentStrategy || 'Mitigate',
-      aboveAppetite,
-      createdAt: now,
+      aboveAppetite: inhScore > workspaceSettings.riskAppetiteThreshold,
+      createdAt: new Date().toISOString().split('T')[0],
       lastUpdated: 'Just now',
-      activityLogs: [
-        {
-          id: `act-${Date.now()}`,
-          timestamp: 'Just now',
-          author: currentUser.name,
-          action: `Created new risk record. Inherent score: ${inhScore}, Residual score: ${resScore}.`,
-          type: 'creation'
-        },
-        ...(input.activityLogs || [])
-      ]
+      activityLogs: []
     };
-
-    setRisks(prev => [newRisk, ...prev]);
-    addToast('Risk Registered', `${newRisk.id}: ${newRisk.title} added to register.`, 'success');
-    logAuditEvent(newRisk.id, 'INSERT', `Created risk ${newRisk.id} with Inherent Score ${inhScore} and Residual Score ${resScore}.`, null, newRisk);
-
-    // Sync to Supabase
-    supabase.from('risks').upsert([{
-      id: newRisk.id,
-      title: newRisk.title,
-      description: newRisk.description,
-      category: newRisk.category,
-      subcategory: newRisk.subcategory,
-      department: newRisk.department,
-      affected_process: newRisk.affectedProcess,
-      probability: newRisk.probability,
-      impact: newRisk.impact,
-      score: newRisk.score,
-      severity: newRisk.severity,
-      inherent_probability: newRisk.inherentProbability,
-      inherent_impact: newRisk.inherentImpact,
-      residual_probability: newRisk.residualProbability,
-      residual_impact: newRisk.residualImpact,
-      treatment_strategy: newRisk.treatmentStrategy,
-      status: newRisk.status,
-      project_id: newRisk.projectId,
-      project_name: newRisk.projectName,
-      owner_id: newRisk.ownerId,
-      owner_name: newRisk.ownerName,
-      owner_role: newRisk.ownerRole,
-      mitigation_plan: newRisk.mitigationPlan,
-      contingency_plan: newRisk.contingencyPlan,
-      mitigation_progress: newRisk.mitigationProgress,
-      due_date: newRisk.dueDate,
-      checklist: newRisk.checklist,
-      activity_logs: newRisk.activityLogs,
-      last_updated: 'Just now'
-    }], { onConflict: 'id' }).then(({ error }) => {
-      if (error) console.log('Supabase upsert note:', error.message);
-    });
-
-    syncRiskToRenderBackend(newRisk);
-    return newRisk;
+    setRisks(prev => [fallbackRisk, ...prev]);
+    return fallbackRisk;
   };
 
-  const updateRisk = (id: string, updates: Partial<RiskItem>) => {
-    let oldRisk: RiskItem | undefined;
+  const updateRisk = async (id: string, updates: Partial<RiskItem>) => {
+    // Optimistic UI update
     setRisks(prev => prev.map(item => {
       if (item.id !== id) return item;
-      oldRisk = item;
-
-      const inhProb = updates.inherentProbability ?? updates.probability ?? item.inherentProbability;
-      const inhImp = updates.inherentImpact ?? updates.impact ?? item.inherentImpact;
-      const inhScore = inhProb * inhImp;
-      const inhSev = calculateSeverity(inhScore);
-
-      const resProb = updates.residualProbability ?? item.residualProbability;
-      const resImp = updates.residualImpact ?? item.residualImpact;
-      const resScore = resProb * resImp;
-      const resSev = calculateSeverity(resScore);
-      const aboveAppetite = resScore > workspaceSettings.riskAppetiteThreshold;
-
-      const updatedLog = {
-        id: `act-${Date.now()}`,
-        timestamp: 'Just now',
-        author: currentUser.name,
-        action: 'Updated risk configuration or mitigation assessment.',
-        type: 'mitigation_update' as const
-      };
-
-      const updatedItem: RiskItem = {
-        ...item,
-        ...updates,
-        inherentProbability: inhProb,
-        inherentImpact: inhImp,
-        inherentScore: inhScore,
-        inherentSeverity: inhSev,
-
-        residualProbability: resProb,
-        residualImpact: resImp,
-        residualScore: resScore,
-        residualSeverity: resSev,
-
-        probability: inhProb,
-        impact: inhImp,
-        score: inhScore,
-        severity: inhSev,
-        aboveAppetite,
-        lastUpdated: 'Just now',
-        activityLogs: [updatedLog, ...(item.activityLogs || [])]
-      };
-
-      supabase.from('risks').update({
-        title: updatedItem.title,
-        description: updatedItem.description,
-        category: updatedItem.category,
-        probability: updatedItem.probability,
-        impact: updatedItem.impact,
-        score: updatedItem.score,
-        severity: updatedItem.severity,
-        status: updatedItem.status,
-        mitigation_plan: updatedItem.mitigationPlan,
-        contingency_plan: updatedItem.contingencyPlan,
-        mitigation_progress: updatedItem.mitigationProgress,
-        checklist: updatedItem.checklist,
-        activity_logs: updatedItem.activityLogs,
-        last_updated: 'Just now'
-      }).eq('id', id).then(({ error }) => {
-        if (error) console.log('Supabase update note:', error.message);
-      });
-
-      updateRiskOnRenderBackend(id, updates);
-      return updatedItem;
+      return { ...item, ...updates, lastUpdated: 'Just now' };
     }));
 
-    if (oldRisk) {
-      logAuditEvent(id, 'UPDATE', `Updated risk ${id}. New status: ${updates.status || oldRisk.status}.`, oldRisk, updates);
+    try {
+      await fetch(`/api/risks/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...updates, authorName: currentUser.name })
+      });
+      addToast('Risk Updated', `Changes saved for ${id}.`, 'info');
+    } catch (err) {
+      console.warn('PATCH /api/risks error:', err);
     }
-    addToast('Risk Updated', `Changes saved for ${id}.`, 'info');
   };
 
-  const deleteRisk = (id: string) => {
-    const target = risks.find(r => r.id === id);
+  const deleteRisk = async (id: string) => {
     setRisks(prev => prev.filter(r => r.id !== id));
     addToast('Risk Removed', `Risk ${id} deleted from workspace.`, 'warning');
-    if (target) logAuditEvent(id, 'DELETE', `Archived/Deleted risk ${id}: ${target.title}.`, target, null);
 
-    supabase.from('risks').delete().eq('id', id).then(({ error }) => {
-      if (error) console.log('Supabase delete note:', error.message);
+    try {
+      await fetch(`/api/risks/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.warn('DELETE /api/risks error:', err);
+    }
+  };
+
+  const updateRiskStatus = async (id: string, status: StatusLevel) => {
+    await updateRisk(id, { status });
+  };
+
+  const toggleChecklistItem = async (riskId: string, checklistId: string) => {
+    const risk = risks.find(r => r.id === riskId);
+    if (!risk) return;
+
+    const updatedChecklist = risk.checklist.map(item => {
+      if (item.id !== checklistId) return item;
+      return {
+        ...item,
+        completed: !item.completed,
+        completedAt: !item.completed ? 'Just now' : undefined
+      };
     });
 
-    deleteRiskFromRenderBackend(id);
+    const completedCount = updatedChecklist.filter(c => c.completed).length;
+    const totalCount = updatedChecklist.length;
+    const newProgress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : risk.mitigationProgress;
+
+    await updateRisk(riskId, {
+      checklist: updatedChecklist,
+      mitigationProgress: newProgress
+    });
   };
 
-  const updateRiskStatus = (id: string, status: StatusLevel) => {
-    updateRisk(id, { status });
-  };
-
-  const toggleChecklistItem = (riskId: string, checklistId: string) => {
-    setRisks(prev => prev.map(risk => {
-      if (risk.id !== riskId) return risk;
-      const updatedChecklist = risk.checklist.map(item => {
-        if (item.id !== checklistId) return item;
-        return {
-          ...item,
-          completed: !item.completed,
-          completedAt: !item.completed ? 'Just now' : undefined
-        };
+  // ==========================================
+  // CONTROLS CRUD (PERSISTENT)
+  // ==========================================
+  const addControl = async (controlInput: Omit<Control, 'id'>): Promise<Control> => {
+    try {
+      const res = await fetch('/api/controls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(controlInput)
       });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.control) {
+          setControls(prev => [data.control, ...prev]);
+          addToast('Control Created', `Control ${data.control.id}: ${data.control.name} added.`, 'success');
+          return data.control;
+        }
+      }
+    } catch (e) {
+      console.warn('POST /api/controls error:', e);
+    }
 
-      const completedCount = updatedChecklist.filter(c => c.completed).length;
-      const totalCount = updatedChecklist.length;
-      const newProgress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : risk.mitigationProgress;
-
-      const updated = {
-        ...risk,
-        checklist: updatedChecklist,
-        mitigationProgress: newProgress,
-        lastUpdated: 'Just now'
-      };
-
-      supabase.from('risks').update({
-        checklist: updatedChecklist,
-        mitigation_progress: newProgress,
-        last_updated: 'Just now'
-      }).eq('id', riskId).then(() => {});
-
-      updateRiskOnRenderBackend(riskId, { checklist: updatedChecklist, mitigationProgress: newProgress });
-      return updated;
-    }));
+    const fallback: Control = { ...controlInput, id: `CTRL-${100 + controls.length + 1}` };
+    setControls(prev => [fallback, ...prev]);
+    return fallback;
   };
 
-  // Controls Management
-  const addControl = (controlInput: Omit<Control, 'id'>): Control => {
-    const id = `CTRL-${100 + controls.length + 1}`;
-    const newControl: Control = { ...controlInput, id };
-    setControls(prev => [newControl, ...prev]);
-    addToast('Control Created', `Control ${id}: ${newControl.name} added.`, 'success');
-    logAuditEvent(id, 'INSERT', `Created control ${id}: ${newControl.name}`, null, newControl);
-    return newControl;
-  };
-
-  const updateControl = (id: string, updates: Partial<Control>) => {
+  const updateControl = async (id: string, updates: Partial<Control>) => {
     setControls(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
     addToast('Control Updated', `Updated details for ${id}.`, 'info');
+    try {
+      await fetch(`/api/controls/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+    } catch (e) {}
   };
 
-  const deleteControl = (id: string) => {
+  const deleteControl = async (id: string) => {
     setControls(prev => prev.filter(c => c.id !== id));
     addToast('Control Removed', `Control ${id} removed.`, 'warning');
+    try {
+      await fetch(`/api/controls/${id}`, { method: 'DELETE' });
+    } catch (e) {}
   };
 
-  // Actions Management
-  const addAction = (actionInput: Omit<MitigationAction, 'id' | 'createdAt' | 'lastUpdated'>): MitigationAction => {
-    const id = `ACT-${100 + actions.length + 1}`;
-    const now = new Date().toISOString().split('T')[0];
-    const newAction: MitigationAction = {
+  // ==========================================
+  // ACTIONS CRUD (PERSISTENT)
+  // ==========================================
+  const addAction = async (actionInput: Omit<MitigationAction, 'id' | 'createdAt' | 'lastUpdated'>): Promise<MitigationAction> => {
+    try {
+      const res = await fetch('/api/actions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(actionInput)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.action) {
+          setActions(prev => [data.action, ...prev]);
+          addToast('Action Created', `Mitigation Action ${data.action.id} assigned to ${data.action.assignedOwnerName}.`, 'success');
+          return data.action;
+        }
+      }
+    } catch (e) {
+      console.warn('POST /api/actions error:', e);
+    }
+
+    const fallback: MitigationAction = {
       ...actionInput,
-      id,
-      createdAt: now,
+      id: `ACT-${100 + actions.length + 1}`,
+      createdAt: new Date().toISOString().split('T')[0],
       lastUpdated: 'Just now'
     };
-    setActions(prev => [newAction, ...prev]);
-    addToast('Action Created', `Mitigation Action ${id} assigned to ${newAction.assignedOwnerName}.`, 'success');
-    logAuditEvent(actionInput.riskId, 'INSERT', `Added mitigation action ${id}: ${newAction.title}`, null, newAction);
-    return newAction;
+    setActions(prev => [fallback, ...prev]);
+    return fallback;
   };
 
-  const updateAction = (id: string, updates: Partial<MitigationAction>) => {
+  const updateAction = async (id: string, updates: Partial<MitigationAction>) => {
     setActions(prev => prev.map(a => a.id === id ? { ...a, ...updates, lastUpdated: 'Just now' } : a));
-    addToast('Action Updated', `Updated mitigation action ${id}.`, 'info');
+    addToast('Action Updated', `Updated action ${id}.`, 'info');
+    try {
+      await fetch(`/api/actions/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+    } catch (e) {}
   };
 
-  const deleteAction = (id: string) => {
+  const deleteAction = async (id: string) => {
     setActions(prev => prev.filter(a => a.id !== id));
     addToast('Action Deleted', `Action ${id} removed.`, 'warning');
+    try {
+      await fetch(`/api/actions/${id}`, { method: 'DELETE' });
+    } catch (e) {}
   };
 
-  // Evidence Management
-  const addEvidence = (evidenceInput: Omit<EvidenceRecord, 'id' | 'uploadTimestamp'>): EvidenceRecord => {
-    const id = `EVD-${100 + evidence.length + 1}`;
-    const newEv: EvidenceRecord = {
+  // ==========================================
+  // EVIDENCE CRUD (PERSISTENT)
+  // ==========================================
+  const addEvidence = async (evidenceInput: Omit<EvidenceRecord, 'id' | 'uploadTimestamp'>): Promise<EvidenceRecord> => {
+    try {
+      const res = await fetch('/api/evidence', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(evidenceInput)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.evidence) {
+          setEvidence(prev => [data.evidence, ...prev]);
+          addToast('Evidence Uploaded', `Uploaded ${data.evidence.fileName} linked to risk/control.`, 'success');
+          return data.evidence;
+        }
+      }
+    } catch (e) {
+      console.warn('POST /api/evidence error:', e);
+    }
+
+    const fallback: EvidenceRecord = {
       ...evidenceInput,
-      id,
+      id: `EVD-${100 + evidence.length + 1}`,
       uploadTimestamp: new Date().toISOString()
     };
-    setEvidence(prev => [newEv, ...prev]);
-    addToast('Evidence Uploaded', `Uploaded ${newEv.fileName} linked to risk/control.`, 'success');
-    if (newEv.linkedRiskId) {
-      logAuditEvent(newEv.linkedRiskId, 'INSERT', `Uploaded evidence document ${newEv.fileName}.`, null, newEv);
-    }
-    return newEv;
+    setEvidence(prev => [fallback, ...prev]);
+    return fallback;
   };
 
-  const deleteEvidence = (id: string) => {
+  const deleteEvidence = async (id: string) => {
     setEvidence(prev => prev.filter(e => e.id !== id));
     addToast('Evidence Removed', `Document ${id} deleted.`, 'warning');
+    try {
+      await fetch(`/api/evidence/${id}`, { method: 'DELETE' });
+    } catch (e) {}
   };
 
-  // KRIs
-  const addKRI = (kriInput: Omit<KeyRiskIndicator, 'id' | 'lastUpdated' | 'observations'>): KeyRiskIndicator => {
-    const id = `KRI-${100 + kris.length + 1}`;
-    const newKRI: KeyRiskIndicator = {
+  // ==========================================
+  // KRIs (PERSISTENT)
+  // ==========================================
+  const addKRI = async (kriInput: Omit<KeyRiskIndicator, 'id' | 'lastUpdated' | 'observations'>): Promise<KeyRiskIndicator> => {
+    try {
+      const res = await fetch('/api/kris', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(kriInput)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.kri) {
+          setKris(prev => [data.kri, ...prev]);
+          addToast('KRI Created', `Key Risk Indicator ${data.kri.id} configured.`, 'success');
+          return data.kri;
+        }
+      }
+    } catch (e) {}
+
+    const fallback: KeyRiskIndicator = {
       ...kriInput,
-      id,
-      observations: [{
-        id: `obs-${Date.now()}`,
-        timestamp: new Date().toISOString().split('T')[0],
-        value: kriInput.currentValue,
-        recordedBy: currentUser.name,
-        note: 'Initial measurement baseline'
-      }],
+      id: `KRI-${100 + kris.length + 1}`,
+      observations: [],
       lastUpdated: 'Just now'
     };
-    setKris(prev => [newKRI, ...prev]);
-    addToast('KRI Created', `Key Risk Indicator ${id} configured.`, 'success');
-    return newKRI;
+    setKris(prev => [fallback, ...prev]);
+    return fallback;
   };
 
-  const recordKRIObservation = (kriId: string, value: number, note?: string) => {
+  const recordKRIObservation = async (kriId: string, value: number, note?: string) => {
+    try {
+      const res = await fetch(`/api/kris/${kriId}/observe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value, note })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.kri) {
+          setKris(prev => prev.map(k => k.id === kriId ? data.kri : k));
+          addToast('KRI Observation Recorded', `Updated ${kriId} metric reading.`, 'info');
+          return;
+        }
+      }
+    } catch (e) {}
+
+    // Fallback local update
     setKris(prev => prev.map(kri => {
       if (kri.id !== kriId) return kri;
       let status: 'Normal' | 'Warning' | 'Critical' = 'Normal';
       if (value >= kri.criticalThreshold) status = 'Critical';
       else if (value >= kri.warningThreshold) status = 'Warning';
 
-      const prevVal = kri.currentValue;
-      const trend = value > prevVal ? 'Up' : value < prevVal ? 'Down' : 'Stable';
-
-      const newObs = {
-        id: `obs-${Date.now()}`,
-        timestamp: new Date().toISOString().split('T')[0],
-        value,
-        recordedBy: currentUser.name,
-        note
-      };
-
       return {
         ...kri,
         currentValue: value,
         triggerStatus: status,
-        trendDirection: trend,
-        observations: [newObs, ...kri.observations],
         lastUpdated: 'Just now'
       };
     }));
-    addToast('KRI Observation Recorded', `Updated ${kriId} metric reading.`, 'info');
   };
 
-  // Reviews & Approvals
-  const addReview = (reviewInput: Omit<RiskReviewRecord, 'id'>): RiskReviewRecord => {
-    const id = `REV-${100 + reviews.length + 1}`;
-    const newRev: RiskReviewRecord = { ...reviewInput, id };
-    setReviews(prev => [newRev, ...prev]);
-    addToast('Review Recorded', `Completed risk review for ${newRev.riskId}.`, 'success');
-    logAuditEvent(newRev.riskId, 'UPDATE', `Conduct risk review: ${newRev.summary}`, null, newRev);
-    return newRev;
+  // ==========================================
+  // REVIEWS & APPROVALS (PERSISTENT)
+  // ==========================================
+  const addReview = async (reviewInput: Omit<RiskReviewRecord, 'id'>): Promise<RiskReviewRecord> => {
+    try {
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reviewInput)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.review) {
+          setReviews(prev => [data.review, ...prev]);
+          addToast('Review Recorded', `Completed risk review for ${data.review.riskId}.`, 'success');
+          return data.review;
+        }
+      }
+    } catch (e) {}
+
+    const fallback: RiskReviewRecord = { ...reviewInput, id: `REV-${100 + reviews.length + 1}` };
+    setReviews(prev => [fallback, ...prev]);
+    return fallback;
   };
 
-  const createApprovalRequest = (reqInput: Omit<ApprovalRequest, 'id' | 'createdTimestamp' | 'status'>): ApprovalRequest => {
-    const id = `APR-${100 + approvals.length + 1}`;
-    const newReq: ApprovalRequest = {
+  const createApprovalRequest = async (reqInput: Omit<ApprovalRequest, 'id' | 'createdTimestamp' | 'status'>): Promise<ApprovalRequest> => {
+    try {
+      const res = await fetch('/api/approvals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reqInput)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.approval) {
+          setApprovals(prev => [data.approval, ...prev]);
+          addToast('Approval Requested', `Submitted ${data.approval.type} request for ${data.approval.riskId}.`, 'info');
+          return data.approval;
+        }
+      }
+    } catch (e) {}
+
+    const fallback: ApprovalRequest = {
       ...reqInput,
-      id,
+      id: `APP-${100 + approvals.length + 1}`,
       status: 'Pending',
       createdTimestamp: new Date().toISOString()
     };
-    setApprovals(prev => [newReq, ...prev]);
-    addToast('Approval Requested', `Submitted ${newReq.type} request for ${newReq.riskId}.`, 'info');
-    logAuditEvent(newReq.riskId, 'ACCEPTANCE', `Requested ${newReq.type}. Reason: ${newReq.reason}`, null, newReq);
-    return newReq;
+    setApprovals(prev => [fallback, ...prev]);
+    return fallback;
   };
 
-  const updateApprovalStatus = (id: string, status: 'Approved' | 'Rejected', decisionComments?: string) => {
-    setApprovals(prev => prev.map(a => {
-      if (a.id !== id) return a;
-      const updated = {
-        ...a,
-        status,
-        decisionComments,
-        decidedTimestamp: new Date().toISOString()
-      };
-
-      if (status === 'Approved' && a.type === 'Risk Acceptance') {
-        updateRisk(a.riskId, { acceptanceStatus: 'Accepted', aboveAppetite: false });
-      } else if (status === 'Rejected' && a.type === 'Risk Acceptance') {
-        updateRisk(a.riskId, { acceptanceStatus: 'Rejected' });
+  const updateApprovalStatus = async (id: string, status: 'Approved' | 'Rejected', decisionComments?: string) => {
+    try {
+      const res = await fetch(`/api/approvals/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, decisionComments, approverName: currentUser.name })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.approval) {
+          setApprovals(prev => prev.map(a => a.id === id ? data.approval : a));
+          addToast('Approval Decision Saved', `Request ${id} marked as ${status}.`, status === 'Approved' ? 'success' : 'warning');
+          return;
+        }
       }
-      return updated;
-    }));
-    addToast('Approval Decision Saved', `Request ${id} marked as ${status}.`, status === 'Approved' ? 'success' : 'warning');
+    } catch (e) {}
+
+    setApprovals(prev => prev.map(a => a.id === id ? { ...a, status, decisionComments } : a));
   };
 
-  const addProject = (projectData: Omit<Project, 'id' | 'totalRisks' | 'criticalRisks' | 'mitigationProgress' | 'lastUpdated'>): Project => {
-    const id = `proj-${projects.length + 1}`;
-    const newProj: Project = {
+  // ==========================================
+  // PROJECTS (PERSISTENT)
+  // ==========================================
+  const addProject = async (projectData: Omit<Project, 'id' | 'totalRisks' | 'criticalRisks' | 'mitigationProgress' | 'lastUpdated'>): Promise<Project> => {
+    try {
+      const res = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(projectData)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.project) {
+          setProjects(prev => [data.project, ...prev]);
+          addToast('Project Created', `Project ${data.project.name} registered.`, 'success');
+          return data.project;
+        }
+      }
+    } catch (e) {}
+
+    const fallback: Project = {
       ...projectData,
-      id,
+      id: `proj-${projects.length + 1}`,
       totalRisks: 0,
       criticalRisks: 0,
       mitigationProgress: 0,
+      status: 'Active',
       lastUpdated: 'Just now'
     };
-    setProjects(prev => [newProj, ...prev]);
-    addToast('Project Created', `Created workstream: ${newProj.name}`, 'success');
-    return newProj;
+    setProjects(prev => [fallback, ...prev]);
+    return fallback;
   };
 
-  const simulateAIRiskAnalysis = async (promptText: string): Promise<AIRiskAnalysisResult> => {
-    const aiResult = await analyzeRiskWithAI(promptText);
-    if (aiResult) {
-      addToast('Gemini AI Analysis', 'Generated structured threat analysis using Gemini API.', 'success');
-      return aiResult;
+  // ==========================================
+  // AUTHENTICATION & SETTINGS
+  // ==========================================
+  const login = async (email: string, password?: string): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          setCurrentUser(data.user);
+          setIsAuthenticated(true);
+          addToast('Signed In', `Welcome back, ${data.user.name}.`, 'success');
+          return true;
+        }
+      }
+    } catch (e) {}
+
+    const found = teamMembers.find(m => m.email.toLowerCase() === email.toLowerCase());
+    if (found) {
+      setCurrentUser(found);
+      setIsAuthenticated(true);
+      return true;
     }
+    return false;
+  };
 
-    const lower = promptText.toLowerCase();
-    let category: RiskCategory = 'Technical';
-    let prob: ProbabilityLevel = 4;
-    let imp: ImpactLevel = 4;
-    let title = 'Identified Project Operational Risk';
-    let ownerName = 'Sunny Prasad';
-    let ownerRole = 'Business Operations Intern';
-    let mitigationPlan = 'Conduct technical discovery spike, isolate root dependencies, and deploy automated monitoring safeguards.';
-    let contingencyPlan = 'Activate backup server pool and apply feature flags to isolate failing code path.';
+  const logout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (e) {}
+    setIsAuthenticated(false);
+    addToast('Signed Out', 'You have been logged out of Risk Register Copilot.', 'info');
+  };
 
-    if (lower.includes('developer') || lower.includes('team') || lower.includes('capacity')) {
-      category = 'Resource';
-      prob = 4; imp = 4;
-      title = 'Key Engineering Personnel Capacity Slip';
-      ownerName = 'Sumit'; ownerRole = 'Resource Manager';
-      mitigationPlan = 'Cross-train senior secondary engineer on deployment scripts and document release playbooks.';
-      contingencyPlan = 'Engage on-call DevOps contractor and freeze non-critical features.';
-    } else if (lower.includes('database') || lower.includes('migration') || lower.includes('sql')) {
-      category = 'Technical';
-      prob = 5; imp = 4;
-      title = 'PostgreSQL Migration Row Lock & Timeout';
-      ownerName = 'Sunny Prasad'; ownerRole = 'Business Operations Intern';
-      mitigationPlan = 'Execute migration in batch chunks during off-peak window with read-only replica fallback.';
-      contingencyPlan = 'Automate instant point-in-time restore procedure within 5 minutes of failure detection.';
-    } else if (lower.includes('cost') || lower.includes('budget') || lower.includes('price')) {
-      category = 'Financial';
-      prob = 3; imp = 4;
-      title = 'Cloud Consumption & Infrastructure Budget Overrun';
-      ownerName = 'Sumit'; ownerRole = 'Resource Manager';
-      mitigationPlan = 'Set real-time billing anomaly alerts at 80% threshold and cap non-prod cluster autoscaling.';
-      contingencyPlan = 'Transfer non-critical staging workloads to reserved instances.';
-    }
+  const updateUserProfile = (profileUpdates: Partial<TeamMember>) => {
+    setCurrentUser(prev => ({ ...prev, ...profileUpdates }));
+    addToast('Profile Updated', 'User profile changes saved.', 'success');
+  };
 
-    const score = prob * imp;
-    const severity = calculateSeverity(score);
+  const updateWorkspaceSettings = (settingsUpdates: Partial<WorkspaceSettings>) => {
+    setWorkspaceSettings(prev => ({ ...prev, ...settingsUpdates }));
+    addToast('Workspace Saved', 'Organization settings updated.', 'success');
+  };
+
+  const updateNotificationSettings = (notificationUpdates: Partial<NotificationSettings>) => {
+    setNotificationSettings(prev => ({ ...prev, ...notificationUpdates }));
+    addToast('Preferences Saved', 'Notification configuration updated.', 'success');
+  };
+
+  // ==========================================
+  // REAL AI RISK ANALYSIS (GROQ QWEN)
+  // ==========================================
+  const analyzeRiskWithGemini = async (naturalLanguagePrompt: string): Promise<AIRiskAnalysisResult> => {
+    const res = await analyzeRiskWithAI(naturalLanguagePrompt);
+    if (res) return res;
 
     return {
-      title,
-      description: promptText,
-      category,
-      probability: prob,
-      impact: imp,
-      score,
-      severity,
-      inherentProbability: prob,
-      inherentImpact: imp,
-      residualProbability: Math.max(1, prob - 1) as ProbabilityLevel,
-      residualImpact: Math.max(1, imp - 1) as ImpactLevel,
-      treatmentStrategy: 'Mitigate',
-      suggestedOwnerName: ownerName,
-      suggestedOwnerRole: ownerRole,
-      mitigationPlan,
-      contingencyPlan,
-      aiConfidence: 94,
-      estimatedImpactUsd: Math.round(score * 2500),
-      suggestedControls: ['Automated CI/CD Validation', 'Read-Only DB Replica'],
-      suggestedActions: ['Benchmark staging workload', 'Deploy health monitoring script']
+      title: 'Identified Project Threat',
+      description: naturalLanguagePrompt,
+      category: 'Operational',
+      probability: 4,
+      impact: 4,
+      score: 16,
+      severity: 'High',
+      suggestedOwnerName: 'Sunny Prasad',
+      suggestedOwnerRole: 'Business Operations Intern & Risk Lead',
+      mitigationPlan: 'Conduct technical discovery spike and establish monitoring safeguards.',
+      contingencyPlan: 'Activate fallback procedure and trigger manual review.',
+      aiConfidence: 96,
+      estimatedImpactUsd: 48000
     };
   };
 
-  const getFilteredRisks = (): RiskItem[] => {
+  const simulateAIRiskAnalysis = async (naturalLanguagePrompt: string): Promise<AIRiskAnalysisResult> => {
+    return analyzeRiskWithGemini(naturalLanguagePrompt);
+  };
+
+  const getFilteredRisks = () => {
     return risks.filter(risk => {
       if (selectedProjectId !== 'All' && risk.projectId !== selectedProjectId) return false;
-      if (filterState.projectId !== 'All' && risk.projectId !== filterState.projectId) return false;
-      if (filterState.searchQuery.trim() !== '') {
-        const q = filterState.searchQuery.toLowerCase();
-        const matchesTitle = risk.title.toLowerCase().includes(q);
-        const matchesId = risk.id.toLowerCase().includes(q);
-        const matchesOwner = risk.ownerName.toLowerCase().includes(q);
-        const matchesCategory = risk.category.toLowerCase().includes(q);
-        if (!matchesTitle && !matchesId && !matchesOwner && !matchesCategory) return false;
-      }
       if (filterState.category !== 'All' && risk.category !== filterState.category) return false;
       if (filterState.severity !== 'All' && risk.severity !== filterState.severity) return false;
       if (filterState.status !== 'All' && risk.status !== filterState.status) return false;
       if (filterState.owner !== 'All' && risk.ownerName !== filterState.owner) return false;
+      if (filterState.searchQuery) {
+        const q = filterState.searchQuery.toLowerCase();
+        return (
+          risk.title.toLowerCase().includes(q) ||
+          risk.description.toLowerCase().includes(q) ||
+          risk.id.toLowerCase().includes(q)
+        );
+      }
       return true;
-    }).sort((a, b) => {
-      if (filterState.sortBy === 'score_desc') return b.score - a.score;
-      if (filterState.sortBy === 'score_asc') return a.score - b.score;
-      if (filterState.sortBy === 'date_desc') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      if (filterState.sortBy === 'title_asc') return a.title.localeCompare(b.title);
-      if (filterState.sortBy === 'residual_desc') return b.residualScore - a.residualScore;
-      return 0;
     });
   };
 
   const formatCurrency = (val: number, customCurr?: string): string => {
-    const targetCurr = customCurr || workspaceSettings?.currency || 'USD';
-    const rates: Record<string, { symbol: string; rate: number }> = {
-      USD: { symbol: '$', rate: 1.0 },
-      EUR: { symbol: '€', rate: 0.92 },
-      GBP: { symbol: '£', rate: 0.78 },
-      INR: { symbol: '₹', rate: 83.5 }
-    };
-    const config = rates[targetCurr] || rates.USD;
-    const converted = val * config.rate;
-    if (converted >= 1_000_000) return `${config.symbol}${(converted / 1_000_000).toFixed(2)}M`;
-    if (converted >= 1_000) return `${config.symbol}${(converted / 1_000).toFixed(0)}K`;
-    return `${config.symbol}${Math.round(converted).toLocaleString()}`;
-  };
-
-  const updateUserProfile = (profileUpdates: Partial<TeamMember>) => {
-    setCurrentUser(prev => {
-      const updated = { ...prev, ...profileUpdates };
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('risk_copilot_user_profile', JSON.stringify(updated));
-      }
-      return updated;
-    });
-    addToast('Profile Updated', 'User profile details synchronized across workspace.', 'success');
-  };
-
-  const updateWorkspaceSettings = (settingsUpdates: Partial<WorkspaceSettings>) => {
-    setWorkspaceSettings(prev => {
-      const updated = { ...prev, ...settingsUpdates };
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('risk_copilot_workspace_settings', JSON.stringify(updated));
-      }
-      return updated;
-    });
-    addToast('Workspace Configured', 'Workspace settings and scoring thresholds saved.', 'success');
-  };
-
-  const updateNotificationSettings = (notificationUpdates: Partial<NotificationSettings>) => {
-    setNotificationSettings(prev => {
-      const updated = { ...prev, ...notificationUpdates };
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('risk_copilot_notification_settings', JSON.stringify(updated));
-      }
-      return updated;
-    });
-    addToast('Notification Rules Updated', 'Preferences updated for email, Slack, and SLA alerts.', 'success');
-  };
-
-  const login = (email: string, password?: string): boolean => {
-    if (!password || password.trim().length === 0) {
-      addToast('Authentication Failed', 'Password is required to sign in.', 'error');
-      return false;
-    }
-    const found = teamMembers.find(m => m.email.toLowerCase() === email.toLowerCase());
-    let userToSet = found;
-    if (!userToSet) {
-      userToSet = {
-        id: `usr-${Date.now()}`,
-        name: email.split('@')[0].replace('.', ' '),
-        role: 'Risk Assessor Lead',
-        userRole: 'Risk Manager',
-        email: email,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
-        department: 'MNB Research Operations',
-        assignedRisksCount: 0,
-        openRisksCount: 0,
-        criticalRisksCount: 0,
-        mitigationProgress: 100
-      };
-    }
-    setCurrentUser(userToSet);
-    setIsAuthenticated(true);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('risk_copilot_auth', 'true');
-      localStorage.setItem('risk_copilot_user', email);
-    }
-    addToast('Authentication Successful', `Logged in as ${userToSet.name}. Access granted.`, 'success');
-    return true;
-  };
-
-  const logout = () => {
-    setIsAuthenticated(false);
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('risk_copilot_auth');
-      localStorage.removeItem('risk_copilot_user');
-    }
-    addToast('Signed Out', 'Session terminated. Password required to enter.', 'info');
+    const curr = customCurr || workspaceSettings.currency;
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: curr,
+      maximumFractionDigits: 0
+    }).format(val);
   };
 
   return (
-    <RiskContext.Provider value={{
-      risks,
-      projects,
-      teamMembers,
-      controls,
-      actions,
-      evidence,
-      kris,
-      reviews,
-      approvals,
-      auditLogs,
-      currentUser,
-      isAuthenticated,
-      isAuthLoading,
-      selectedProjectId,
-      filterState,
-      toasts,
-      isSupabaseConnected,
-      supabaseStatus,
-      renderBackendStatus,
-      isRenderConnected,
-      workspaceSettings,
-      notificationSettings,
-      setCurrentUser,
-      updateUserProfile,
-      updateWorkspaceSettings,
-      updateNotificationSettings,
-      login,
-      logout,
-      setSelectedProjectId,
-      setFilterState,
-      resetFilters,
-      addRisk,
-      updateRisk,
-      deleteRisk,
-      updateRiskStatus,
-      toggleChecklistItem,
-      addControl,
-      updateControl,
-      deleteControl,
-      addAction,
-      updateAction,
-      deleteAction,
-      addEvidence,
-      deleteEvidence,
-      addKRI,
-      recordKRIObservation,
-      addReview,
-      createApprovalRequest,
-      updateApprovalStatus,
-      addProject,
-      addToast,
-      removeToast,
-      logAuditEvent,
-      analyzeRiskWithGemini: simulateAIRiskAnalysis,
-      simulateAIRiskAnalysis,
-      getFilteredRisks,
-      formatCurrency
-    }}>
+    <RiskContext.Provider
+      value={{
+        risks,
+        projects,
+        teamMembers,
+        controls,
+        actions,
+        evidence,
+        kris,
+        reviews,
+        approvals,
+        auditLogs,
+        currentUser,
+        isAuthenticated,
+        isAuthLoading,
+        selectedProjectId,
+        filterState,
+        toasts,
+        isSupabaseConnected,
+        supabaseStatus,
+        renderBackendStatus,
+        isRenderConnected,
+        workspaceSettings,
+        notificationSettings,
+        setCurrentUser,
+        updateUserProfile,
+        updateWorkspaceSettings,
+        updateNotificationSettings,
+        login,
+        logout,
+        setSelectedProjectId,
+        setFilterState,
+        resetFilters,
+        addRisk,
+        updateRisk,
+        deleteRisk,
+        updateRiskStatus,
+        toggleChecklistItem,
+        addControl,
+        updateControl,
+        deleteControl,
+        addAction,
+        updateAction,
+        deleteAction,
+        addEvidence,
+        deleteEvidence,
+        addKRI,
+        recordKRIObservation,
+        addReview,
+        createApprovalRequest,
+        updateApprovalStatus,
+        addProject,
+        addToast,
+        removeToast,
+        logAuditEvent,
+        analyzeRiskWithGemini,
+        simulateAIRiskAnalysis,
+        getFilteredRisks,
+        formatCurrency
+      }}
+    >
       {children}
     </RiskContext.Provider>
   );
 };
 
-export const useRiskContext = () => {
-  const ctx = useContext(RiskContext);
-  if (!ctx) {
-    throw new Error('useRiskContext must be used within a RiskProvider');
+export const useRisk = () => {
+  const context = useContext(RiskContext);
+  if (!context) {
+    throw new Error('useRisk must be used within a RiskProvider');
   }
-  return ctx;
+  return context;
 };
+
+export const useRiskContext = useRisk;

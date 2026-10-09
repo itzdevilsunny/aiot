@@ -9,9 +9,12 @@ import { UserCheck, Clock, AlertCircle, ArrowUpRight } from 'lucide-react';
 
 export default function MyRisksPage() {
   const router = useRouter();
-  const { risks } = useRiskContext();
+  const { risks, currentUser } = useRiskContext();
 
-  const myRisks = risks.filter(r => r.ownerName === 'Sunny P.' || r.coOwnerName === 'Sunny P.');
+  const myRisks = risks.filter(r => 
+    (r.ownerName && (r.ownerName.toLowerCase().includes('sunny') || r.ownerName === currentUser?.name)) ||
+    (r.coOwnerName && (r.coOwnerName.toLowerCase().includes('sunny') || r.coOwnerName === currentUser?.name))
+  );
   const criticalCount = myRisks.filter(r => r.severity === 'Critical' || r.severity === 'High').length;
 
   return (
@@ -23,7 +26,7 @@ export default function MyRisksPage() {
           <span>My Assigned Risks & Actions</span>
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-          Filtered workspace view displaying risks and mitigation checklist items owned by Sunny P.
+          Filtered workspace view displaying risks and mitigation checklist items owned by {currentUser?.name || 'Sunny Prasad'}.
         </p>
       </div>
 
@@ -90,6 +93,16 @@ export default function MyRisksPage() {
             </div>
           </div>
         ))}
+        {myRisks.length === 0 && (
+          <div className="p-8 text-center bg-white rounded-xl border border-slate-200">
+            <p className="text-xs font-semibold text-slate-500">
+              No risks currently assigned to {currentUser?.name || 'Sunny Prasad'}.
+            </p>
+            <p className="text-[11px] text-slate-400 mt-1">
+              Assign risks in the Risk Register to track them here.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

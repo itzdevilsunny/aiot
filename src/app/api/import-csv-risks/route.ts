@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { callGroqAI } from '@/lib/groq';
+import { createRisk } from '@/lib/server/db';
 
 export async function POST(req: NextRequest) {
   try {
-    const { rawRows } = await req.json();
+    const { rawRows, persist = false } = await req.json();
 
     if (!rawRows || !Array.isArray(rawRows) || rawRows.length === 0) {
       return NextResponse.json({ error: 'No CSV rows provided' }, { status: 400 });
@@ -40,6 +41,8 @@ Respond ONLY with a JSON object containing a "risks" array with items matching t
   ]
 }`;
 
+    let parsedRisks: any[] = [];
+
     // 1. Primary: Groq Qwen (qwen/qwen3.8-27b)
     const groqResult = await callGroqAI({
       messages: [{ role: 'user', content: prompt }],
@@ -51,41 +54,52 @@ Respond ONLY with a JSON object containing a "risks" array with items matching t
       try {
         const parsed = JSON.parse(groqResult.content);
         if (parsed && Array.isArray(parsed.risks) && parsed.risks.length > 0) {
-          return NextResponse.json({
-            risks: parsed.risks,
-            source: `Groq (${groqResult.model})`
-          });
+          parsedRisks = parsed.risks;
         }
       } catch (err) {
         console.warn('Groq CSV parse note:', err);
       }
     }
 
-    // 2. Dynamic Fallback
-    const mapped = rawRows.slice(0, 15).map((row: any, idx: number) => {
-      const title = row.title || row.risk || row.name || `Imported Threat ${idx + 1}`;
-      const description = row.description || row.desc || row.details || `Bulk imported risk record: ${title}`;
-      const prob = Math.min(5, Math.max(1, Number(row.probability || row.prob || 3)));
-      const imp = Math.min(5, Math.max(1, Number(row.impact || row.imp || 3)));
-      const score = prob * imp;
+    // 2. Dynamic Fallback if AI empty
+    if (parsedRisks.length === 0) {
+      parsedRisks = rawRows.slice(0, 15).map((row: any, idx: number) => {
+        const title = row.title || row.risk || row.name || `Imported Threat ${idx + 1}`;
+        const description = row.description || row.desc || row.details || `Bulk imported risk record: ${title}`;
+        const prob = Math.min(5, Math.max(1, Number(row.probability || row.prob || 3)));
+        const imp = Math.min(5, Math.max(1, Number(row.impact || row.imp || 3)));
+        const score = prob * imp;
 
-      return {
-        title,
-        description,
-        category: row.category || 'Operational',
-        probability: prob,
-        impact: imp,
-        score,
-        severity: score >= 17 ? 'Critical' : score >= 10 ? 'High' : score >= 5 ? 'Medium' : 'Low',
-        ownerName: row.owner || 'Sunny Prasad',
-        ownerRole: 'Business Operations Intern & Risk Lead',
-        mitigationPlan: row.mitigation || 'Establish proactive monitoring and regular status review.',
-        contingencyPlan: row.contingency || 'Activate backup operational protocol upon trigger threshold.',
-        estimatedImpactUsd: Math.round(score * 2500)
-      };
+        return {
+          title,
+          description,
+          category: row.category || 'Operational',
+          probability: prob,
+          impact: imp,
+          score,
+          severity: score >= 17 ? 'Critical' : score >= 10 ? 'High' : score >= 5 ? 'Medium' : 'Low',
+          ownerName: row.owner || 'Sunny Prasad',
+          ownerRole: 'Business Operations Intern & Risk Lead',
+          mitigationPlan: row.mitigation || 'Establish proactive monitoring and regular status review.',
+          contingencyPlan: row.contingency || 'Activate backup operational protocol upon trigger threshold.',
+          estimatedImpactUsd: Math.round(score * 2500)
+        };
+      });
+    }
+
+    // If persist is requested, save directly into the server database
+    let persistedRecords: any[] = [];
+    if (persist) {
+      persistedRecords = parsedRisks.map(r => createRisk(r));
+    }
+
+    return NextResponse.json({
+      success: true,
+      risks: persist ? persistedRecords : parsedRisks,
+      persisted: !!persist,
+      count: parsedRisks.length
     });
 
-    return NextResponse.json({ risks: mapped, source: 'Dynamic Context Engine' });
   } catch (error: any) {
     console.error('Import CSV error:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });

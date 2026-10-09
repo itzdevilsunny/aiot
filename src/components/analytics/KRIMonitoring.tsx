@@ -99,47 +99,79 @@ const INITIAL_KRIS: KRIItem[] = [
 ];
 
 export const KRIMonitoring: React.FC = () => {
-  const { risks, updateRiskStatus, addToast } = useRiskContext();
+  const { risks, kris, recordKRIObservation, addKRI, updateRiskStatus, addToast } = useRiskContext();
 
   const [kriList, setKriList] = useState<KRIItem[]>(INITIAL_KRIS);
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [isAIScanModalOpen, setIsAIScanModalOpen] = useState<boolean>(false);
   const [activeKriDetail, setActiveKriDetail] = useState<KRIItem | null>(null);
 
+  // Sync with persistent KRIs from server
+  React.useEffect(() => {
+    if (kris && kris.length > 0) {
+      const mapped: KRIItem[] = kris.map(k => ({
+        id: k.id,
+        name: k.name,
+        category: (risks.find(r => r.id === k.linkedRiskId)?.category || 'Technical'),
+        currentValue: k.currentValue,
+        unit: k.measurementUnit,
+        targetThreshold: k.warningThreshold,
+        criticalThreshold: k.criticalThreshold,
+        status: (k.triggerStatus === 'Critical' ? 'Breached' : k.triggerStatus === 'Warning' ? 'Warning' : 'Normal') as any,
+        linkedRiskId: k.linkedRiskId,
+        lastUpdated: k.lastUpdated || 'Recently'
+      }));
+      setKriList(mapped);
+    }
+  }, [kris, risks]);
+
   const handleAddKRI = (newKri: KRIItem) => {
     setKriList(prev => [newKri, ...prev]);
+    addKRI({
+      name: newKri.name,
+      description: `Monitored threshold indicator for ${newKri.linkedRiskId}`,
+      linkedRiskId: newKri.linkedRiskId,
+      ownerName: 'Sunny Prasad',
+      measurementUnit: newKri.unit,
+      dataSource: 'Telemetry Script',
+      currentValue: newKri.currentValue,
+      warningThreshold: newKri.targetThreshold,
+      criticalThreshold: newKri.criticalThreshold,
+      reportingFrequency: 'Weekly',
+      trendDirection: 'Stable',
+      triggerStatus: newKri.status === 'Breached' ? 'Critical' : newKri.status === 'Warning' ? 'Warning' : 'Normal'
+    });
   };
 
-  const handleSimulateSpike = (id: string) => {
-    setKriList(prev => prev.map(kri => {
-      if (kri.id !== id) return kri;
+  const handleSimulateSpike = async (id: string) => {
+    const target = kriList.find(k => k.id === id);
+    if (!target) return;
+    const spikedVal = Math.round(target.currentValue * 1.8 * 10) / 10;
+    const isBreached = spikedVal >= target.criticalThreshold;
 
-      const spikedVal = Math.round(kri.currentValue * 1.8 * 10) / 10;
-      const isBreached = spikedVal >= kri.criticalThreshold;
+    // Record persistent observation on server
+    await recordKRIObservation(id, spikedVal, 'Live threshold stress observation');
 
-      if (isBreached) {
-        addToast(
-          '⚠️ KRI SLA Breach Triggered!',
-          `${kri.name} reached ${spikedVal} ${kri.unit} (Threshold: ${kri.criticalThreshold} ${kri.unit}). Auto-escalated linked risk ${kri.linkedRiskId}.`,
-          'error'
-        );
-        // Escalate linked risk to Open/Critical in risk context
-        updateRiskStatus(kri.linkedRiskId, 'Open');
-      }
+    if (isBreached) {
+      addToast(
+        '⚠️ KRI SLA Breach Triggered!',
+        `${target.name} reached ${spikedVal} ${target.unit} (Threshold: ${target.criticalThreshold} ${target.unit}). Auto-escalated linked risk ${target.linkedRiskId}.`,
+        'error'
+      );
+      updateRiskStatus(target.linkedRiskId, 'Open');
+    }
 
-      const updated = {
-        ...kri,
-        currentValue: spikedVal,
-        status: (isBreached ? 'Breached' : spikedVal >= kri.targetThreshold ? 'Warning' : 'Normal') as any,
-        lastUpdated: 'Just now'
-      };
+    const updated = {
+      ...target,
+      currentValue: spikedVal,
+      status: (isBreached ? 'Breached' : spikedVal >= target.targetThreshold ? 'Warning' : 'Normal') as any,
+      lastUpdated: 'Just now'
+    };
 
-      if (activeKriDetail?.id === id) {
-        setActiveKriDetail(updated);
-      }
-
-      return updated;
-    }));
+    setKriList(prev => prev.map(k => k.id === id ? updated : k));
+    if (activeKriDetail?.id === id) {
+      setActiveKriDetail(updated);
+    }
   };
 
   const handleResetMetric = (id: string) => {

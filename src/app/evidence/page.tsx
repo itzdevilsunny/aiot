@@ -24,11 +24,13 @@ export default function EvidencePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Upload Form
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState('');
   const [description, setDescription] = useState('');
   const [linkedRiskId, setLinkedRiskId] = useState('');
   const [linkedControlId, setLinkedControlId] = useState('');
   const [validityExpiryDate, setValidityExpiryDate] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
   const now = new Date();
 
@@ -48,27 +50,95 @@ export default function EvidencePage() {
     return true;
   });
 
-  const handleUpload = (e: React.FormEvent) => {
+  const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fileName.trim()) return;
+    const finalDocName = fileName.trim() || (selectedFile ? selectedFile.name : '');
+    if (!finalDocName) return;
 
-    addEvidence({
-      fileName,
-      fileType: fileName.endsWith('.pdf') ? 'application/pdf' : 'text/plain',
-      fileSize: 1250000,
-      fileUrl: `/uploads/${fileName}`,
+    let finalFileUrl = `/uploads/${finalDocName}`;
+    let finalFileSize = selectedFile ? selectedFile.size : 102400;
+    let finalFileType = selectedFile ? selectedFile.type : (finalDocName.endsWith('.pdf') ? 'application/pdf' : 'text/plain');
+
+    if (selectedFile) {
+      setIsUploading(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('linkedRiskId', linkedRiskId);
+        formData.append('linkedControlId', linkedControlId);
+        formData.append('description', description);
+        const res = await fetch('/api/evidence/upload', {
+          method: 'POST',
+          body: formData
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.evidence) {
+            finalFileUrl = data.evidence.fileUrl;
+            finalFileSize = data.evidence.fileSize;
+            finalFileType = data.evidence.fileType;
+          }
+        }
+      } catch (err) {
+        console.error('Evidence upload error:', err);
+      } finally {
+        setIsUploading(false);
+      }
+    }
+
+    await addEvidence({
+      fileName: finalDocName,
+      fileType: finalFileType || 'application/pdf',
+      fileSize: finalFileSize,
+      fileUrl: finalFileUrl,
       linkedRiskId: linkedRiskId || undefined,
       linkedControlId: linkedControlId || undefined,
       uploadedBy: currentUser.name,
-      description,
+      description: description || 'Audit verification document',
       validityExpiryDate: validityExpiryDate || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       verificationStatus: 'Verified',
       verifierName: currentUser.name
     });
 
     setIsModalOpen(false);
+    setSelectedFile(null);
     setFileName('');
     setDescription('');
+  };
+
+  const handleDownload = (ev: any) => {
+    if (ev.fileUrl && ev.fileUrl.startsWith('/uploads/')) {
+      const link = document.createElement('a');
+      link.href = ev.fileUrl;
+      link.download = ev.fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      const cert = `MNB RESEARCH ENTERPRISE RISK & COMPLIANCE EVIDENCE RECORD
+==========================================================
+Document: ${ev.fileName}
+ID: ${ev.id}
+Uploaded By: ${ev.uploadedBy}
+Timestamp: ${ev.uploadTimestamp}
+Verification Status: ${ev.verificationStatus}
+Linked Risk: ${ev.linkedRiskId || 'None'}
+Linked Control: ${ev.linkedControlId || 'None'}
+Validity Expiry: ${ev.validityExpiryDate || 'None'}
+Checksum: ${ev.checksum || 'SHA256-AUTHENTICATED'}
+Description: ${ev.description}
+==========================================================
+Verified by MNB Research Business Operations Audit Engine.`;
+      const blob = new Blob([cert], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = ev.fileName.endsWith('.txt') || ev.fileName.endsWith('.pdf') ? ev.fileName : `${ev.fileName}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
   };
 
   return (
@@ -251,7 +321,7 @@ export default function EvidencePage() {
                     <td className="px-4 py-4 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2">
                         <button
-                          onClick={() => alert(`Simulated secure download for ${ev.fileName}`)}
+                          onClick={() => handleDownload(ev)}
                           className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                           title="Download Document"
                         >
@@ -293,6 +363,21 @@ export default function EvidencePage() {
             </div>
 
             <form onSubmit={handleUpload} className="space-y-3.5 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Select File from Computer</label>
+                <input
+                  type="file"
+                  onChange={e => {
+                    const f = e.target.files?.[0];
+                    if (f) {
+                      setSelectedFile(f);
+                      if (!fileName) setFileName(f.name);
+                    }
+                  }}
+                  className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                />
+              </div>
+
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Document File Name</label>
                 <input

@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { RiskItem } from '../../types/risk';
-import { MOCK_RISKS } from '../../data/mockData';
 import { DollarSign, ShieldAlert } from 'lucide-react';
 
 interface RiskDistributionProps {
@@ -13,7 +12,7 @@ interface RiskDistributionProps {
 export const RiskDistribution: React.FC<RiskDistributionProps> = ({ risks }) => {
   const [mode, setMode] = useState<'severity' | 'usd'>('severity');
 
-  const activeRisks = risks && risks.length > 0 ? risks : MOCK_RISKS;
+  const activeRisks = risks || [];
   const criticalCount = activeRisks.filter(r => r.severity === 'Critical').length;
   const highCount = activeRisks.filter(r => r.severity === 'High').length;
   const mediumCount = activeRisks.filter(r => r.severity === 'Medium').length;
