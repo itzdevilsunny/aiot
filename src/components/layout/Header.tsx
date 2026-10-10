@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
@@ -11,6 +11,7 @@ import {
   FolderKanban, 
   ChevronDown, 
   Check, 
+  CheckCircle2,
   ShieldCheck,
   X,
   Database,
@@ -56,14 +57,67 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
   const [hasUnreadAlerts, setHasUnreadAlerts] = useState(true);
+  const [isNotificationsCleared, setIsNotificationsCleared] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const notificationRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const projectDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
     const isDark = document.documentElement.classList.contains('dark') || localStorage.getItem('theme') === 'dark';
     setIsDarkMode(isDark);
+
+    // Check if user previously cleared notifications permanently
+    const cleared = localStorage.getItem('risk_notifications_cleared') === 'true';
+    if (cleared) {
+      setIsNotificationsCleared(true);
+      setHasUnreadAlerts(false);
+    }
   }, []);
+
+  // Close popovers when clicking outside
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node;
+      if (notificationRef.current && !notificationRef.current.contains(target)) {
+        setShowNotifications(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(target)) {
+        setShowUserMenu(false);
+      }
+      if (projectDropdownRef.current && !projectDropdownRef.current.contains(target)) {
+        setShowProjectDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('touchstart', handleOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+    };
+  }, []);
+
+  const handleClearAllNotifications = () => {
+    setIsNotificationsCleared(true);
+    setHasUnreadAlerts(false);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('risk_notifications_cleared', 'true');
+    }
+    addToast('Notifications Cleared', 'All operations alerts cleared permanently.', 'info');
+  };
+
+  const handleRestoreNotifications = () => {
+    setIsNotificationsCleared(false);
+    setHasUnreadAlerts(true);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('risk_notifications_cleared');
+    }
+    addToast('Notifications Restored', 'Active risk alert stream refreshed.', 'info');
+  };
 
   const toggleDarkMode = () => {
     const newMode = !isDarkMode;
@@ -116,7 +170,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
           </button>
 
           {/* Project Selector Dropdown */}
-          <div className="relative">
+          <div ref={projectDropdownRef} className="relative">
             <button
               onClick={() => setShowProjectDropdown(!showProjectDropdown)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-200/70 dark:hover:bg-slate-700/80 border border-slate-200/80 dark:border-slate-700 text-slate-800 dark:text-slate-200 transition-colors cursor-pointer"
@@ -247,7 +301,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
           </button>
 
           {/* Notifications Icon & Live Popover */}
-          <div className="relative">
+          <div ref={notificationRef} className="relative">
             <button
               onClick={() => {
                 setShowNotifications(!showNotifications);
@@ -257,7 +311,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
               aria-label="Notifications"
             >
               <Bell className="w-4 h-4" />
-              {hasUnreadAlerts && criticalRisks.length > 0 && (
+              {hasUnreadAlerts && !isNotificationsCleared && criticalRisks.length > 0 && (
                 <span className="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full text-[9px] font-extrabold bg-red-600 text-white ring-2 ring-white dark:ring-slate-900 shadow-xs">
                   {criticalRisks.length}
                 </span>
@@ -273,91 +327,117 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
                       Live Operations Notifications
                     </h4>
                   </div>
-                  <button 
-                    onClick={() => {
-                      setHasUnreadAlerts(false);
-                      addToast('Notifications Cleared', 'All alerts marked as read.', 'info');
-                    }}
-                    className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
-                  >
-                    Clear All
-                  </button>
+                  {!isNotificationsCleared ? (
+                    <button 
+                      onClick={handleClearAllNotifications}
+                      className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                    >
+                      Clear All
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={handleRestoreNotifications}
+                      className="text-[10px] font-bold text-slate-500 hover:underline cursor-pointer"
+                    >
+                      Refresh
+                    </button>
+                  )}
                 </div>
 
                 <div className="p-2 space-y-2 max-h-80 overflow-y-auto text-xs">
-                  {/* Real Live Critical Risk Notifications */}
-                  {criticalRisks.map(r => (
-                    <button
-                      key={`notif-crit-${r.id}`}
-                      onClick={() => {
-                        setShowNotifications(false);
-                        router.push(`/risk/${r.id}`);
-                      }}
-                      className="w-full p-2.5 rounded-xl bg-red-50/90 dark:bg-red-950/40 hover:bg-red-100/90 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-900/60 text-left transition-colors cursor-pointer group"
-                    >
-                      <div className="flex items-center justify-between text-[11px] font-bold text-red-900 dark:text-red-300">
-                        <span className="flex items-center gap-1.5">
-                          <AlertTriangle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
-                          <span>Critical Severity · {r.id}</span>
-                        </span>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-200/80 dark:bg-red-900/60 text-red-900 dark:text-red-200 font-extrabold uppercase">
-                          Action Required
-                        </span>
+                  {isNotificationsCleared ? (
+                    <div className="py-8 px-4 text-center space-y-2">
+                      <div className="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center mx-auto text-emerald-600 dark:text-emerald-400 shadow-2xs">
+                        <CheckCircle2 className="w-5 h-5" />
                       </div>
-                      <p className="text-[11px] text-red-950 dark:text-red-100 mt-1 font-semibold leading-tight group-hover:underline">
-                        {r.title}
+                      <p className="text-xs font-bold text-slate-800 dark:text-slate-200">All Caught Up</p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 max-w-[210px] mx-auto leading-relaxed">
+                        All operational alerts have been cleared permanently.
                       </p>
-                      <div className="flex items-center justify-between text-[10px] text-red-800 dark:text-red-300 mt-1.5 font-medium">
-                        <span>Owner: {r.ownerName}</span>
-                        <span className="font-mono text-red-700 dark:text-red-400">{r.score} Risk Score</span>
-                      </div>
-                    </button>
-                  ))}
-
-                  {/* Real High Severity Open Risks */}
-                  {risks.filter(r => r.severity === 'High' && r.status === 'Open').slice(0, 2).map(r => (
-                    <button
-                      key={`notif-high-${r.id}`}
-                      onClick={() => {
-                        setShowNotifications(false);
-                        router.push(`/risk/${r.id}`);
-                      }}
-                      className="w-full p-2.5 rounded-xl bg-amber-50/80 dark:bg-amber-950/40 hover:bg-amber-100/80 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-900/60 text-left transition-colors cursor-pointer group"
-                    >
-                      <div className="flex items-center justify-between text-[11px] font-bold text-amber-900 dark:text-amber-300">
-                        <span className="flex items-center gap-1.5">
-                          <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-                          <span>High Priority · {r.id}</span>
-                        </span>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-200/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 font-extrabold uppercase">
-                          Open
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-amber-950 dark:text-amber-100 mt-1 font-semibold leading-tight group-hover:underline">
-                        {r.title}
-                      </p>
-                      <div className="text-[10px] text-amber-800 dark:text-amber-300 mt-1 font-medium">
-                        Owner: {r.ownerName} ({r.projectName})
-                      </div>
-                    </button>
-                  ))}
-
-                  {/* Live Activity Log Notification */}
-                  {risks.length > 0 && risks[0].activityLogs && risks[0].activityLogs[0] && (
-                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-left">
-                      <div className="flex items-center justify-between text-[11px] font-bold text-slate-800 dark:text-slate-200">
-                        <span className="flex items-center gap-1.5">
-                          <UserCheck className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                          <span>Latest Audit Activity</span>
-                        </span>
-                        <span className="text-[10px] text-slate-400 font-medium">
-                          {risks[0].activityLogs[0].timestamp}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-700 dark:text-slate-300 mt-1 font-medium leading-tight">
-                        <strong>{risks[0].activityLogs[0].author}</strong>: {risks[0].activityLogs[0].action}
-                      </p>
+                      <button
+                        onClick={handleRestoreNotifications}
+                        className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline font-bold pt-1 inline-block cursor-pointer"
+                      >
+                        Restore Active Alerts
+                      </button>
                     </div>
+                  ) : (
+                    <>
+                      {/* Real Live Critical Risk Notifications */}
+                      {criticalRisks.map(r => (
+                        <button
+                          key={`notif-crit-${r.id}`}
+                          onClick={() => {
+                            setShowNotifications(false);
+                            router.push(`/risk/${r.id}`);
+                          }}
+                          className="w-full p-2.5 rounded-xl bg-red-50/90 dark:bg-red-950/40 hover:bg-red-100/90 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-900/60 text-left transition-colors cursor-pointer group"
+                        >
+                          <div className="flex items-center justify-between text-[11px] font-bold text-red-900 dark:text-red-300">
+                            <span className="flex items-center gap-1.5">
+                              <AlertTriangle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
+                              <span>Critical Severity · {r.id}</span>
+                            </span>
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-200/80 dark:bg-red-900/60 text-red-900 dark:text-red-200 font-extrabold uppercase">
+                              Action Required
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-red-950 dark:text-red-100 mt-1 font-semibold leading-tight group-hover:underline">
+                            {r.title}
+                          </p>
+                          <div className="flex items-center justify-between text-[10px] text-red-800 dark:text-red-300 mt-1.5 font-medium">
+                            <span>Owner: {r.ownerName}</span>
+                            <span className="font-mono text-red-700 dark:text-red-400">{r.score} Risk Score</span>
+                          </div>
+                        </button>
+                      ))}
+
+                      {/* Real High Severity Open Risks */}
+                      {risks.filter(r => r.severity === 'High' && r.status === 'Open').slice(0, 2).map(r => (
+                        <button
+                          key={`notif-high-${r.id}`}
+                          onClick={() => {
+                            setShowNotifications(false);
+                            router.push(`/risk/${r.id}`);
+                          }}
+                          className="w-full p-2.5 rounded-xl bg-amber-50/80 dark:bg-amber-950/40 hover:bg-amber-100/80 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-900/60 text-left transition-colors cursor-pointer group"
+                        >
+                          <div className="flex items-center justify-between text-[11px] font-bold text-amber-900 dark:text-amber-300">
+                            <span className="flex items-center gap-1.5">
+                              <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                              <span>High Priority · {r.id}</span>
+                            </span>
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-200/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 font-extrabold uppercase">
+                              Open
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-amber-950 dark:text-amber-100 mt-1 font-semibold leading-tight group-hover:underline">
+                            {r.title}
+                          </p>
+                          <div className="text-[10px] text-amber-800 dark:text-amber-300 mt-1 font-medium">
+                            Owner: {r.ownerName} ({r.projectName})
+                          </div>
+                        </button>
+                      ))}
+
+                      {/* Live Activity Log Notification */}
+                      {risks.length > 0 && risks[0].activityLogs && risks[0].activityLogs[0] && (
+                        <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-left">
+                          <div className="flex items-center justify-between text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                            <span className="flex items-center gap-1.5">
+                              <UserCheck className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                              <span>Latest Audit Activity</span>
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium">
+                              {risks[0].activityLogs[0].timestamp}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-700 dark:text-slate-300 mt-1 font-medium leading-tight">
+                            <strong>{risks[0].activityLogs[0].author}</strong>: {risks[0].activityLogs[0].action}
+                          </p>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -376,7 +456,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
           <div className="h-4 w-px bg-slate-200 dark:bg-slate-800" />
 
           {/* User Profile Pill & Dropdown Menu */}
-          <div className="relative">
+          <div ref={userMenuRef} className="relative">
             <button
               onClick={() => {
                 setShowUserMenu(!showUserMenu);

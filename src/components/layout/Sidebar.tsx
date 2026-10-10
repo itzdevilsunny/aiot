@@ -204,9 +204,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
             </button>
 
             <button
-              onClick={() => logout()}
-              className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ml-1"
-              title="Sign Out"
+              onClick={() => {
+                logout();
+                router.push('/login');
+              }}
+              className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ml-1 cursor-pointer"
+              title="Sign Out Session"
             >
               <LogOut className="w-3.5 h-3.5" />
             </button>
