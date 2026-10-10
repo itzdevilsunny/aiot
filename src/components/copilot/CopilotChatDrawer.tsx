@@ -315,9 +315,11 @@ export const CopilotChatDrawer: React.FC = () => {
   };
 
   const sampleChips = [
-    { label: '🔥 Top Critical Threats', query: 'What are our top 3 critical threats?' },
-    { label: '👤 Sunny\'s Workload', query: 'Summarize Sunny Prasad\'s workload' },
-    { label: '💰 Financial Exposure ($)', query: 'What is our total financial risk exposure?' }
+    { label: '🛡️ Quality Check', query: 'Perform an enterprise risk data quality check: identify any risks with missing owners, unlinked evidence, or overdue reviews.' },
+    { label: '🔥 Top Critical Threats', query: 'What are our top 3 critical threats and unmitigated exposures?' },
+    { label: '📈 Appetite & Residual Risk', query: 'Analyze our portfolio residual exposure against the risk appetite threshold and highlight items needing governance review.' },
+    { label: '👤 Team Allocation', query: 'Summarize risk ownership and workload allocations across the MNB Research team directory.' },
+    { label: '💰 Financial Exposure ($)', query: 'What is our total financial risk exposure in USD and high-priority mitigation ROI?' }
   ];
 
   const formatInlineMarkdown = (str: string) => {

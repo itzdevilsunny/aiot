@@ -33,7 +33,8 @@ import {
   ChevronRight,
   Shield,
   FileCheck,
-  Send
+  Send,
+  Activity
 } from 'lucide-react';
 
 interface RiskDetailProps {
@@ -48,6 +49,7 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
     evidence,
     approvals,
     kris,
+    reviews,
     workspaceSettings,
     currentUser,
     createApprovalRequest,
@@ -85,6 +87,7 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
   const linkedKris = (kris || []).filter(k => k?.linkedRiskId === risk.id);
   const linkedApprovals = (approvals || []).filter(a => a?.riskId === risk.id);
   const latestApproval = linkedApprovals.length > 0 ? linkedApprovals[linkedApprovals.length - 1] : undefined;
+  const linkedReviews = (reviews || []).filter(r => r?.riskId === risk.id);
 
   const handleUpdateLifecycleStage = (stage: LifecycleStage) => {
     updateRisk(risk.id, { lifecycleStage: stage });
@@ -632,6 +635,137 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
                       <span>{e.fileName}</span>
                       <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{e.verificationStatus}</span>
                     </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 3 GOVERNANCE CHAIN SECTIONS: KRIS, DECISIONS & APPROVALS, SCHEDULED REVIEWS */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* 4. Key Risk Indicators (KRIs) */}
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-card space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-1.5">
+                <Activity className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                <h4 className="text-xs font-extrabold text-slate-900 dark:text-slate-100">Key Risk Indicators ({linkedKris.length})</h4>
+              </div>
+              <Link href="/kri" className="text-[10px] font-bold text-purple-600 dark:text-purple-400 hover:underline flex items-center">
+                <span>Telemetry</span>
+                <ChevronRight className="w-3 h-3" />
+              </Link>
+            </div>
+
+            {linkedKris.length === 0 ? (
+              <p className="text-xs text-slate-400 dark:text-slate-500 py-3 text-center">No KRIs attached to this risk.</p>
+            ) : (
+              <div className="space-y-2">
+                {linkedKris.map(k => (
+                  <div key={k.id} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono-code text-[10px] font-bold text-purple-700 dark:text-purple-400">{k.id}</span>
+                      <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
+                        k.triggerStatus === 'Normal' ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' :
+                        k.triggerStatus === 'Warning' ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300' :
+                        'bg-red-100 dark:bg-red-950/60 text-red-800 dark:text-red-300'
+                      }`}>
+                        {k.triggerStatus}
+                      </span>
+                    </div>
+                    <div className="font-bold text-slate-900 dark:text-slate-100 mt-1 truncate">{k.name}</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center justify-between">
+                      <span>Value: <strong className="text-slate-800 dark:text-slate-200 font-mono-code">{k.currentValue} {k.measurementUnit}</strong></span>
+                      <span>Threshold: {k.criticalThreshold}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 5. Governance Decisions & Risk Acceptance */}
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-card space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <h4 className="text-xs font-extrabold text-slate-900 dark:text-slate-100">Governance & Acceptance ({linkedApprovals.length})</h4>
+              </div>
+              <button 
+                onClick={() => setIsApprovalModalOpen(true)}
+                className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center cursor-pointer"
+              >
+                <span>Request</span>
+                <ChevronRight className="w-3 h-3" />
+              </button>
+            </div>
+
+            {linkedApprovals.length === 0 ? (
+              <div className="text-center py-2 space-y-2">
+                <p className="text-xs text-slate-400 dark:text-slate-500">No formal approvals or acceptance recorded.</p>
+                <Button variant="outline" size="sm" onClick={() => setIsApprovalModalOpen(true)}>
+                  Submit for Governance Decision
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {linkedApprovals.map(a => (
+                  <div key={a.id} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-900 dark:text-slate-100">{a.type}</span>
+                      <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
+                        a.status === 'Approved' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' :
+                        a.status === 'Rejected' ? 'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300' :
+                        'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
+                      }`}>
+                        {a.status}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">{a.reason}</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5 flex items-center justify-between">
+                      <span>By: {a.requestedBy}</span>
+                      <span>Score: {a.residualScore}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 6. Scheduled Reviews & Governance Cycle */}
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-card space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                <h4 className="text-xs font-extrabold text-slate-900 dark:text-slate-100">Review Cycle ({linkedReviews.length})</h4>
+              </div>
+              <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                {risk.reviewFrequency || 'Monthly'}
+              </span>
+            </div>
+
+            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-xs space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 dark:text-slate-400">Next Scheduled Review:</span>
+                <strong className="text-slate-900 dark:text-slate-100 font-mono-code">{risk.nextReviewDate || '2026-10-31'}</strong>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 dark:text-slate-400">Review Frequency:</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200">{risk.reviewFrequency || 'Monthly'}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 dark:text-slate-400">Governance Owner:</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200">{risk.ownerName}</span>
+              </div>
+            </div>
+
+            {linkedReviews.length > 0 && (
+              <div className="space-y-1.5 pt-1">
+                <div className="text-[10px] font-bold uppercase text-slate-400">Recent Findings</div>
+                {linkedReviews.slice(0, 2).map(r => (
+                  <div key={r.id} className="text-[11px] p-2 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                    <div className="font-semibold">{r.reviewerName} • {r.reviewDate}</div>
+                    <div className="text-[10px] text-slate-500 line-clamp-1 mt-0.5">{r.summary || r.findings}</div>
                   </div>
                 ))}
               </div>
