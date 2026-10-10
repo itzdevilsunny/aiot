@@ -122,6 +122,137 @@ When presenting to stakeholders or during intern review:
 ## 5. Technical Delivery Metrics
 
 - **Framework**: Next.js 16 (Turbopack) with React 19 and Tailwind CSS
-- **Build Status**: `npm run build` compiled **51/51 routes** successfully in **2.4 seconds** with **0 errors**
-- **Git Repository**: Pushed to `origin/main` (`github.com/itzdevilsunny/aiot`) and `vercel-repo/main` (`github.com/itzdevilsunny/risk-register-copilot`)
-- **Local Server**: Running and healthy on `http://localhost:3000` (`HTTP 200 OK`)
+- **Build Status**: `npm run build` compiled **68/68 routes** successfully with **0 errors**
+- **Git Repositories**: Synchronized across dual remotes:
+  - `https://github.com/itzdevilsunny/aiot.git`
+  - `https://github.com/itzdevilsunny/risk-register-copilot.git`
+- **Live Deployments**:
+  - **Frontend (Vercel)**: `https://risk-register-copilot-git-main-pds39937-1995s-projects.vercel.app`
+  - **Backend (Render Engine)**: `https://risk-register-copilot-1.onrender.com`
+  - **Authoritative Database**: `https://nrymxphrspvxhacevvwr.supabase.co` (Supabase PostgreSQL)
+- **AI Dual-Engine Stack**:
+  - Primary: Groq (`qwen/qwen3.8-27b`) ~160ms latency
+  - Secondary: Google Gemini (`models/gemini-3.8-flash`)
+
+---
+
+## 6. Response to Section 18: Expected Deliverables
+
+### Deliverable 1: Updated Working Application
+
+- Live production frontend on Vercel: [https://risk-register-copilot-git-main-pds39937-1995s-projects.vercel.app](https://risk-register-copilot-git-main-pds39937-1995s-projects.vercel.app)
+- Live backend proxy on Render: `https://risk-register-copilot-1.onrender.com`
+- 13 interconnected operational pages with full lifecycle pipeline, 5x5 scoring, and zero mock fallbacks.
+
+### Deliverable 2: Database / Entity Relationship Documentation
+
+```text
+┌──────────────┐       1:N        ┌──────────────┐       1:N        ┌──────────────┐
+│ Organization │ ───────────────> │  Department  │ ───────────────> │    Users     │
+└──────────────┘                  └──────────────┘                  └──────┬───────┘
+       │ 1:N                                                               │
+       ▼                                                                   │ 1:N (Owner)
+┌──────────────┐       1:N        ┌──────────────┐                         ▼
+│   Projects   │ ───────────────> │    Risks     │ <───────────────────────┘
+└──────────────┘                  └──────┬───────┘
+                                         │
+        ┌───────────────────┬────────────┴──────────┬───────────────────┐
+        │ 1:N               │ 1:N                   │ 1:N               │ 1:N
+        ▼                   ▼                       ▼                   ▼
+┌───────────────┐   ┌───────────────┐       ┌───────────────┐   ┌───────────────┐
+│   Controls    │   │Mitig. Actions │       │Audit Evidence │   │     KRIs      │
+│(Prev/Det/Corr)│   │ (SLA, Progress)       │ (File, Expiry)│   │(Limit, Status)│
+└───────────────┘   └───────────────┘       └───────────────┘   └───────────────┘
+        │                   │                       │                   │
+        └───────────────────┴────────────┬──────────┴───────────────────┘
+                                         │
+                                         ▼
+                                ┌─────────────────┐
+                                │   Governance    │
+                                │   (Approvals,   │
+                                │ Reviews, Audits)│
+                                └─────────────────┘
+```
+
+### Deliverable 3: Feature and User-Flow Documentation
+
+1. **Identify**: Create risk through Register, CSV Import, or AI Copilot.
+2. **Assess**: Record Likelihood (1–5) and Impact (1–5) to calculate Inherent Score ($P \times I$).
+3. **Prioritise**: Automatically evaluate against Risk Appetite Threshold ($15$). Flag exceptions.
+4. **Treat**: Select strategy (`Mitigate`, `Accept`, `Transfer`, `Avoid`, `Escalate`).
+5. **Assign**: Designate Risk Owner, Action Owners, and Reviewers from the MNB Team directory.
+6. **Monitor**: Connect Controls, Evidence, Actions, and KRIs with real-time telemetry.
+7. **Review**: Reassess Residual Likelihood ($P_{\text{res}}$) and Residual Impact ($I_{\text{res}}$).
+8. **Decide**: Submit formal Risk Acceptance request for committee sign-off if residual exceeds appetite.
+9. **Report**: Export operational CSVs or render board-level PDF briefings.
+10. **Close**: Archive completed risk records upon mitigation verification and decision sign-off.
+
+### Deliverable 4: API Documentation
+
+| Method | Route | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `GET/POST` | `/api/risks` | List all risks / Create new risk | Yes (Session) |
+| `GET/PUT/DEL` | `/api/risks/[id]` | Get risk details, update, or archive | Yes (Session) |
+| `GET/POST` | `/api/controls` | Query controls / register new control | Yes (Session) |
+| `GET/POST` | `/api/actions` | Retrieve mitigation actions / update SLA | Yes (Session) |
+| `GET/POST` | `/api/evidence` | Audit evidence repository / file upload | Yes (Session) |
+| `GET/POST` | `/api/kris` | Query KRI limits / record telemetry observations | Yes (Session) |
+| `GET/POST` | `/api/approvals` | Governance approval queue / sign-offs | Yes (Session) |
+| `GET` | `/api/audit-logs` | Immutable SOC 2 audit trail | Yes (Session) |
+| `POST` | `/api/copilot-chat` | Enterprise AI Copilot grounded in active DB | Yes (Session) |
+| `GET` | `/api/proxy?path=...` | Render backend API bridge & health check | Public (Diagnostics) |
+| `GET` | `/api/health` | Authoritative system & database status | Public |
+
+### Deliverable 5: User-Role and Permission Matrix
+
+| Role | View Register | Create/Edit Risk | Reassess Score | Approve Acceptance | Manage Controls | View Audit Logs |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Risk Lead** (Sunny) | Full | Full | Yes | Yes (Submit/Review) | Yes | Full |
+| **Governance Officer** (Yash) | Full | Full | Yes | Final Approval | Yes | Full (SOC 2) |
+| **Product Manager** (Ritika) | Full | Scope Edits | Yes | Request Only | View Only | View Only |
+| **Resource Manager** (Sumit) | Full | Actions Only | No | No | View Only | View Only |
+| **Compliance/Auditor** (Priya) | Full | Read-Only | Read-Only | Audit Log Verify | Review Tests | Full Export |
+
+### Deliverable 6: Security Checklist and Test Evidence
+
+- [x] **Authentication**: Secure cookie-based base64 token issuance with server-side validation.
+- [x] **Route Protection**: Next.js middleware guards all 12 operational pages and API routes (HTTP 307 redirect / HTTP 401).
+- [x] **Authoritative Storage**: Supabase PostgreSQL with constraints and server fallback.
+- [x] **Input Validation**: Sanitization on risk IDs, scores, and currency fields.
+- [x] **Zero Mock Data**: Fully live Groq/Gemini AI completions and real database persistence.
+
+### Deliverable 7: Functional Test Cases & Results
+
+- **Vitest Unit Suite**: 11/11 tests passing (`risk-math.test.ts`, `webhooks.test.ts`, `governance-database.test.ts`).
+- **End-to-End Live Audit**: 29/29 tests passing across local and Vercel production:
+  - Authentication Suite: 7/7 passed (100%)
+  - Supabase PostgreSQL Suite: 7/7 passed (100%)
+  - 12-Step Lifecycle Workflow: 12/12 passed (100%)
+  - Dual AI Provider Integration: 3/3 passed (100%)
+
+### Deliverable 8: AI Test Set and Results
+
+- Tested Groq `qwen/qwen3.8-27b` with live grounding payload (~160ms latency, 100% success).
+- Tested Google Gemini `models/gemini-3.8-flash` with header-based authorization (100% success).
+- Validated Red-Teamer risk generation, SLA breach predictor, and Copilot portfolio synthesis.
+
+### Deliverable 9: Sample Enterprise Dataset
+
+- Active inventory includes 10 production-grade enterprise risks spanning technical infrastructure, regulatory compliance, operational workflows, and vendor dependencies, complete with assigned controls, SLA actions, and verified evidence files.
+
+### Deliverable 10: Deployment & Setup Documentation
+
+- Frontend: Automated deployment on Vercel tied to `main` branch.
+- Backend: Render background web service at `https://risk-register-copilot-1.onrender.com`.
+- Supabase: PostgreSQL with RLS and complete migration schemas in `/supabase`.
+- Dual Git Remotes configured for simultaneous push to `aiot.git` and `risk-register-copilot.git`.
+
+### Deliverable 11: Known Limitations and Technical Debt List
+
+- Google Gemini requires explicit `GEMINI_API_KEY` configuration in Vercel settings (fallback to Groq handles all production queries smoothly).
+- Multi-organization tenant switching is currently configured for MNB Research; multi-tenant self-service signup planned for P2.
+
+### Deliverable 12: Next-Phase Roadmap
+
+- **P1**: Automated Jira/ServiceNow bi-directional sync, SOX compliance control auto-testing, and scheduled board report email digests.
+- **P2**: Vendor risk management portal, ISO 27001 / NIST framework cross-mapping engine, and automated incident-to-risk conversion.
