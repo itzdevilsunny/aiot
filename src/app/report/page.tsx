@@ -18,8 +18,16 @@ import {
 import { Button } from '../../components/ui/Button';
 
 export default function ReportPage() {
-  const { risks, projects, controls, actions, evidence, kris, approvals, workspaceSettings, formatCurrency } = useRiskContext();
+  const { risks, projects, controls, actions, evidence, kris, approvals, workspaceSettings, formatCurrency, addToast } = useRiskContext();
   const [reportType, setReportType] = useState<'executive' | 'board'>('executive');
+  const [isGeneratingBriefing, setIsGeneratingBriefing] = useState<boolean>(false);
+  const [briefingData, setBriefingData] = useState<{
+    executiveSummary?: string;
+    topPriorityActions?: string[];
+    financialVulnerabilityScore?: number;
+    governanceRating?: string;
+    source?: string;
+  } | null>(null);
 
   const totalRisks = risks.length;
   const criticalRisks = risks.filter(r => r.severity === 'Critical');
@@ -32,6 +40,28 @@ export default function ReportPage() {
   const avgProgress = totalRisks > 0 
     ? Math.round(risks.reduce((acc, r) => acc + r.mitigationProgress, 0) / totalRisks) 
     : 0;
+
+  const handleGenerateBriefing = async () => {
+    setIsGeneratingBriefing(true);
+    try {
+      const res = await fetch('/api/generate-briefing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ risks })
+      });
+      const data = await res.json();
+      if (res.ok && data) {
+        setBriefingData(data);
+        addToast('AI Briefing Generated', `Executive synthesis synthesized via ${data.source || 'Copilot AI'}.`, 'success');
+      } else {
+        addToast('Briefing Generation Failed', data.error || 'Could not synthesize briefing.', 'error');
+      }
+    } catch (err: any) {
+      addToast('Network Note', 'Failed to reach AI briefing engine.', 'error');
+    } finally {
+      setIsGeneratingBriefing(false);
+    }
+  };
 
   const handlePrint = () => {
     if (typeof window !== 'undefined') {
@@ -76,6 +106,16 @@ export default function ReportPage() {
               Board Governance Briefing
             </button>
           </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            icon={<Sparkles className={`w-3.5 h-3.5 text-indigo-600 ${isGeneratingBriefing ? 'animate-spin' : ''}`} />}
+            onClick={handleGenerateBriefing}
+            disabled={isGeneratingBriefing}
+          >
+            {isGeneratingBriefing ? 'Synthesizing...' : briefingData ? 'Refresh AI Briefing' : 'Synthesize AI Briefing'}
+          </Button>
 
           <Button
             variant="primary"
@@ -144,16 +184,44 @@ export default function ReportPage() {
         </div>
 
         {/* Executive Summary Narrative */}
-        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
-          <h3 className="font-extrabold text-slate-900 uppercase text-xs tracking-wider">
-            Executive Summary & Risk Profile Synthesis
-          </h3>
+        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-extrabold text-slate-900 uppercase text-xs tracking-wider flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5 text-indigo-600" />
+              Executive Summary & Risk Posture Synthesis
+            </h3>
+            {briefingData?.governanceRating && (
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-900 border border-indigo-200">
+                Governance Status: {briefingData.governanceRating}
+              </span>
+            )}
+          </div>
+
           <p className="text-slate-700 leading-relaxed">
-            This governance report provides an objective overview of active operational, technical, resource, and schedule risks across 
-            <strong> {workspaceSettings.workspaceName}</strong>. 
-            Currently, <strong>{aboveAppetiteRisks.length} risk(s)</strong> exceed the organization's approved risk appetite threshold of {workspaceSettings.riskAppetiteThreshold}, 
-            requiring explicit formal management sign-off or accelerated mitigation. Average mitigation readiness stands at <strong>{avgProgress}%</strong> across all active workstreams.
+            {briefingData?.executiveSummary ? (
+              <span>{briefingData.executiveSummary}</span>
+            ) : (
+              <span>
+                This governance report provides an objective overview of active operational, technical, resource, and schedule risks across 
+                <strong> {workspaceSettings.workspaceName}</strong>. 
+                Currently, <strong>{aboveAppetiteRisks.length} risk(s)</strong> exceed the organization's approved risk appetite threshold of {workspaceSettings.riskAppetiteThreshold}, 
+                requiring explicit formal management sign-off or accelerated mitigation. Average mitigation readiness stands at <strong>{avgProgress}%</strong> across all active workstreams.
+              </span>
+            )}
           </p>
+
+          {briefingData?.topPriorityActions && briefingData.topPriorityActions.length > 0 && (
+            <div className="pt-2 border-t border-slate-200 space-y-1.5">
+              <div className="font-bold text-slate-800 text-[11px] uppercase tracking-wide">
+                Key Strategic Action Priorities (Mandated by Leadership):
+              </div>
+              <ul className="list-disc pl-4 space-y-1 text-slate-600">
+                {briefingData.topPriorityActions.map((act, i) => (
+                  <li key={i} className="leading-snug">{act}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         {/* Above Appetite Exposure Table */}

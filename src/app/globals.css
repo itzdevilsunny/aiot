@@ -149,3 +149,48 @@ html.dark ::-webkit-scrollbar-thumb:hover {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Print Optimization for Board & Executive Reports */
+@media print {
+  @page {
+    margin: 1.2cm;
+    size: A4 portrait;
+  }
+
+  body, 
+  html, 
+  html.dark, 
+  html.dark body, 
+  html.dark .bg-white, 
+  html.dark .bg-slate-50,
+  html.dark main {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  html.dark .text-slate-900,
+  html.dark .text-slate-800,
+  html.dark .text-slate-700 {
+    color: #0f172a !important;
+  }
+
+  html.dark .border-slate-200,
+  html.dark .border-slate-300 {
+    border-color: #cbd5e1 !important;
+  }
+
+  aside, 
+  header, 
+  nav, 
+  .print\:hidden,
+  button:not(.print\:inline) {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+}
