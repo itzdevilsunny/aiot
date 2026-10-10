@@ -63,6 +63,27 @@ export async function POST(req: NextRequest) {
     // Explicitly persist to authoritative Supabase PostgreSQL
     await syncRiskToSupabase(created);
 
+    // Automated escalation trigger for Critical or high-exposure risks
+    if (created.severity === 'Critical' || created.score >= 15) {
+      try {
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        fetch(`${appUrl}/api/notify-escalation`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            riskId: created.id,
+            title: created.title,
+            severity: created.severity,
+            score: created.score,
+            ownerName: created.ownerName,
+            category: created.category,
+            eventType: 'CRITICAL_ESCALATION',
+            reason: `Automatically escalated: Risk scored ${created.score}/25 (${created.severity}).`
+          })
+        }).catch(() => {});
+      } catch {}
+    }
+
     return NextResponse.json({
       success: true,
       risk: created

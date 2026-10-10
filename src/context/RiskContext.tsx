@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { 
   RiskItem, 
   Project, 
@@ -115,6 +115,7 @@ interface RiskContextType {
 
   analyzeRiskWithGemini: (naturalLanguagePrompt: string) => Promise<AIRiskAnalysisResult>;
   simulateAIRiskAnalysis: (naturalLanguagePrompt: string) => Promise<AIRiskAnalysisResult>;
+  refreshData: () => Promise<void>;
   getFilteredRisks: () => RiskItem[];
   formatCurrency: (val: number, customCurr?: string) => string;
 }
@@ -316,55 +317,82 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Load initial persistent data from server APIs
-  useEffect(() => {
-    async function loadAllData() {
+  // Cross-tab broadcast synchronization
+  const broadcastSync = () => {
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
       try {
-        const [
-          risksRes,
-          controlsRes,
-          actionsRes,
-          evidenceRes,
-          krisRes,
-          reviewsRes,
-          approvalsRes,
-          logsRes,
-          projectsRes,
-          teamRes
-        ] = await Promise.all([
-          fetch('/api/risks').then(r => r.ok ? r.json() : null).catch(() => null),
-          fetch('/api/controls').then(r => r.ok ? r.json() : null).catch(() => null),
-          fetch('/api/actions').then(r => r.ok ? r.json() : null).catch(() => null),
-          fetch('/api/evidence').then(r => r.ok ? r.json() : null).catch(() => null),
-          fetch('/api/kris').then(r => r.ok ? r.json() : null).catch(() => null),
-          fetch('/api/reviews').then(r => r.ok ? r.json() : null).catch(() => null),
-          fetch('/api/approvals').then(r => r.ok ? r.json() : null).catch(() => null),
-          fetch('/api/audit-logs').then(r => r.ok ? r.json() : null).catch(() => null),
-          fetch('/api/projects').then(r => r.ok ? r.json() : null).catch(() => null),
-          fetch('/api/team').then(r => r.ok ? r.json() : null).catch(() => null)
-        ]);
-
-        if (risksRes && Array.isArray(risksRes.risks)) {
-          setRisks(dedupeById(risksRes.risks));
-          setSupabaseStatus('⚡ Server DB Connected & Synchronized');
-        }
-        if (controlsRes?.controls) setControls(dedupeById(controlsRes.controls));
-        if (actionsRes?.actions) setActions(dedupeById(actionsRes.actions));
-        if (evidenceRes?.evidence) setEvidence(dedupeById(evidenceRes.evidence));
-        if (krisRes?.kris) setKris(dedupeById(krisRes.kris));
-        if (reviewsRes?.reviews) setReviews(dedupeById(reviewsRes.reviews));
-        if (approvalsRes?.approvals) setApprovals(dedupeById(approvalsRes.approvals));
-        if (logsRes?.auditLogs) setAuditLogs(dedupeById(logsRes.auditLogs));
-        if (projectsRes?.projects) setProjects(dedupeById(projectsRes.projects));
-        if (teamRes?.teamMembers) setTeamMembers(dedupeById(teamRes.teamMembers));
-
-      } catch (err) {
-        console.warn('Initial data load notice:', err);
-      }
+        const channel = new BroadcastChannel('mnb_erm_sync_channel');
+        channel.postMessage({ type: 'REFRESH_DATA', timestamp: Date.now() });
+        channel.close();
+      } catch {}
     }
+  };
 
-    loadAllData();
+  const refreshData = useCallback(async () => {
+    try {
+      const [
+        risksRes,
+        controlsRes,
+        actionsRes,
+        evidenceRes,
+        krisRes,
+        reviewsRes,
+        approvalsRes,
+        logsRes,
+        projectsRes,
+        teamRes
+      ] = await Promise.all([
+        fetch('/api/risks').then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/controls').then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/actions').then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/evidence').then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/kris').then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/reviews').then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/approvals').then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/audit-logs').then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/projects').then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/team').then(r => r.ok ? r.json() : null).catch(() => null)
+      ]);
+
+      if (risksRes && Array.isArray(risksRes.risks)) {
+        setRisks(dedupeById(risksRes.risks));
+        setSupabaseStatus('⚡ Server DB Connected & Synchronized');
+      }
+      if (controlsRes?.controls) setControls(dedupeById(controlsRes.controls));
+      if (actionsRes?.actions) setActions(dedupeById(actionsRes.actions));
+      if (evidenceRes?.evidence) setEvidence(dedupeById(evidenceRes.evidence));
+      if (krisRes?.kris) setKris(dedupeById(krisRes.kris));
+      if (reviewsRes?.reviews) setReviews(dedupeById(reviewsRes.reviews));
+      if (approvalsRes?.approvals) setApprovals(dedupeById(approvalsRes.approvals));
+      if (logsRes?.auditLogs) setAuditLogs(dedupeById(logsRes.auditLogs));
+      if (projectsRes?.projects) setProjects(dedupeById(projectsRes.projects));
+      if (teamRes?.teamMembers) setTeamMembers(dedupeById(teamRes.teamMembers));
+
+    } catch (err) {
+      console.warn('Initial data load notice:', err);
+    }
   }, []);
+
+  // Initial load
+  useEffect(() => {
+    refreshData();
+  }, [refreshData]);
+
+  // Cross-tab real-time sync listener
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('BroadcastChannel' in window)) return;
+    try {
+      const channel = new BroadcastChannel('mnb_erm_sync_channel');
+      channel.onmessage = (event) => {
+        if (event.data?.type === 'REFRESH_DATA') {
+          refreshData();
+        }
+      };
+      return () => {
+        channel.close();
+      };
+    } catch {}
+  }, [refreshData]);
 
   const addToast = (title: string, message: string, type: 'success' | 'info' | 'warning' | 'error' = 'info') => {
     const id = Math.random().toString(36).substring(2, 9);
@@ -436,6 +464,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (data.risk) {
           setRisks(prev => [data.risk, ...prev]);
           addToast('Risk Registered', `${data.risk.id}: ${data.risk.title} added to register.`, 'success');
+          broadcastSync();
           return data.risk;
         }
       }
@@ -474,6 +503,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       activityLogs: []
     };
     setRisks(prev => [fallbackRisk, ...prev]);
+    broadcastSync();
     return fallbackRisk;
   };
 
@@ -491,6 +521,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ ...updates, authorName: currentUser.name })
       });
       addToast('Risk Updated', `Changes saved for ${id}.`, 'info');
+      broadcastSync();
     } catch (err) {
       console.warn('PATCH /api/risks error:', err);
     }
@@ -499,6 +530,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const deleteRisk = async (id: string) => {
     setRisks(prev => prev.filter(r => r.id !== id));
     addToast('Risk Removed', `Risk ${id} deleted from workspace.`, 'warning');
+    broadcastSync();
 
     try {
       await fetch(`/api/risks/${id}`, { method: 'DELETE' });
@@ -549,6 +581,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (data.control) {
           setControls(prev => [data.control, ...prev]);
           addToast('Control Created', `Control ${data.control.id}: ${data.control.name} added.`, 'success');
+          broadcastSync();
           return data.control;
         }
       }
@@ -558,12 +591,14 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const fallback: Control = { ...controlInput, id: `CTRL-${100 + controls.length + 1}` };
     setControls(prev => [fallback, ...prev]);
+    broadcastSync();
     return fallback;
   };
 
   const updateControl = async (id: string, updates: Partial<Control>) => {
     setControls(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
     addToast('Control Updated', `Updated details for ${id}.`, 'info');
+    broadcastSync();
     try {
       await fetch(`/api/controls/${id}`, {
         method: 'PATCH',
@@ -576,6 +611,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const deleteControl = async (id: string) => {
     setControls(prev => prev.filter(c => c.id !== id));
     addToast('Control Removed', `Control ${id} removed.`, 'warning');
+    broadcastSync();
     try {
       await fetch(`/api/controls/${id}`, { method: 'DELETE' });
     } catch (e) {}
@@ -596,6 +632,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (data.action) {
           setActions(prev => [data.action, ...prev]);
           addToast('Action Created', `Mitigation Action ${data.action.id} assigned to ${data.action.assignedOwnerName}.`, 'success');
+          broadcastSync();
           return data.action;
         }
       }
@@ -610,6 +647,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       lastUpdated: 'Just now'
     };
     setActions(prev => [fallback, ...prev]);
+    broadcastSync();
     return fallback;
   };
 
@@ -772,6 +810,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (data.approval) {
           setApprovals(prev => [data.approval, ...prev]);
           addToast('Approval Requested', `Submitted ${data.approval.type} request for ${data.approval.riskId}.`, 'info');
+          broadcastSync();
           return data.approval;
         }
       }
@@ -784,6 +823,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       createdTimestamp: new Date().toISOString()
     };
     setApprovals(prev => [fallback, ...prev]);
+    broadcastSync();
     return fallback;
   };
 
@@ -799,12 +839,14 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (data.approval) {
           setApprovals(prev => prev.map(a => a.id === id ? data.approval : a));
           addToast('Approval Decision Saved', `Request ${id} marked as ${status}.`, status === 'Approved' ? 'success' : 'warning');
+          broadcastSync();
           return;
         }
       }
     } catch (e) {}
 
     setApprovals(prev => prev.map(a => a.id === id ? { ...a, status, decisionComments } : a));
+    broadcastSync();
   };
 
   // ==========================================
@@ -1019,6 +1061,7 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logAuditEvent,
         analyzeRiskWithGemini,
         simulateAIRiskAnalysis,
+        refreshData,
         getFilteredRisks,
         formatCurrency
       }}
