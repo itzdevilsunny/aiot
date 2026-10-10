@@ -373,19 +373,19 @@ export const CopilotChatDrawer: React.FC = () => {
           onClick={handleButtonClick}
           onMouseDown={handleMouseDown}
           onTouchStart={handleTouchStart}
-          title="Drag anywhere or click to Ask Risk Copilot"
-          className={`group relative w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-600 via-indigo-700 to-purple-600 text-white shadow-xl hover:shadow-indigo-500/40 hover:scale-110 active:scale-95 transition-transform duration-150 cursor-grab active:cursor-grabbing flex items-center justify-center border-2 border-white/30 ${
-            isDragging ? 'ring-4 ring-indigo-400/50 scale-105' : ''
+          title="Enterprise Risk Copilot"
+          className={`group relative w-11 h-11 rounded-full bg-slate-900 dark:bg-slate-800 text-slate-100 hover:bg-slate-800 dark:hover:bg-slate-700 shadow-md hover:shadow-lg transition-all duration-150 cursor-pointer flex items-center justify-center border border-slate-700 dark:border-slate-600 ${
+            isDragging ? 'ring-2 ring-indigo-500 scale-105' : ''
           }`}
         >
-          <Sparkles className="w-5 h-5 text-white animate-pulse" />
+          <Bot className="w-5 h-5 text-indigo-400" />
           
           {/* Live Online Ping Dot */}
-          <span className="w-3 h-3 rounded-full bg-emerald-400 border-2 border-slate-900 absolute -top-0.5 -right-0.5 animate-pulse" />
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-slate-900 absolute -top-0.5 -right-0.5" />
 
           {/* Hover Tooltip */}
-          <span className="absolute right-full mr-2.5 px-2.5 py-1 rounded-lg bg-slate-900/90 text-white text-[11px] font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-md border border-slate-700">
-            Ask Risk Copilot (Drag Me)
+          <span className="absolute right-full mr-2.5 px-2.5 py-1 rounded-md bg-slate-900 text-white text-[11px] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-md border border-slate-800">
+            Enterprise Copilot
           </span>
         </button>
       </div>
