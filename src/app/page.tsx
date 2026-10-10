@@ -22,8 +22,10 @@ import {
   FileText,
   CheckSquare,
   ArrowRight,
-  ShieldCheck
+  ShieldCheck,
+  Flame
 } from 'lucide-react';
+import { IncidentToRiskModal } from '../components/risks/IncidentToRiskModal';
 
 export default function DashboardPage() {
   const { 
@@ -57,6 +59,8 @@ export default function DashboardPage() {
     ? Math.round(filteredRisks.reduce((acc, r) => acc + r.mitigationProgress, 0) / totalRisks) 
     : 0;
 
+  const [isIncidentModalOpen, setIsIncidentModalOpen] = useState<boolean>(false);
+
   const activeProject = projects.find(p => p.id === selectedProjectId);
   const topCriticalRisk = filteredRisks.find(r => r.severity === 'Critical') || filteredRisks[0];
 
@@ -78,14 +82,26 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Live Status Indicators */}
-        <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-400 shrink-0">
-          <div className="flex items-center gap-1.5 font-medium">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Database Synced</span>
+        {/* Live Status Indicators & Action Tools */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            icon={<Flame className="w-3.5 h-3.5 text-rose-500 animate-pulse" />}
+            onClick={() => setIsIncidentModalOpen(true)}
+            className="border-rose-200 dark:border-rose-900/60 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-700 dark:text-rose-300 font-bold text-xs"
+          >
+            Incident ➔ Risk
+          </Button>
+
+          <div className="hidden sm:flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 pl-1 border-l border-slate-200 dark:border-slate-800">
+            <div className="flex items-center gap-1.5 font-medium">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Database Synced</span>
+            </div>
+            <span className="text-slate-300 dark:text-slate-700">•</span>
+            <span className="font-mono-code font-bold text-slate-800 dark:text-slate-200">{totalRisks} Risks Active</span>
           </div>
-          <span className="text-slate-300 dark:text-slate-700">•</span>
-          <span className="font-mono-code font-bold text-slate-800 dark:text-slate-200">{totalRisks} Risks Active</span>
         </div>
       </div>
 
@@ -197,6 +213,12 @@ export default function DashboardPage() {
           <WhatIfSimulator />
         </div>
       </div>
+
+      {/* Incident-to-Risk Pipeline Modal */}
+      <IncidentToRiskModal
+        isOpen={isIncidentModalOpen}
+        onClose={() => setIsIncidentModalOpen(false)}
+      />
     </div>
   );
 }

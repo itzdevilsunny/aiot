@@ -7,8 +7,9 @@ import { RiskFilters } from '../../components/risks/RiskFilters';
 import { RiskTable } from '../../components/risks/RiskTable';
 import { RiskDependencyGraph } from '../../components/risks/RiskDependencyGraph';
 import { Button } from '../../components/ui/Button';
-import { Plus, Sparkles, ShieldAlert, Download, Upload, Network, Table } from 'lucide-react';
+import { Plus, Sparkles, ShieldAlert, Download, Upload, Network, Table, Flame } from 'lucide-react';
 import { exportRisksToCSV, parseCSVToRisks } from '../../lib/exportUtils';
+import { IncidentToRiskModal } from '../../components/risks/IncidentToRiskModal';
 
 export default function RiskRegisterPage() {
   const { getFilteredRisks, risks, addRisk, addToast } = useRiskContext();
@@ -16,6 +17,7 @@ export default function RiskRegisterPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [viewMode, setViewMode] = useState<'table' | 'graph'>('table');
+  const [isIncidentModalOpen, setIsIncidentModalOpen] = useState<boolean>(false);
 
   const criticalCount = risks.filter(r => r.severity === 'Critical').length;
   const highCount = risks.filter(r => r.severity === 'High').length;
@@ -128,6 +130,16 @@ export default function RiskRegisterPage() {
           <Button
             variant="outline"
             size="sm"
+            icon={<Flame className="w-3.5 h-3.5 text-rose-500 animate-pulse" />}
+            onClick={() => setIsIncidentModalOpen(true)}
+            className="border-rose-200 dark:border-rose-900/60 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-700 dark:text-rose-300 font-semibold"
+          >
+            Incident ➔ Risk
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
             icon={<Download className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />}
             onClick={handleExportCSV}
           >
@@ -182,6 +194,12 @@ export default function RiskRegisterPage() {
       ) : (
         <RiskDependencyGraph />
       )}
+
+      {/* Incident-to-Risk Pipeline Modal */}
+      <IncidentToRiskModal
+        isOpen={isIncidentModalOpen}
+        onClose={() => setIsIncidentModalOpen(false)}
+      />
     </div>
   );
 }
