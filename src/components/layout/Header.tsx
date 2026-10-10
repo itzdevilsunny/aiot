@@ -25,7 +25,9 @@ import {
   Lock,
   Sun,
   Moon,
-  Plus
+  Plus,
+  Sparkles,
+  Bot
 } from 'lucide-react';
 import { useRiskContext } from '../../context/RiskContext';
 import { HelpModal } from './HelpModal';
@@ -48,7 +50,8 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
     teamMembers,
     login,
     logout,
-    addToast
+    addToast,
+    openCopilot
   } = useRiskContext();
 
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
@@ -274,6 +277,17 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileSidebar, onOpenComma
           >
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>Audit Trail</span>
+          </button>
+
+          {/* AI Copilot Qwen Trigger Button */}
+          <button
+            onClick={() => openCopilot()}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors cursor-pointer shadow-2xs"
+            title="Open Enterprise Risk Copilot Chatbot (Groq Qwen 27B)"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+            <span className="hidden md:inline">AI Copilot</span>
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-200/70 dark:bg-indigo-800 text-indigo-900 dark:text-indigo-200">Qwen</span>
           </button>
 
           {/* Primary Action: Create Risk */}

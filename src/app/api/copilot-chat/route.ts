@@ -88,13 +88,13 @@ ${approvalsSummary}
 
 ${imageBase64 ? 'NOTE: The user has attached an image/screenshot of system error telemetry, architecture diagram, or metric log. Analyze and diagnose the visual/system threat in relation to the risk register.' : ''}
 
-INSTRUCTIONS FOR COPILOT:
-1. Always respond directly and accurately to the user's specific question: "${userQuery || 'Analyze current enterprise risk portfolio'}".
-2. DO NOT output canned or generic responses. Address the actual user prompt specifically using the live data above.
-3. Keep Sunny Prasad, Yash Raj, Ritika, Sumit, and Priya Sharma in proper context when answering queries about ownership, reviews, workloads, approvals, or operational responsibilities.
-4. Always cite concrete data proof: mention exact Risk IDs (e.g. [RSK-104]), numerical Risk Scores, Owner names, dollar exposures ($USD), and mitigation statuses.
-5. Provide high-value, actionable, executive-ready analysis suitable for MNB Research leadership.
-6. Use clean markdown with bullet points, bold key metrics, and structured sections.`;
+INSTRUCTIONS FOR COPILOT (POWERED BY QWEN 27B):
+1. Always respond directly, concisely, and specifically to the user's exact question: "${userQuery || 'Analyze current enterprise risk portfolio'}".
+2. NEVER output canned, generic, or repeating template paragraphs. Jump straight into the specific answer without unnecessary preamble.
+3. If asked about a specific risk (e.g., RSK-105, RSK-101) or a specific person (e.g., Sunny Prasad, Yash Raj), focus exclusively on that item/person with concrete metrics.
+4. If asked about telemetry or live monitoring events, explain the underlying risk connection and actionable next steps.
+5. Always cite concrete data proof: exact Risk IDs (e.g. [RSK-104]), quantitative $5x5$ scores, assigned owners, and dollar exposures.
+6. Format with sharp, executive-ready markdown bullet points.`;
 
     // 1. Primary: Ultra-Fast Groq Qwen (qwen/qwen3.8-27b) with failover to openai/gpt-oss-120b
     const groqResult = await callGroqAI({

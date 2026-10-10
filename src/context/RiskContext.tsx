@@ -118,6 +118,12 @@ interface RiskContextType {
   refreshData: () => Promise<void>;
   getFilteredRisks: () => RiskItem[];
   formatCurrency: (val: number, customCurr?: string) => string;
+
+  isCopilotOpen: boolean;
+  copilotInitialQuery: string;
+  openCopilot: (initialQuery?: string) => void;
+  closeCopilot: () => void;
+  toggleCopilot: () => void;
 }
 
 const initialFilterState: FilterState = {
@@ -300,6 +306,25 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentUser, setCurrentUser] = useState<TeamMember>(DEFAULT_USER);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
   const [isAuthLoading, setIsAuthLoading] = useState<boolean>(false);
+
+  // Global Copilot Chatbot State
+  const [isCopilotOpen, setIsCopilotOpen] = useState<boolean>(false);
+  const [copilotInitialQuery, setCopilotInitialQuery] = useState<string>('');
+
+  const openCopilot = useCallback((initialQuery?: string) => {
+    if (initialQuery) {
+      setCopilotInitialQuery(initialQuery);
+    }
+    setIsCopilotOpen(true);
+  }, []);
+
+  const closeCopilot = useCallback(() => {
+    setIsCopilotOpen(false);
+  }, []);
+
+  const toggleCopilot = useCallback(() => {
+    setIsCopilotOpen(prev => !prev);
+  }, []);
 
   // Restore authenticated session from localStorage if previously signed out or customized
   useEffect(() => {
@@ -1063,7 +1088,12 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         simulateAIRiskAnalysis,
         refreshData,
         getFilteredRisks,
-        formatCurrency
+        formatCurrency,
+        isCopilotOpen,
+        copilotInitialQuery,
+        openCopilot,
+        closeCopilot,
+        toggleCopilot
       }}
     >
       {children}

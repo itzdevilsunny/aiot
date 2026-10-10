@@ -10,6 +10,7 @@ import { RecentRisks } from '../components/dashboard/RecentRisks';
 import { ExecutiveBriefingCard } from '../components/dashboard/ExecutiveBriefingCard';
 import { LifecyclePipelineCard } from '../components/dashboard/LifecyclePipelineCard';
 import { WhatIfSimulator } from '../components/dashboard/WhatIfSimulator';
+import { LiveMonitoringTicker } from '../components/analytics/LiveMonitoringTicker';
 import { Button } from '../components/ui/Button';
 import { 
   ShieldAlert, 
@@ -58,37 +59,6 @@ export default function DashboardPage() {
 
   const activeProject = projects.find(p => p.id === selectedProjectId);
   const topCriticalRisk = filteredRisks.find(r => r.severity === 'Critical') || filteredRisks[0];
-
-  const [aiTelemetryText, setAiTelemetryText] = useState<string>(
-    'Copilot Telemetry: Multi-Region PostgreSQL locks detected. Elevating RSK-105 mitigation urgency recommended.'
-  );
-
-  useEffect(() => {
-    async function fetchAiTelemetry() {
-      try {
-        const res = await fetch('/api/telemetry-insight', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            criticalCount,
-            highCount,
-            topRiskTitle: topCriticalRisk?.title
-          })
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data.insight) {
-            setAiTelemetryText(data.insight);
-          }
-        }
-      } catch (err) {}
-    }
-
-    if (totalRisks > 0) {
-      fetchAiTelemetry();
-    }
-  }, [totalRisks, criticalCount, highCount]);
 
   return (
     <div className="space-y-4 animate-in fade-in-50 pb-10">
@@ -143,22 +113,8 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Operational Telemetry Insight Banner (Compact) */}
-      <div className="p-2.5 px-3.5 rounded-xl bg-slate-100/90 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between text-xs">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="w-5 h-5 rounded-md bg-indigo-600 text-white flex items-center justify-center shrink-0">
-            <ShieldAlert className="w-3 h-3" />
-          </div>
-          <span className="text-slate-800 dark:text-slate-200 font-medium text-[11px] truncate">
-            {aiTelemetryText}
-          </span>
-        </div>
-        {topCriticalRisk && (
-          <Link href={`/risk/${topCriticalRisk.id}`} className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline shrink-0 hidden sm:inline ml-2">
-            View Top Threat →
-          </Link>
-        )}
-      </div>
+      {/* Real-Time Non-Repeating Live Telemetry Stream */}
+      <LiveMonitoringTicker />
 
       {/* 6 OPERATIONAL KPI CARDS (Immediate Executive Pulse) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2.5 sm:gap-3">

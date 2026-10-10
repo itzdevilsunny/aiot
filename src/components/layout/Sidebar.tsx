@@ -23,7 +23,9 @@ import {
   FileText,
   Clock,
   ClipboardList,
-  Plus
+  Plus,
+  Sparkles,
+  Bot
 } from 'lucide-react';
 import { useRiskContext } from '../../context/RiskContext';
 
@@ -35,7 +37,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseMobile }) => {
   const pathname = usePathname();
   const router = useRouter();
-  const { risks, controls, actions, evidence, approvals, currentUser, teamMembers, login, logout } = useRiskContext();
+  const { risks, controls, actions, evidence, approvals, currentUser, teamMembers, login, logout, openCopilot } = useRiskContext();
 
   const [showUserDropdown, setShowUserDropdown] = useState(false);
 
@@ -143,6 +145,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
               </p>
             </div>
           </Link>
+        </div>
+
+        {/* AI Copilot Qwen Quick Launcher */}
+        <div className="px-3 pt-3">
+          <button
+            onClick={() => {
+              openCopilot();
+              if (onCloseMobile) onCloseMobile();
+            }}
+            className="w-full flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white shadow-xs transition-all cursor-pointer group"
+            title="Open Enterprise Risk Copilot (Groq Qwen 27B)"
+          >
+            <div className="flex items-center gap-2">
+              <Bot className="w-4 h-4 text-indigo-200 group-hover:scale-110 transition-transform" />
+              <div className="text-left">
+                <div className="text-xs font-bold leading-tight flex items-center gap-1.5">
+                  <span>AI Copilot</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                </div>
+                <div className="text-[10px] text-indigo-200 leading-tight">Qwen 27B Live Q&A</div>
+              </div>
+            </div>
+            <Sparkles className="w-3.5 h-3.5 text-indigo-200 shrink-0" />
+          </button>
         </div>
 
         {/* Navigation Sections */}

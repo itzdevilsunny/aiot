@@ -38,12 +38,22 @@ export const CopilotChatDrawer: React.FC = () => {
     kris, 
     teamMembers, 
     currentUser, 
-    addToast 
+    addToast,
+    isCopilotOpen,
+    copilotInitialQuery,
+    closeCopilot,
+    toggleCopilot
   } = useRiskContext();
-  const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [inputQuery, setInputQuery] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Sync initial query when opened via external trigger
+  useEffect(() => {
+    if (copilotInitialQuery && isCopilotOpen) {
+      setInputQuery(copilotInitialQuery);
+    }
+  }, [copilotInitialQuery, isCopilotOpen]);
   
   // Voice recognition state
   const [isListening, setIsListening] = useState(false);
@@ -148,7 +158,7 @@ export const CopilotChatDrawer: React.FC = () => {
 
   const handleButtonClick = () => {
     if (!hasDragged.current) {
-      setIsOpen(prev => !prev);
+      toggleCopilot();
     }
   };
 
@@ -157,10 +167,10 @@ export const CopilotChatDrawer: React.FC = () => {
   };
 
   useEffect(() => {
-    if (isOpen) {
+    if (isCopilotOpen) {
       scrollToBottom();
     }
-  }, [messages, isOpen]);
+  }, [messages, isCopilotOpen]);
 
   // Voice Assistant Handler (Web Speech API + Fallback)
   const toggleVoiceAssistant = () => {
@@ -393,7 +403,7 @@ export const CopilotChatDrawer: React.FC = () => {
       </div>
 
       {/* Floating Copilot Chat Drawer Window */}
-      {isOpen && (
+      {isCopilotOpen && (
         <div 
           className={`fixed z-50 bg-slate-900 text-white rounded-3xl shadow-2xl border border-indigo-900/60 overflow-hidden flex flex-col transition-all duration-200 animate-in slide-in-from-bottom-5 ${
             isExpanded ? 'w-[calc(100vw-2rem)] sm:w-[540px] h-[640px]' : 'w-[calc(100vw-2rem)] sm:w-[420px] h-[540px]'
@@ -412,11 +422,14 @@ export const CopilotChatDrawer: React.FC = () => {
               <div>
                 <h3 className="text-xs font-extrabold text-white flex items-center gap-1.5">
                   <span>Enterprise Risk Copilot</span>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                    AI Online
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                    Qwen 27B
                   </span>
                 </h3>
-                <p className="text-[10px] text-slate-400">Live Supabase DB Context Active</p>
+                <p className="text-[10px] text-slate-400 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Groq Qwen (qwen3.8-27b) • Live DB Context
+                </p>
               </div>
             </div>
 
@@ -430,8 +443,9 @@ export const CopilotChatDrawer: React.FC = () => {
               </button>
 
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={closeCopilot}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                title="Close Copilot"
               >
                 <X className="w-4 h-4" />
               </button>

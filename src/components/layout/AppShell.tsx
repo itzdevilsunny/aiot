@@ -6,6 +6,7 @@ import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { CommandMenu } from './CommandMenu';
 import { ToastContainer } from '../ui/Toast';
+import { CopilotChatDrawer } from '../copilot/CopilotChatDrawer';
 import { useRiskContext } from '../../context/RiskContext';
 
 export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -77,6 +78,9 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
         isOpen={commandMenuOpen}
         onClose={() => setCommandMenuOpen(false)}
       />
+
+      {/* Enterprise AI Copilot Chatbot */}
+      <CopilotChatDrawer />
 
       {/* Toast Notification Layer */}
       <ToastContainer />
