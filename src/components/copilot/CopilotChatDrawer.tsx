@@ -17,7 +17,8 @@ import {
   Paperclip, 
   Image as ImageIcon, 
   Volume2, 
-  VolumeX 
+  VolumeX,
+  GripVertical
 } from 'lucide-react';
 
 interface ChatMessage {
@@ -72,26 +73,39 @@ export const CopilotChatDrawer: React.FC = () => {
     }
   ]);
 
-  // Draggable position state
+  // Draggable position state for circular launcher button
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const buttonPosOnStart = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const hasDragged = useRef<boolean>(false);
 
+  // Draggable position state for Chat Window itself
+  const [windowPosition, setWindowPosition] = useState<{ x: number; y: number } | null>(null);
+  const [isDraggingWindow, setIsDraggingWindow] = useState(false);
+  const windowDragStartPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const windowPosOnStart = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Initialize position to bottom-right corner after mount
+  // Initialize positions after mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setPosition({
         x: window.innerWidth - 68,
         y: window.innerHeight - 68
       });
-    }
-  }, []);
 
-  // Handle Dragging
+      const winW = isExpanded ? 540 : 420;
+      const winH = isExpanded ? 640 : 540;
+      setWindowPosition({
+        x: Math.max(16, window.innerWidth - winW - 24),
+        y: Math.max(16, window.innerHeight - winH - 76)
+      });
+    }
+  }, [isExpanded]);
+
+  // Handle Button Dragging
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
     hasDragged.current = false;
@@ -112,36 +126,103 @@ export const CopilotChatDrawer: React.FC = () => {
     }
   };
 
+  // Handle Window Header Dragging
+  const handleWindowMouseDown = (e: React.MouseEvent) => {
+    // Only drag when clicking header area, ignore buttons
+    if ((e.target as HTMLElement).closest('button, input, textarea, a')) return;
+    setIsDraggingWindow(true);
+    windowDragStartPos.current = { x: e.clientX, y: e.clientY };
+    if (windowPosition) {
+      windowPosOnStart.current = { ...windowPosition };
+    } else {
+      const winW = isExpanded ? 540 : 420;
+      const winH = isExpanded ? 640 : 540;
+      const initialPos = {
+        x: Math.max(16, window.innerWidth - winW - 24),
+        y: Math.max(16, window.innerHeight - winH - 76)
+      };
+      windowPosOnStart.current = initialPos;
+      setWindowPosition(initialPos);
+    }
+  };
+
+  const handleWindowTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      if ((e.target as HTMLElement).closest('button, input, textarea, a')) return;
+      setIsDraggingWindow(true);
+      windowDragStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      if (windowPosition) {
+        windowPosOnStart.current = { ...windowPosition };
+      } else {
+        const winW = isExpanded ? 540 : 420;
+        const winH = isExpanded ? 640 : 540;
+        const initialPos = {
+          x: Math.max(16, window.innerWidth - winW - 24),
+          y: Math.max(16, window.innerHeight - winH - 76)
+        };
+        windowPosOnStart.current = initialPos;
+        setWindowPosition(initialPos);
+      }
+    }
+  };
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      const dx = e.clientX - dragStartPos.current.x;
-      const dy = e.clientY - dragStartPos.current.y;
-      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-        hasDragged.current = true;
+      // 1. Move button
+      if (isDragging) {
+        const dx = e.clientX - dragStartPos.current.x;
+        const dy = e.clientY - dragStartPos.current.y;
+        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+          hasDragged.current = true;
+        }
+        const newX = Math.max(12, Math.min(window.innerWidth - 60, buttonPosOnStart.current.x + dx));
+        const newY = Math.max(12, Math.min(window.innerHeight - 60, buttonPosOnStart.current.y + dy));
+        setPosition({ x: newX, y: newY });
       }
-      const newX = Math.max(12, Math.min(window.innerWidth - 60, buttonPosOnStart.current.x + dx));
-      const newY = Math.max(12, Math.min(window.innerHeight - 60, buttonPosOnStart.current.y + dy));
-      setPosition({ x: newX, y: newY });
+
+      // 2. Move window freely anywhere on screen
+      if (isDraggingWindow) {
+        const dx = e.clientX - windowDragStartPos.current.x;
+        const dy = e.clientY - windowDragStartPos.current.y;
+        const winW = isExpanded ? 540 : 420;
+        const newX = Math.max(8, Math.min(window.innerWidth - winW - 8, windowPosOnStart.current.x + dx));
+        const newY = Math.max(8, Math.min(window.innerHeight - 90, windowPosOnStart.current.y + dy));
+        setWindowPosition({ x: newX, y: newY });
+      }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (!isDragging || e.touches.length === 0) return;
-      const dx = e.touches[0].clientX - dragStartPos.current.x;
-      const dy = e.touches[0].clientY - dragStartPos.current.y;
-      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-        hasDragged.current = true;
+      if (e.touches.length === 0) return;
+
+      // 1. Move button
+      if (isDragging) {
+        const dx = e.touches[0].clientX - dragStartPos.current.x;
+        const dy = e.touches[0].clientY - dragStartPos.current.y;
+        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+          hasDragged.current = true;
+        }
+        const newX = Math.max(12, Math.min(window.innerWidth - 60, buttonPosOnStart.current.x + dx));
+        const newY = Math.max(12, Math.min(window.innerHeight - 60, buttonPosOnStart.current.y + dy));
+        setPosition({ x: newX, y: newY });
       }
-      const newX = Math.max(12, Math.min(window.innerWidth - 60, buttonPosOnStart.current.x + dx));
-      const newY = Math.max(12, Math.min(window.innerHeight - 60, buttonPosOnStart.current.y + dy));
-      setPosition({ x: newX, y: newY });
+
+      // 2. Move window freely
+      if (isDraggingWindow) {
+        const dx = e.touches[0].clientX - windowDragStartPos.current.x;
+        const dy = e.touches[0].clientY - windowDragStartPos.current.y;
+        const winW = isExpanded ? 540 : 420;
+        const newX = Math.max(8, Math.min(window.innerWidth - winW - 8, windowPosOnStart.current.x + dx));
+        const newY = Math.max(8, Math.min(window.innerHeight - 90, windowPosOnStart.current.y + dy));
+        setWindowPosition({ x: newX, y: newY });
+      }
     };
 
     const handleMouseUp = () => {
       setIsDragging(false);
+      setIsDraggingWindow(false);
     };
 
-    if (isDragging) {
+    if (isDragging || isDraggingWindow) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
       window.addEventListener('touchmove', handleTouchMove);
@@ -154,7 +235,7 @@ export const CopilotChatDrawer: React.FC = () => {
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleMouseUp);
     };
-  }, [isDragging]);
+  }, [isDragging, isDraggingWindow, isExpanded]);
 
   const handleButtonClick = () => {
     if (!hasDragged.current) {
@@ -402,20 +483,27 @@ export const CopilotChatDrawer: React.FC = () => {
         </button>
       </div>
 
-      {/* Floating Copilot Chat Drawer Window */}
+      {/* Floating Copilot Chat Drawer Window (Freely Draggable Anywhere) */}
       {isCopilotOpen && (
         <div 
-          className={`fixed z-50 bg-slate-900 text-white rounded-3xl shadow-2xl border border-indigo-900/60 overflow-hidden flex flex-col transition-all duration-200 animate-in slide-in-from-bottom-5 ${
+          className={`fixed z-50 bg-slate-900 text-white rounded-3xl shadow-2xl border border-indigo-900/60 overflow-hidden flex flex-col transition-[width,height] duration-200 animate-in slide-in-from-bottom-5 ${
             isExpanded ? 'w-[calc(100vw-2rem)] sm:w-[540px] h-[640px]' : 'w-[calc(100vw-2rem)] sm:w-[420px] h-[540px]'
-          }`}
+          } ${isDraggingWindow ? 'ring-2 ring-indigo-500 shadow-indigo-900/40 select-none' : ''}`}
           style={{
-            bottom: '80px',
-            right: position ? `${Math.min(window.innerWidth - position.x - 30, window.innerWidth - 440)}px` : '24px'
+            left: windowPosition ? `${windowPosition.x}px` : undefined,
+            top: windowPosition ? `${windowPosition.y}px` : undefined,
+            right: windowPosition ? undefined : '24px',
+            bottom: windowPosition ? undefined : '80px'
           }}
         >
-          {/* Header */}
-          <div className="p-3.5 bg-slate-950 border-b border-indigo-900/40 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
+          {/* Header - Drag Handle */}
+          <div 
+            onMouseDown={handleWindowMouseDown}
+            onTouchStart={handleWindowTouchStart}
+            className="p-3.5 bg-slate-950 border-b border-indigo-900/40 flex items-center justify-between cursor-grab active:cursor-grabbing select-none group"
+            title="Click and drag to move window anywhere on screen"
+          >
+            <div className="flex items-center gap-2.5 pointer-events-none">
               <div className="w-8 h-8 rounded-xl bg-indigo-600/30 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
                 <Bot className="w-4.5 h-4.5" />
               </div>
@@ -428,13 +516,20 @@ export const CopilotChatDrawer: React.FC = () => {
                 </h3>
                 <p className="text-[10px] text-slate-400 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Groq Qwen (qwen3.8-27b) • Live DB Context
+                  Groq Qwen (qwen3.8-27b) • Drag to Move
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-1">
+              {/* Drag Handle Indicator */}
+              <div className="hidden sm:flex items-center text-slate-600 group-hover:text-indigo-400 transition-colors mr-1 cursor-grab" title="Drag window">
+                <GripVertical className="w-4 h-4" />
+              </div>
+
               <button
+                type="button"
+                onMouseDown={(e) => e.stopPropagation()}
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
                 title={isExpanded ? 'Collapse Drawer' : 'Expand Drawer'}
@@ -443,6 +538,8 @@ export const CopilotChatDrawer: React.FC = () => {
               </button>
 
               <button
+                type="button"
+                onMouseDown={(e) => e.stopPropagation()}
                 onClick={closeCopilot}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
                 title="Close Copilot"
