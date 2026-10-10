@@ -176,8 +176,25 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
       reason: `${approvalReason} | Compensating Controls: ${compensatingControls}`,
       expiryDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     });
+
+    // Dispatch webhook notification to Governance and Approver channels
+    fetch('/api/notify-escalation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        eventType: 'APPROVAL_REQUESTED',
+        riskId: risk.id,
+        title: risk.title,
+        ownerName: currentUser.name,
+        score: residualScore,
+        severity: risk.residualSeverity || risk.severity,
+        category: risk.category,
+        reason: `Formal Risk Acceptance requested: ${approvalReason}`
+      })
+    }).catch(err => console.warn('Approval notification dispatch note:', err));
+
     setIsApprovalModalOpen(false);
-    addToast('Approval Request Submitted', 'Submitted for executive governance review.', 'success');
+    addToast('Approval Request Submitted', 'Submitted for executive governance review and alerted approver channels.', 'success');
   };
 
   return (

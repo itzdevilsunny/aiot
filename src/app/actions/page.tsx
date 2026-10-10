@@ -13,15 +13,46 @@ import {
   XCircle, 
   UserCheck, 
   Trash2, 
-  FileText
+  FileText,
+  BellRing
 } from 'lucide-react';
 
 export default function ActionsPage() {
-  const { actions, risks, controls, addAction, updateAction, deleteAction, currentUser } = useRiskContext();
+  const { actions, risks, controls, addAction, updateAction, deleteAction, currentUser, addToast } = useRiskContext();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [escalatingId, setEscalatingId] = useState<string | null>(null);
+
+  const handleEscalateAction = async (act: any) => {
+    setEscalatingId(act.id);
+    try {
+      const res = await fetch('/api/notify-escalation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventType: 'SLA_OVERDUE',
+          riskId: act.riskId,
+          title: act.title,
+          ownerName: act.assignedOwnerName,
+          dueDate: act.dueDate,
+          reason: `Mitigation action "${act.title}" is overdue (Progress: ${act.progressPct}%). Target due date was ${act.dueDate}.`,
+          severity: act.priority === 'High' ? 'Critical' : 'High'
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        addToast('SLA Breach Alert Dispatched', `Escalated to ${data.dispatchedChannels.join(', ')}`, 'success');
+      } else {
+        addToast('Escalation Warning', data.error || 'Failed to dispatch alert', 'error');
+      }
+    } catch (err: any) {
+      addToast('Escalation Error', err.message, 'error');
+    } finally {
+      setEscalatingId(null);
+    }
+  };
 
   // Form state
   const [riskId, setRiskId] = useState(risks[0]?.id || '');
@@ -287,13 +318,26 @@ export default function ActionsPage() {
                     </td>
 
                     <td className="px-4 py-4 text-right whitespace-nowrap">
-                      <button
-                        onClick={() => deleteAction(act.id)}
-                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Delete Action"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        {isOverdue && act.status !== 'Completed' && (
+                          <button
+                            onClick={() => handleEscalateAction(act)}
+                            disabled={escalatingId === act.id}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors cursor-pointer shadow-2xs"
+                            title="Dispatch SLA breach escalation to Slack/Teams"
+                          >
+                            <BellRing className="w-3 h-3 text-red-600 animate-pulse" />
+                            <span>{escalatingId === act.id ? 'Pinging...' : 'Escalate SLA'}</span>
+                          </button>
+                        )}
+                        <button
+                          onClick={() => deleteAction(act.id)}
+                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                          title="Delete Action"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
