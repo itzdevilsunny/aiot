@@ -1,18 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://risk-register-copilot.onrender.com';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://risk-register-copilot-1.onrender.com';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const targetPath = searchParams.get('path') || '/health';
+  let targetPath = searchParams.get('path') || '/api/health';
+  if (targetPath === '/health') targetPath = '/api/health';
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => controller.abort(), 7000);
+
+    const headers: Record<string, string> = { 'Accept': 'application/json' };
+    const auth = req.headers.get('authorization');
+    if (auth) headers['Authorization'] = auth;
+    const cookie = req.headers.get('cookie');
+    if (cookie) headers['Cookie'] = cookie;
 
     const res = await fetch(`${BACKEND_URL}${targetPath}`, {
       method: 'GET',
-      headers: { 'Accept': 'application/json' },
+      headers,
       signal: controller.signal
     });
 
@@ -36,11 +43,17 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    const timeoutId = setTimeout(() => controller.abort(), 7000);
+
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const auth = req.headers.get('authorization');
+    if (auth) headers['Authorization'] = auth;
+    const cookie = req.headers.get('cookie');
+    if (cookie) headers['Cookie'] = cookie;
 
     const res = await fetch(`${BACKEND_URL}${targetPath}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(body),
       signal: controller.signal
     });
@@ -61,11 +74,17 @@ export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    const timeoutId = setTimeout(() => controller.abort(), 7000);
+
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const auth = req.headers.get('authorization');
+    if (auth) headers['Authorization'] = auth;
+    const cookie = req.headers.get('cookie');
+    if (cookie) headers['Cookie'] = cookie;
 
     const res = await fetch(`${BACKEND_URL}${targetPath}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(body),
       signal: controller.signal
     });
@@ -85,10 +104,17 @@ export async function DELETE(req: NextRequest) {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    const timeoutId = setTimeout(() => controller.abort(), 7000);
+
+    const headers: Record<string, string> = {};
+    const auth = req.headers.get('authorization');
+    if (auth) headers['Authorization'] = auth;
+    const cookie = req.headers.get('cookie');
+    if (cookie) headers['Cookie'] = cookie;
 
     const res = await fetch(`${BACKEND_URL}${targetPath}`, {
       method: 'DELETE',
+      headers,
       signal: controller.signal
     });
 
