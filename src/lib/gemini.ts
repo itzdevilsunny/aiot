@@ -102,11 +102,15 @@ export async function callGeminiAI(options: GeminiCallOptions): Promise<GeminiCa
         };
       }
 
-      const url = `https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${apiKey}`;
+      const url = apiKey.startsWith('AQ.') 
+        ? `https://generativelanguage.googleapis.com/v1beta/${model}:generateContent`
+        : `https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${apiKey}`;
+
       const res = await fetch(url, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey,
           'Connection': 'close'
         },
         signal: AbortSignal.timeout(12000),

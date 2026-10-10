@@ -26,7 +26,7 @@ export async function GET() {
   const geminiKey = process.env.GEMINI_API_KEY;
   let geminiStatus = 'NOT_CONFIGURED';
   if (geminiKey) {
-    geminiStatus = 'READY (models/gemini-3.1-flash-lite authenticated)';
+    geminiStatus = 'READY (models/gemini-3.8-flash authenticated)';
   }
 
   // 4. Persistent DB Engine
@@ -58,7 +58,7 @@ export async function GET() {
         status: groqStatus
       },
       secondary: {
-        provider: 'Google Gemini (models/gemini-3.1-flash-lite)',
+        provider: 'Google Gemini (models/gemini-3.8-flash)',
         status: geminiStatus
       }
     },
