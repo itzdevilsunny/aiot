@@ -72,76 +72,68 @@ export const WhatIfSimulator: React.FC = () => {
   };
 
   return (
-    <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-card space-y-6">
+    <div className="p-4 sm:p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-4">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
         <div>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold shadow-xs">
-              <Sliders className="w-4 h-4" />
+            <div className="w-6 h-6 rounded-md bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
+              <Sliders className="w-3.5 h-3.5" />
             </div>
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-              Scenario Simulation (Hypothetical Stress Testing)
+            <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+              Scenario Simulation (Stress Testing)
             </h3>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono-code font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+            <span className="px-1.5 py-0.2 rounded text-[9px] font-mono-code font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
               Hypothetical Model
             </span>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
             Simulate portfolio residual exposure under hypothetical mitigation completion rates. Official risk records remain unmodified.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={handleMaximizeAll}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/50 cursor-pointer transition-colors shadow-2xs"
+            className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/50 cursor-pointer transition-colors shadow-2xs"
           >
-            <ShieldCheck className="w-3.5 h-3.5" />
-            Simulate 100% Mitigation
+            <ShieldCheck className="w-3 h-3" />
+            <span>Simulate 100%</span>
           </button>
 
           <button
             onClick={handleResetSim}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer transition-colors shadow-2xs"
+            className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer transition-colors shadow-2xs"
           >
-            <RotateCcw className="w-3.5 h-3.5" />
-            Reset
+            <RotateCcw className="w-3 h-3" />
+            <span>Reset</span>
           </button>
         </div>
       </div>
 
-      {/* Methodology Notice */}
-      <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80 flex items-start gap-2.5 text-xs">
-        <Info className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
-        <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-[11px]">
-          <strong className="text-slate-800 dark:text-slate-200">Calculation Methodology:</strong> Baseline exposure is derived from persisted risk records&apos; documented financial impact ($ USD) or score weighting. Simulated post-mitigation exposure models residual risk assuming standard 85% maximum control effectiveness. Scenario outputs are hypothetical projections for planning purposes only and do not constitute realised financial gains or verified accounting savings.
-        </p>
-      </div>
-
       {/* KPI Cards & Comparison Bar Chart Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* KPI Stats */}
-        <div className="space-y-3">
-          <div className="p-4 rounded-xl bg-slate-900 dark:bg-slate-800/80 text-white shadow-xs border border-slate-800 dark:border-slate-700 space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Baseline Projected Exposure</span>
-            <div className="text-2xl font-extrabold font-mono-code text-red-400">{formatUSD(stats.baselineTotal)}</div>
-            <p className="text-[11px] text-slate-400">Current unmitigated portfolio baseline</p>
+        <div className="space-y-2.5">
+          <div className="p-3 rounded-lg bg-slate-900 dark:bg-slate-800/80 text-white shadow-2xs border border-slate-800 dark:border-slate-700 space-y-0.5">
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Baseline Projected Exposure</span>
+            <div className="text-xl font-black font-mono-code text-red-400">{formatUSD(stats.baselineTotal)}</div>
+            <p className="text-[10px] text-slate-400">Current unmitigated portfolio baseline</p>
           </div>
 
-          <div className="p-4 rounded-xl bg-slate-900 dark:bg-slate-800/80 text-white shadow-xs border border-emerald-900/60 dark:border-emerald-800/60 space-y-1">
-            <span className="text-[10px] font-bold text-emerald-300 uppercase tracking-wider block">Simulated Post-Mitigation Exposure</span>
-            <div className="text-2xl font-extrabold font-mono-code text-emerald-400">{formatUSD(stats.simulatedTotal)}</div>
-            <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-300 pt-0.5">
-              <TrendingDown className="w-4 h-4" />
+          <div className="p-3 rounded-lg bg-slate-900 dark:bg-slate-800/80 text-white shadow-2xs border border-emerald-900/60 dark:border-emerald-800/60 space-y-0.5">
+            <span className="text-[9px] font-bold text-emerald-300 uppercase tracking-wider block">Simulated Post-Mitigation Exposure</span>
+            <div className="text-xl font-black font-mono-code text-emerald-400">{formatUSD(stats.simulatedTotal)}</div>
+            <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-300 pt-0.5">
+              <TrendingDown className="w-3 h-3" />
               <span>{stats.reductionPercent}% Residual Reduction</span>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 space-y-1">
-            <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider block">Projected Exposure Reduction</span>
-            <div className="text-2xl font-extrabold font-mono-code text-indigo-900 dark:text-indigo-300">{formatUSD(stats.projectedAvoidance)}</div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Hypothetical exposure avoided through proactive controls</p>
+          <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 space-y-0.5">
+            <span className="text-[9px] font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider block">Projected Exposure Avoidance</span>
+            <div className="text-xl font-black font-mono-code text-indigo-900 dark:text-indigo-300">{formatUSD(stats.projectedAvoidance)}</div>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Hypothetical exposure avoided</p>
           </div>
         </div>
 

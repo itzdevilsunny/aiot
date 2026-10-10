@@ -147,16 +147,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
 
         {/* Navigation Sections */}
         <div className="flex-1 overflow-y-auto p-3 space-y-4 no-scrollbar">
-          {/* Primary Create Risk Button */}
-          <Link
-            href="/add"
-            onClick={onCloseMobile}
-            className="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-colors shadow-xs"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create Risk</span>
-          </Link>
-
           <div>
             <h3 className="px-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Overview</h3>
             <nav className="space-y-0.5">
