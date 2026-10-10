@@ -476,57 +476,59 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
         />
 
         {/* INHERENT VS RESIDUAL SCORING GAUGE */}
-        <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-card space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-indigo-600" />
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-card space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               <span>Inherent vs. Residual Risk Scoring Matrix</span>
             </h3>
-            <span className="text-[11px] font-semibold text-slate-500">
-              Appetite Threshold: <strong className="text-slate-800 font-mono">{workspaceSettings.riskAppetiteThreshold}</strong>
+            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+              Appetite Threshold: <strong className="text-slate-800 dark:text-slate-200 font-mono-code">{workspaceSettings.riskAppetiteThreshold}</strong>
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Inherent Exposure */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Inherent Risk (Pre-Controls)</span>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-extrabold text-white ${
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Inherent Risk (Pre-Controls)</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-mono-code font-extrabold text-white ${
                   inherentScore >= 16 ? 'bg-red-600' : inherentScore >= 10 ? 'bg-orange-600' : 'bg-emerald-600'
                 }`}>
                   Score {inherentScore}
                 </span>
               </div>
-              <div className="flex items-center gap-4 text-xs font-medium text-slate-700 pt-1">
-                <div>Probability: <strong className="font-mono text-slate-900">{risk.inherentProbability || risk.probability}/5</strong></div>
-                <div>Impact: <strong className="font-mono text-slate-900">{risk.inherentImpact || risk.impact}/5</strong></div>
+              <div className="flex items-center gap-4 text-xs font-medium text-slate-700 dark:text-slate-300 pt-1">
+                <div>Probability: <strong className="font-mono-code text-slate-900 dark:text-slate-100">{risk.inherentProbability || risk.probability}/5</strong></div>
+                <div>Impact: <strong className="font-mono-code text-slate-900 dark:text-slate-100">{risk.inherentImpact || risk.impact}/5</strong></div>
               </div>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Baseline exposure without active controls or countermeasures.
               </p>
             </div>
 
             {/* Residual Exposure */}
             <div className={`p-4 rounded-xl border space-y-2 ${
-              isAboveAppetite ? 'bg-red-50/50 border-red-200' : 'bg-emerald-50/40 border-emerald-200'
+              isAboveAppetite 
+                ? 'bg-red-50/50 dark:bg-red-950/40 border-red-200 dark:border-red-900/60' 
+                : 'bg-emerald-50/40 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60'
             }`}>
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700">Residual Risk (Post-Controls)</span>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-extrabold border ${
-                  isAboveAppetite ? 'bg-red-100 text-red-800 border-red-300' : 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Residual Risk (Post-Controls)</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-mono-code font-extrabold border ${
+                  isAboveAppetite ? 'bg-red-100 dark:bg-red-900/60 text-red-800 dark:text-red-200 border-red-300 dark:border-red-800' : 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 border-emerald-300 dark:border-emerald-800'
                 }`}>
                   Score {residualScore}
                 </span>
               </div>
-              <div className="flex items-center gap-4 text-xs font-medium text-slate-700 pt-1">
-                <div>Probability: <strong className="font-mono text-slate-900">{risk.residualProbability || risk.probability}/5</strong></div>
-                <div>Impact: <strong className="font-mono text-slate-900">{risk.residualImpact || risk.impact}/5</strong></div>
-                <div className="ml-auto font-mono font-bold text-slate-900">
+              <div className="flex items-center gap-4 text-xs font-medium text-slate-700 dark:text-slate-300 pt-1">
+                <div>Probability: <strong className="font-mono-code text-slate-900 dark:text-slate-100">{risk.residualProbability || risk.probability}/5</strong></div>
+                <div>Impact: <strong className="font-mono-code text-slate-900 dark:text-slate-100">{risk.residualImpact || risk.impact}/5</strong></div>
+                <div className="ml-auto font-mono-code font-bold text-slate-900 dark:text-slate-100">
                   {formatCurrency(risk.estimatedImpactUsd || (residualScore * 2500))}
                 </div>
               </div>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Remaining exposure after evaluating {linkedControls.length} linked control(s).
               </p>
             </div>
@@ -536,35 +538,35 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
         {/* 3 OPERATIONAL LIFECYCLE SECTIONS: CONTROLS, ACTIONS, EVIDENCE */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* 1. Linked Controls */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-card space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-card space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-1.5">
-                <Shield className="w-4 h-4 text-indigo-600" />
-                <h4 className="text-xs font-extrabold text-slate-900">Internal Controls ({linkedControls.length})</h4>
+                <Shield className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                <h4 className="text-xs font-extrabold text-slate-900 dark:text-slate-100">Internal Controls ({linkedControls.length})</h4>
               </div>
-              <Link href="/controls" className="text-[10px] font-bold text-indigo-600 hover:underline flex items-center">
+              <Link href="/controls" className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center">
                 <span>Manage</span>
                 <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
 
             {linkedControls.length === 0 ? (
-              <p className="text-xs text-slate-400 py-3 text-center">No controls directly mapped.</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 py-3 text-center">No controls directly mapped.</p>
             ) : (
               <div className="space-y-2">
                 {linkedControls.map(c => (
-                  <div key={c.id} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
+                  <div key={c.id} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-xs">
                     <div className="flex items-center justify-between">
-                      <span className="font-mono text-[10px] font-bold text-indigo-700">{c.id}</span>
+                      <span className="font-mono-code text-[10px] font-bold text-indigo-700 dark:text-indigo-400">{c.id}</span>
                       <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
-                        c.testStatus === 'Passed' ? 'bg-emerald-100 text-emerald-800' :
-                        c.testStatus === 'Failed' ? 'bg-red-100 text-red-800' : 'bg-slate-200 text-slate-700'
+                        c.testStatus === 'Passed' ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' :
+                        c.testStatus === 'Failed' ? 'bg-red-100 dark:bg-red-950/60 text-red-800 dark:text-red-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
                       }`}>
                         {c.testStatus}
                       </span>
                     </div>
-                    <div className="font-bold text-slate-900 mt-1 truncate">{c.name}</div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">
+                    <div className="font-bold text-slate-900 dark:text-slate-100 mt-1 truncate">{c.name}</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                       {c.type} • {c.effectiveness}
                     </div>
                   </div>
@@ -574,29 +576,29 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
           </div>
 
           {/* 2. Linked Mitigation Actions */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-card space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-card space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-1.5">
-                <CheckSquare className="w-4 h-4 text-emerald-600" />
-                <h4 className="text-xs font-extrabold text-slate-900">Mitigation Actions ({linkedActions.length})</h4>
+                <CheckSquare className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <h4 className="text-xs font-extrabold text-slate-900 dark:text-slate-100">Mitigation Actions ({linkedActions.length})</h4>
               </div>
-              <Link href="/actions" className="text-[10px] font-bold text-emerald-600 hover:underline flex items-center">
+              <Link href="/actions" className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center">
                 <span>Manage</span>
                 <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
 
             {linkedActions.length === 0 ? (
-              <p className="text-xs text-slate-400 py-3 text-center">No mitigation actions assigned.</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 py-3 text-center">No mitigation actions assigned.</p>
             ) : (
               <div className="space-y-2">
                 {linkedActions.map(a => (
-                  <div key={a.id} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
+                  <div key={a.id} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-xs">
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-900 truncate">{a.title}</span>
-                      <span className="font-mono text-[10px] font-extrabold text-indigo-700">{a.progressPct}%</span>
+                      <span className="font-bold text-slate-900 dark:text-slate-100 truncate">{a.title}</span>
+                      <span className="font-mono-code text-[10px] font-extrabold text-indigo-700 dark:text-indigo-400">{a.progressPct}%</span>
                     </div>
-                    <div className="text-[10px] text-slate-500 mt-1 flex items-center justify-between">
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 flex items-center justify-between">
                       <span>Owner: {a.assignedOwnerName}</span>
                       <span>Due: {a.dueDate}</span>
                     </div>
@@ -607,28 +609,28 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
           </div>
 
           {/* 3. Linked Audit Evidence */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-card space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-card space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-1.5">
-                <FileText className="w-4 h-4 text-blue-600" />
-                <h4 className="text-xs font-extrabold text-slate-900">Audit Evidence ({linkedEvidence.length})</h4>
+                <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <h4 className="text-xs font-extrabold text-slate-900 dark:text-slate-100">Audit Evidence ({linkedEvidence.length})</h4>
               </div>
-              <Link href="/evidence" className="text-[10px] font-bold text-blue-600 hover:underline flex items-center">
+              <Link href="/evidence" className="text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center">
                 <span>Manage</span>
                 <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
 
             {linkedEvidence.length === 0 ? (
-              <p className="text-xs text-slate-400 py-3 text-center">No evidence artifacts attached.</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 py-3 text-center">No evidence artifacts attached.</p>
             ) : (
               <div className="space-y-2">
                 {linkedEvidence.map(e => (
-                  <div key={e.id} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
-                    <div className="font-bold text-slate-900 truncate">{e.description || e.fileName}</div>
-                    <div className="text-[10px] text-slate-500 mt-1 flex items-center justify-between">
+                  <div key={e.id} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-xs">
+                    <div className="font-bold text-slate-900 dark:text-slate-100 truncate">{e.description || e.fileName}</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 flex items-center justify-between">
                       <span>{e.fileName}</span>
-                      <span className="text-emerald-600 font-semibold">{e.verificationStatus}</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{e.verificationStatus}</span>
                     </div>
                   </div>
                 ))}
@@ -789,22 +791,27 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
               )}
             </div>
 
-            {/* Copilot Recommendation Box */}
-            <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 shadow-xs space-y-3">
-              <div className="flex items-center gap-2 text-indigo-900 font-bold text-xs">
-                <Sparkles className="w-4 h-4 text-indigo-600" />
-                <span>Copilot Telemetry Insight</span>
+            {/* Treatment Recommendation Box */}
+            <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 shadow-xs space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-slate-900 dark:text-slate-100 font-bold text-xs">
+                  <ShieldCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  <span>Treatment Recommendation</span>
+                </div>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                  Advisory
+                </span>
               </div>
-              <p className="text-xs text-indigo-950 leading-relaxed font-medium">
-                Executing the linked mitigation actions is projected to reduce probability to <strong className="font-mono">2</strong>, bringing residual exposure safely within appetite.
+              <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                Executing the linked mitigation actions is projected to reduce probability to <strong className="font-mono-code text-slate-900 dark:text-slate-100">2</strong>, bringing residual exposure safely within appetite.
               </p>
               <Button
-                variant="copilot"
+                variant="primary"
                 size="sm"
                 className="w-full text-xs"
                 onClick={handleApplyCopilotRec}
               >
-                Apply Recommended Reduction
+                Apply Recommended Adjustment
               </Button>
             </div>
 

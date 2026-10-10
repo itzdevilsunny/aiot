@@ -6,7 +6,6 @@ import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { CommandMenu } from './CommandMenu';
 import { ToastContainer } from '../ui/Toast';
-import { CopilotChatDrawer } from '../copilot/CopilotChatDrawer';
 import { useRiskContext } from '../../context/RiskContext';
 
 export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -56,7 +55,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans relative">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 flex flex-col font-sans relative transition-colors">
       {/* Fixed Sidebar */}
       <Sidebar
         isOpenMobile={mobileSidebarOpen}
@@ -74,9 +73,6 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
           {children}
         </main>
       </div>
-
-      {/* Floating Gemini AI Risk Copilot Chat Drawer */}
-      <CopilotChatDrawer />
 
       {/* Command Menu Modal */}
       <CommandMenu

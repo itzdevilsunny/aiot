@@ -430,58 +430,63 @@ export const AIRiskAnalyzer: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header Banner */}
-      <div className="p-6 rounded-2xl bg-gradient-to-br from-indigo-900 via-slate-900 to-slate-950 text-white shadow-xl relative overflow-hidden">
-        <div className="relative z-10 flex items-start justify-between">
-          <div className="space-y-1 max-w-xl">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
-              <span>Enterprise AI Threat Intelligence Engine</span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight pt-1">
-              Add Risk & AI Threat Analyzer
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-              MNB Research · Synthesize natural language prompts, voice dictation, and architecture screenshots into structured 5x5 quantitative risks.
-            </p>
+      <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-card">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold shadow-xs shrink-0">
+            <ShieldCheck className="w-5 h-5" />
           </div>
-
-          <div className="hidden sm:block p-3 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
-            <Bot className="w-8 h-8 text-indigo-300 mx-auto" />
-            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider block mt-1">AI Online</span>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
+                Create Risk Record
+              </h1>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                Operating Model: Step 1
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+              Document an operational threat into the register using assisted quantification or standard manual entry.
+            </p>
           </div>
         </div>
       </div>
 
       {/* Mode Switcher Tabs */}
-      <div className="flex items-center gap-2 p-1.5 rounded-xl bg-slate-200/70 text-xs font-bold">
+      <div className="flex items-center gap-2 p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-xs font-bold">
         <button
           onClick={() => setActiveTab('single_ai')}
           className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-all cursor-pointer ${
-            activeTab === 'single_ai' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+            activeTab === 'single_ai' 
+              ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-xs' 
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
           }`}
         >
-          <Wand2 className="w-4 h-4 text-indigo-600" />
-          <span>✨ Single Threat AI Analysis</span>
+          <Sliders className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+          <span>Assisted Risk Creation</span>
         </button>
 
         <button
           onClick={() => setActiveTab('bulk_ai')}
           className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-all cursor-pointer ${
-            activeTab === 'bulk_ai' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+            activeTab === 'bulk_ai' 
+              ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-xs' 
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
           }`}
         >
-          <Zap className="w-4 h-4 text-amber-600" />
-          <span>⚡ Bulk AI Project Generator</span>
+          <Activity className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+          <span>Project Threat Discovery</span>
         </button>
 
         <button
           onClick={() => setActiveTab('manual')}
           className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-all cursor-pointer ${
-            activeTab === 'manual' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+            activeTab === 'manual' 
+              ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-xs' 
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
           }`}
         >
-          <FileText className="w-4 h-4 text-slate-600" />
-          <span>✍️ Manual Entry Form</span>
+          <FileText className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+          <span>Manual Entry Form</span>
         </button>
       </div>
 

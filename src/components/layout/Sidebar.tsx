@@ -11,25 +11,19 @@ import {
   UserCheck, 
   Users, 
   Settings, 
-  Sparkles,
-  ChevronRight,
-  MoreVertical,
   ShieldCheck,
   SlidersHorizontal,
   LogOut,
   Check,
-  KeyRound,
   Printer,
   Gauge,
-  DollarSign,
-  TrendingUp,
   Network,
-  Lock,
   FileCheck,
   CheckSquare,
   FileText,
   Clock,
-  ClipboardList
+  ClipboardList,
+  Plus
 } from 'lucide-react';
 import { useRiskContext } from '../../context/RiskContext';
 
@@ -41,7 +35,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseMobile }) => {
   const pathname = usePathname();
   const router = useRouter();
-  const { risks, controls, actions, evidence, kris, approvals, currentUser, teamMembers, login, logout } = useRiskContext();
+  const { risks, controls, actions, evidence, approvals, currentUser, teamMembers, login, logout } = useRiskContext();
 
   const [showUserDropdown, setShowUserDropdown] = useState(false);
 
@@ -56,31 +50,29 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
 
   const riskManagementNav = [
     { label: 'Risk Register', href: '/register', icon: ShieldAlert, badge: openRisksCount },
-    { label: 'My Risks', href: '/my-risks', icon: UserCheck, badge: criticalCount ? `${criticalCount} crit` : undefined },
+    { label: 'My Risks', href: '/my-risks', icon: UserCheck, badge: criticalCount ? `${criticalCount}` : undefined },
+    { label: 'Mitigation Actions', href: '/actions', icon: CheckSquare, badge: overdueActionsCount ? `${overdueActionsCount}` : undefined },
+  ];
+
+  const governanceNav = [
     { label: 'Controls', href: '/controls', icon: ShieldCheck, badge: controls.length },
-    { label: 'Mitigation Actions', href: '/actions', icon: CheckSquare, badge: overdueActionsCount ? `${overdueActionsCount} overdue` : undefined },
+    { label: 'Reviews & Approvals', href: '/approvals', icon: Clock, badge: pendingApprovalsCount ? `${pendingApprovalsCount}` : undefined },
     { label: 'Evidence Library', href: '/evidence', icon: FileText, badge: evidence.length },
-    { label: 'KRI Telemetry', href: '/kri', icon: Gauge, badge: kris.length },
-    { label: 'Reviews & Approvals', href: '/approvals', icon: Clock, badge: pendingApprovalsCount ? `${pendingApprovalsCount} req` : undefined },
-    { label: 'Projects', href: '/projects', icon: FolderKanban },
+    { label: 'Audit Trail', href: '/audit-logs', icon: ClipboardList },
+  ];
+
+  const monitoringNav = [
+    { label: 'KRI Telemetry', href: '/kri', icon: Gauge },
     { label: 'Analytics & Heatmap', href: '/analytics', icon: BarChart3 },
-    { label: 'Compliance Matrix', href: '/compliance', icon: FileCheck },
-  ];
-
-  const intelligenceNav = [
-    { label: 'Predictive Radar', href: '/radar', icon: TrendingUp },
-    { label: 'Monte Carlo Engine', href: '/simulation', icon: SlidersHorizontal },
     { label: 'Threat Surface', href: '/threat-surface', icon: ShieldAlert },
-    { label: 'Cascade Propagation', href: '/cascade', icon: Network },
+    { label: 'Scenario Simulation', href: '/simulation', icon: SlidersHorizontal },
   ];
 
-  const workspaceNav = [
-    { label: 'Team', href: '/team', icon: Users },
-  ];
-
-  const systemNav = [
+  const administrationNav = [
+    { label: 'Projects', href: '/projects', icon: FolderKanban },
+    { label: 'Compliance Matrix', href: '/compliance', icon: FileCheck },
     { label: 'Executive Report', href: '/report', icon: Printer },
-    { label: 'Audit Trail / Logs', href: '/audit-logs', icon: ClipboardList },
+    { label: 'Team', href: '/team', icon: Users },
     { label: 'Settings', href: '/settings', icon: Settings },
   ];
 
@@ -93,14 +85,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
         key={item.href}
         href={item.href}
         onClick={onCloseMobile}
-        className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150 ${
+        className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
           isActive
-            ? 'bg-slate-900 text-white font-semibold shadow-xs'
-            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+            ? 'bg-slate-900 text-white font-semibold dark:bg-indigo-600 dark:text-white shadow-xs'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800'
         }`}
       >
         <div className="flex items-center gap-2.5">
-          <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-500'}`} />
+          <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-500 dark:text-slate-400'}`} />
           <span>{item.label}</span>
         </div>
         {item.badge !== undefined && (
@@ -108,12 +100,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
             isActive 
               ? 'bg-white/20 text-white' 
               : item.label === 'Mitigation Actions' && overdueActionsCount > 0
-                ? 'bg-red-100 text-red-700 font-bold'
+                ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300'
                 : item.label === 'Reviews & Approvals' && pendingApprovalsCount > 0
-                  ? 'bg-amber-100 text-amber-800 border border-amber-200 font-bold'
+                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
                   : item.label === 'My Risks' && criticalCount > 0 
-                    ? 'bg-red-100 text-red-700' 
-                    : 'bg-slate-200 text-slate-700'
+                    ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300' 
+                    : 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
           }`}>
             {item.badge}
           </span>
@@ -127,176 +119,135 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
       {/* Mobile Backdrop */}
       {isOpenMobile && (
         <div 
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 lg:hidden"
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 lg:hidden"
           onClick={onCloseMobile}
         />
       )}
 
-      <aside className={`fixed top-0 left-0 bottom-0 z-40 w-[240px] bg-white border-r border-slate-200/80 flex flex-col justify-between transition-transform duration-200 ease-in-out ${
+      <aside className={`fixed top-0 left-0 bottom-0 z-40 w-[240px] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between transition-transform duration-200 ease-in-out ${
         isOpenMobile ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}>
         {/* Top Brand Header */}
-        <div className="p-4 border-b border-slate-100">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
-              <ShieldCheck className="w-4.5 h-4.5 text-emerald-400" />
+            <div className="w-8 h-8 rounded-lg bg-slate-900 dark:bg-indigo-600 flex items-center justify-center text-white shadow-xs">
+              <ShieldCheck className="w-4.5 h-4.5 text-emerald-400 dark:text-white" />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-sm text-slate-900 tracking-tight">Risk Register</span>
-                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-extrabold uppercase bg-indigo-100 text-indigo-700 tracking-wide">Copilot</span>
+                <span className="font-extrabold text-sm text-slate-900 dark:text-white tracking-tight">Risk Register</span>
+                <span className="px-1.5 py-0.2 rounded text-[9px] font-extrabold uppercase bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 tracking-wide border border-slate-200 dark:border-slate-700">Copilot</span>
               </div>
-              <p className="text-[10px] text-slate-500 font-semibold truncate">
-                MNB Research · Business Operations
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold truncate">
+                MNB Research · Enterprise ERM
               </p>
             </div>
           </Link>
         </div>
 
         {/* Navigation Sections */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-5">
-          {/* AI Banner Shortcut */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-4 no-scrollbar">
+          {/* Primary Create Risk Button */}
           <Link
             href="/add"
             onClick={onCloseMobile}
-            className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-br from-indigo-50 via-purple-50 to-indigo-100/60 border border-indigo-200/60 hover:border-indigo-300 transition-all group shadow-xs"
+            className="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-colors shadow-xs"
           >
-            <div className="flex items-center gap-2.5">
-              <div className="w-6 h-6 rounded-md bg-indigo-600 text-white flex items-center justify-center">
-                <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-              </div>
-              <div className="text-left">
-                <div className="text-xs font-semibold text-indigo-950 flex items-center gap-1">
-                  AI Risk Analysis
-                </div>
-                <div className="text-[10px] text-indigo-600 font-medium">Natural language threats</div>
-              </div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-indigo-400 group-hover:translate-x-0.5 transition-transform" />
+            <Plus className="w-4 h-4" />
+            <span>Create Risk</span>
           </Link>
 
           <div>
-            <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Overview</h3>
-            <nav className="space-y-1">
+            <h3 className="px-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Overview</h3>
+            <nav className="space-y-0.5">
               {overviewNav.map(renderNavLink)}
             </nav>
           </div>
 
           <div>
-            <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Risk Operating System</h3>
-            <nav className="space-y-1">
+            <h3 className="px-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Risk Management</h3>
+            <nav className="space-y-0.5">
               {riskManagementNav.map(renderNavLink)}
             </nav>
           </div>
 
           <div>
-            <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Simulation & Threats</h3>
-            <nav className="space-y-1">
-              {intelligenceNav.map(renderNavLink)}
+            <h3 className="px-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Governance</h3>
+            <nav className="space-y-0.5">
+              {governanceNav.map(renderNavLink)}
             </nav>
           </div>
 
           <div>
-            <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Workspace</h3>
-            <nav className="space-y-1">
-              {workspaceNav.map(renderNavLink)}
+            <h3 className="px-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Monitoring</h3>
+            <nav className="space-y-0.5">
+              {monitoringNav.map(renderNavLink)}
             </nav>
           </div>
 
           <div>
-            <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">System & Audit</h3>
-            <nav className="space-y-1">
-              {systemNav.map(renderNavLink)}
+            <h3 className="px-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Administration</h3>
+            <nav className="space-y-0.5">
+              {administrationNav.map(renderNavLink)}
             </nav>
           </div>
         </div>
 
-        {/* User Footer Tile & Interactive Dropdown Menu */}
-        <div className="p-3 border-t border-slate-100 bg-slate-50/50 relative">
-          {showUserDropdown && (
-            <div className="absolute bottom-16 left-3 right-3 rounded-2xl bg-white border border-slate-200 shadow-popover p-2 z-50 animate-in fade-in-50 zoom-in-95 text-xs">
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 mb-1.5">
-                <div className="font-bold text-slate-900 truncate">{currentUser.name}</div>
-                <div className="text-[10px] text-indigo-600 font-semibold truncate">{currentUser.role} ({currentUser.userRole || 'User'})</div>
-              </div>
-
-              <div className="space-y-1">
-                <div className="px-2 py-0.5 text-[9px] font-bold uppercase text-slate-400">Switch Account</div>
-                {teamMembers.map(m => (
-                  <button
-                    key={m.id}
-                    onClick={() => {
-                      login(m.email);
-                      setShowUserDropdown(false);
-                    }}
-                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors ${
-                      currentUser.email.toLowerCase() === m.email.toLowerCase()
-                        ? 'bg-indigo-50 text-indigo-700 font-bold'
-                        : 'text-slate-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    <span className="truncate">{m.name}</span>
-                    {currentUser.email.toLowerCase() === m.email.toLowerCase() && (
-                      <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                    )}
-                  </button>
-                ))}
-              </div>
-
-              <div className="my-1.5 border-t border-slate-100" />
-
-              <button
-                onClick={() => {
-                  setShowUserDropdown(false);
-                  router.push('/login');
-                }}
-                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-slate-100 font-medium"
-              >
-                <KeyRound className="w-3.5 h-3.5 text-indigo-600" />
-                <span>Auth & Login Screen</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  logout();
-                  setShowUserDropdown(false);
-                  router.push('/login');
-                }}
-                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-red-600 hover:bg-red-50 font-semibold"
-              >
-                <LogOut className="w-3.5 h-3.5 text-red-600" />
-                <span>Sign Out</span>
-              </button>
-            </div>
-          )}
-
-          <div 
-            onClick={() => setShowUserDropdown(!showUserDropdown)}
-            className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200/60 shadow-xs hover:border-slate-300 transition-colors cursor-pointer group"
-          >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="relative w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden ring-2 ring-slate-100">
-                <img
-                  src={currentUser.avatar}
-                  alt={currentUser.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="truncate text-left">
-                <h4 className="text-xs font-bold text-slate-900 truncate">{currentUser.name}</h4>
-                <p className="text-[10px] text-slate-500 font-medium truncate">{currentUser.role}</p>
-              </div>
-            </div>
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowUserDropdown(!showUserDropdown);
-              }}
-              className="text-slate-400 hover:text-slate-700 p-1 rounded-md hover:bg-slate-100 transition-colors"
+        {/* Bottom User Profile Section */}
+        <div className="p-3 border-t border-slate-100 dark:border-slate-800 relative bg-slate-50/50 dark:bg-slate-900/50">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setShowUserDropdown(!showUserDropdown)}
+              className="flex items-center gap-2.5 min-w-0 flex-1 hover:bg-slate-100 dark:hover:bg-slate-800 p-1.5 rounded-lg transition-colors text-left"
             >
-              <MoreVertical className="w-4 h-4" />
+              {currentUser.avatar ? (
+                <img src={currentUser.avatar} alt={currentUser.name} className="w-7 h-7 rounded-full object-cover ring-1 ring-slate-200 dark:ring-slate-700" />
+              ) : (
+                <div className="w-7 h-7 rounded-full bg-slate-800 text-white text-xs font-bold flex items-center justify-center">
+                  {currentUser.name.charAt(0)}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-bold text-slate-900 dark:text-white truncate">{currentUser.name}</div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{currentUser.role}</div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => logout()}
+              className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ml-1"
+              title="Sign Out"
+            >
+              <LogOut className="w-3.5 h-3.5" />
             </button>
           </div>
+
+          {/* User Role Switcher Dropdown */}
+          {showUserDropdown && (
+            <div className="absolute bottom-16 left-3 right-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg py-1.5 z-50 animate-in fade-in-50 zoom-in-95">
+              <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                Switch Role / Profile
+              </div>
+              {teamMembers.map(member => (
+                <button
+                  key={member.id}
+                  onClick={() => {
+                    login(member.id);
+                    setShowUserDropdown(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-3 py-1.5 text-xs text-left hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors ${
+                    currentUser.id === member.id ? 'text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50/50 dark:bg-indigo-950/30' : 'text-slate-700 dark:text-slate-300'
+                  }`}
+                >
+                  <div className="truncate pr-2">
+                    <div className="truncate font-semibold">{member.name}</div>
+                    <div className="text-[10px] text-slate-400 truncate">{member.role}</div>
+                  </div>
+                  {currentUser.id === member.id && <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </aside>
     </>

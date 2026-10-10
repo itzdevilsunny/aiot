@@ -86,29 +86,29 @@ export default function RiskRegisterPage() {
       />
 
       {/* Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/60">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/60 dark:border-slate-800">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-              <ShieldAlert className="w-6 h-6 text-indigo-600" />
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2">
+              <ShieldAlert className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
               <span>Risk Register</span>
             </h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
               Live Sync Active
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
             Centralized repository of all identified project operational, technical, and resource risks.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           {/* View Mode Toggle */}
-          <div className="flex items-center p-1 rounded-lg bg-slate-100 border border-slate-200 text-xs font-bold mr-1">
+          <div className="flex items-center p-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold mr-1">
             <button
               onClick={() => setViewMode('table')}
               className={`px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-colors ${
-                viewMode === 'table' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                viewMode === 'table' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               <Table className="w-3.5 h-3.5" />
@@ -117,10 +117,10 @@ export default function RiskRegisterPage() {
             <button
               onClick={() => setViewMode('graph')}
               className={`px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-colors ${
-                viewMode === 'graph' ? 'bg-white text-indigo-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                viewMode === 'graph' ? 'bg-white dark:bg-slate-900 text-indigo-900 dark:text-indigo-300 shadow-2xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
-              <Network className="w-3.5 h-3.5 text-indigo-600" />
+              <Network className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
               <span>Cascading Threat Graph</span>
             </button>
           </div>
@@ -128,7 +128,7 @@ export default function RiskRegisterPage() {
           <Button
             variant="outline"
             size="sm"
-            icon={<Download className="w-3.5 h-3.5 text-slate-600" />}
+            icon={<Download className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />}
             onClick={handleExportCSV}
           >
             Export CSV
@@ -137,7 +137,7 @@ export default function RiskRegisterPage() {
           <Button
             variant="outline"
             size="sm"
-            icon={<Upload className="w-3.5 h-3.5 text-indigo-600" />}
+            icon={<Upload className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
             onClick={() => fileInputRef.current?.click()}
           >
             Import CSV
@@ -145,21 +145,11 @@ export default function RiskRegisterPage() {
 
           <Link href="/add">
             <Button
-              variant="copilot"
-              size="sm"
-              icon={<Sparkles className="w-3.5 h-3.5 text-indigo-200" />}
-            >
-              AI Analyze
-            </Button>
-          </Link>
-
-          <Link href="/add">
-            <Button
               variant="primary"
               size="sm"
               icon={<Plus className="w-4 h-4" />}
             >
-              Add Risk
+              Create Risk
             </Button>
           </Link>
         </div>
@@ -167,19 +157,19 @@ export default function RiskRegisterPage() {
 
       {/* Quick Summary Pill Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="p-3.5 rounded-xl bg-white border border-slate-200/80 shadow-xs flex items-center justify-between">
-          <span className="text-xs font-semibold text-slate-500">Total Registered</span>
-          <span className="text-sm font-extrabold text-slate-900">{risks.length} Items</span>
+        <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center justify-between">
+          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Registered</span>
+          <span className="text-sm font-extrabold text-slate-900 dark:text-slate-100">{risks.length} Items</span>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-white border border-slate-200/80 shadow-xs flex items-center justify-between">
-          <span className="text-xs font-semibold text-slate-500">Critical / High Severity</span>
-          <span className="text-sm font-extrabold text-red-600">{criticalCount + highCount} Items</span>
+        <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center justify-between">
+          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Critical / High Severity</span>
+          <span className="text-sm font-extrabold text-red-600 dark:text-red-400">{criticalCount + highCount} Items</span>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-white border border-slate-200/80 shadow-xs flex items-center justify-between">
-          <span className="text-xs font-semibold text-slate-500">Mitigated & Closed</span>
-          <span className="text-sm font-extrabold text-emerald-600">{mitigatedCount} Items</span>
+        <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center justify-between">
+          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Mitigated & Closed</span>
+          <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">{mitigatedCount} Items</span>
         </div>
       </div>
 

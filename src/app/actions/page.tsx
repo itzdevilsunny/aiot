@@ -110,19 +110,19 @@ export default function ActionsPage() {
   return (
     <div className="space-y-6 pb-12 animate-in fade-in-50">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
         <div>
           <div className="flex items-center gap-2">
-            <CheckSquare className="w-6 h-6 text-indigo-600" />
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Mitigation Actions Tracking</h1>
+            <CheckSquare className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Mitigation Actions Tracking</h1>
           </div>
-          <p className="text-xs text-slate-500 mt-1 font-medium">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
             Manage granular mitigation tasks, due dates, action owners, and verification evidence.
           </p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-xs transition-colors shadow-sm"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-xs transition-colors shadow-xs"
         >
           <Plus className="w-4 h-4" />
           <span>New Mitigation Action</span>
@@ -131,59 +131,59 @@ export default function ActionsPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs">
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Total Mitigation Actions</span>
-            <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Mitigation Actions</span>
+            <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
               <CheckSquare className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-extrabold text-slate-900 mt-2">{actions.length}</div>
-          <div className="text-[11px] text-slate-500 mt-1 font-medium">Assigned across risk register</div>
+          <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 mt-2">{actions.length}</div>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-medium">Assigned across risk register</div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs">
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">In Progress</span>
-            <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">In Progress</span>
+            <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
               <Clock className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-extrabold text-blue-600 mt-2">
+          <div className="text-2xl font-extrabold text-blue-600 dark:text-blue-400 mt-2">
             {actions.filter(a => a.status === 'In Progress').length}
           </div>
-          <div className="text-[11px] text-slate-500 mt-1 font-medium">Active work in flight</div>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-medium">Active work in flight</div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs">
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Overdue Actions</span>
-            <div className="p-2 rounded-lg bg-red-50 text-red-600">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Overdue Actions</span>
+            <div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400">
               <AlertTriangle className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-extrabold text-red-600 mt-2">
+          <div className="text-2xl font-extrabold text-red-600 dark:text-red-400 mt-2">
             {actions.filter(a => a.status !== 'Completed' && new Date(a.dueDate) < now).length}
           </div>
-          <div className="text-[11px] text-red-600 font-semibold mt-1">Past target completion date</div>
+          <div className="text-[11px] text-red-600 dark:text-red-400 font-semibold mt-1">Past target completion date</div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs">
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Verified Completed</span>
-            <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Verified Completed</span>
+            <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-extrabold text-emerald-600 mt-2">
+          <div className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-2">
             {actions.filter(a => a.status === 'Completed').length}
           </div>
-          <div className="text-[11px] text-slate-500 mt-1 font-medium">Verified with evidence</div>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-medium">Verified with evidence</div>
         </div>
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-wrap items-center justify-between gap-4">
         <div className="relative flex-1 min-w-[240px]">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
@@ -191,18 +191,18 @@ export default function ActionsPage() {
             placeholder="Search action by title, risk, or assignee..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900"
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
           />
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
             <Filter className="w-3.5 h-3.5" />
             <span>Status:</span>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none"
+              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
             >
               <option value="All">All Statuses</option>
               <option value="Not Started">Not Started</option>
@@ -212,12 +212,12 @@ export default function ActionsPage() {
             </select>
           </div>
 
-          <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
             <span>Priority:</span>
             <select
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
-              className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none"
+              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
             >
               <option value="All">All Priorities</option>
               <option value="High">High</option>
@@ -229,11 +229,11 @@ export default function ActionsPage() {
       </div>
 
       {/* Actions Table */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              <tr className="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200/80 dark:border-slate-800 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 <th className="px-5 py-3.5">Action Title & Linked Risk</th>
                 <th className="px-4 py-3.5">Assignee</th>
                 <th className="px-4 py-3.5">Priority</th>
@@ -243,40 +243,40 @@ export default function ActionsPage() {
                 <th className="px-4 py-3.5 text-right">Options</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 text-xs text-slate-700 dark:text-slate-300">
               {filteredActions.map((act) => {
                 const isOverdue = act.status !== 'Completed' && new Date(act.dueDate) < now;
 
                 return (
-                  <tr key={act.id} className="hover:bg-slate-50/60 transition-colors">
+                  <tr key={act.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
                     <td className="px-5 py-4">
-                      <div className="font-bold text-slate-900">{act.title}</div>
-                      <div className="text-[11px] text-indigo-600 font-mono font-semibold mt-0.5">
+                      <div className="font-bold text-slate-900 dark:text-slate-100">{act.title}</div>
+                      <div className="text-[11px] text-indigo-600 dark:text-indigo-400 font-mono font-semibold mt-0.5">
                         Linked Risk: {act.riskId}
                       </div>
                     </td>
 
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="font-semibold text-slate-900">{act.assignedOwnerName}</div>
-                      <div className="text-[10px] text-slate-500">{act.assignedOwnerRole}</div>
+                      <div className="font-semibold text-slate-900 dark:text-slate-100">{act.assignedOwnerName}</div>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400">{act.assignedOwnerRole}</div>
                     </td>
 
                     <td className="px-4 py-4 whitespace-nowrap">
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                         act.priority === 'High'
-                          ? 'bg-red-50 text-red-700 border border-red-200'
+                          ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900/50'
                           : act.priority === 'Medium'
-                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                            : 'bg-slate-100 text-slate-700'
+                            ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                       }`}>
                         {act.priority}
                       </span>
                     </td>
 
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="font-medium text-slate-900">{act.dueDate}</div>
+                      <div className="font-medium text-slate-900 dark:text-slate-200">{act.dueDate}</div>
                       {isOverdue && (
-                        <div className="text-[10px] font-bold text-red-600 inline-flex items-center gap-1 mt-0.5">
+                        <div className="text-[10px] font-bold text-red-600 dark:text-red-400 inline-flex items-center gap-1 mt-0.5">
                           <AlertTriangle className="w-3 h-3" /> Overdue SLA
                         </div>
                       )}
@@ -284,13 +284,13 @@ export default function ActionsPage() {
 
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <div className="w-24 bg-slate-100 h-2 rounded-full overflow-hidden">
+                        <div className="w-24 bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
                           <div 
-                            className={`h-full rounded-full ${act.progressPct === 100 ? 'bg-emerald-500' : 'bg-indigo-600'}`}
+                            className={`h-full rounded-full ${act.progressPct === 100 ? 'bg-emerald-500' : 'bg-indigo-600 dark:bg-indigo-500'}`}
                             style={{ width: `${act.progressPct}%` }}
                           />
                         </div>
-                        <span className="font-mono text-[11px] font-bold text-slate-700">{act.progressPct}%</span>
+                        <span className="font-mono text-[11px] font-bold text-slate-700 dark:text-slate-300">{act.progressPct}%</span>
                       </div>
                     </td>
 
@@ -302,12 +302,12 @@ export default function ActionsPage() {
                           const newProg = newStatus === 'Completed' ? 100 : act.progressPct;
                           updateAction(act.id, { status: newStatus, progressPct: newProg });
                         }}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border focus:outline-none ${
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border focus:outline-none cursor-pointer ${
                           act.status === 'Completed'
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
                             : act.status === 'Blocked'
-                              ? 'bg-red-50 text-red-700 border-red-200'
-                              : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                              ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
+                              : 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800'
                         }`}
                       >
                         <option value="Not Started">Not Started</option>
@@ -323,16 +323,16 @@ export default function ActionsPage() {
                           <button
                             onClick={() => handleEscalateAction(act)}
                             disabled={escalatingId === act.id}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors cursor-pointer shadow-2xs"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-800 rounded-lg transition-colors cursor-pointer shadow-2xs"
                             title="Dispatch SLA breach escalation to Slack/Teams"
                           >
-                            <BellRing className="w-3 h-3 text-red-600 animate-pulse" />
+                            <BellRing className="w-3 h-3 text-red-600 dark:text-red-400 animate-pulse" />
                             <span>{escalatingId === act.id ? 'Pinging...' : 'Escalate SLA'}</span>
                           </button>
                         )}
                         <button
                           onClick={() => deleteAction(act.id)}
-                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                          className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors cursor-pointer"
                           title="Delete Action"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -344,7 +344,7 @@ export default function ActionsPage() {
               })}
               {filteredActions.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-5 py-8 text-center text-slate-500 text-xs">
+                  <td colSpan={7} className="px-5 py-8 text-center text-slate-500 dark:text-slate-400 text-xs">
                     No mitigation actions found. Click "New Mitigation Action" to assign a task.
                   </td>
                 </tr>
@@ -356,22 +356,22 @@ export default function ActionsPage() {
 
       {/* Modal Form */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-popover border border-slate-200 animate-in zoom-in-95 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-bold text-slate-900 text-base">Assign Mitigation Action</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 dark:bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-popover border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base">Assign Mitigation Action</h3>
+              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
                 <XCircle className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleCreateAction} className="space-y-3 text-xs">
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Target Risk</label>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Target Risk</label>
                 <select
                   value={riskId}
                   onChange={e => setRiskId(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-900 font-semibold"
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl text-slate-900 dark:text-slate-100 font-semibold"
                 >
                   {risks.map(r => (
                     <option key={r.id} value={r.id}>
@@ -382,45 +382,45 @@ export default function ActionsPage() {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Action Title</label>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Action Title</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Implement Redis response caching TTL"
                   value={title}
                   onChange={e => setTitle(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-900"
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Description</label>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Description</label>
                 <textarea
                   rows={2}
                   placeholder="Task details and expected output..."
                   value={description}
                   onChange={e => setDescription(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-900"
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Assignee Name</label>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Assignee Name</label>
                   <input
                     type="text"
                     value={assignedOwnerName}
                     onChange={e => setAssignedOwnerName(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-900 font-semibold"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl text-slate-900 dark:text-slate-100 font-semibold"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Priority</label>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Priority</label>
                   <select
                     value={priority}
                     onChange={e => setPriority(e.target.value as any)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-900 font-semibold"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl text-slate-900 dark:text-slate-100 font-semibold"
                   >
                     <option value="High">High</option>
                     <option value="Medium">Medium</option>
@@ -430,27 +430,27 @@ export default function ActionsPage() {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Target Due Date</label>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Target Due Date</label>
                 <input
                   type="date"
                   required
                   value={dueDate}
                   onChange={e => setDueDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-900 font-semibold"
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl text-slate-900 dark:text-slate-100 font-semibold"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl font-semibold"
+                  className="px-4 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold cursor-pointer"
                 >
                   Create Action
                 </button>

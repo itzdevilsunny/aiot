@@ -72,12 +72,12 @@ export const RiskTable: React.FC<RiskTableProps> = ({ risks }) => {
 
   return (
     <>
-      <div className="rounded-2xl bg-white border border-slate-200/80 shadow-card overflow-hidden">
+      <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-card overflow-hidden">
         {/* Desktop Data Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
-              <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              <tr className="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
                 <th className="py-3 px-4 w-10 text-center">ID</th>
                 <th className="py-3 px-4">Risk Title & Process</th>
                 <th className="py-3 px-4">Category</th>
@@ -89,7 +89,7 @@ export const RiskTable: React.FC<RiskTableProps> = ({ risks }) => {
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-xs">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 text-xs">
               {paginatedRisks.map((risk, idx) => {
                 const isExpanded = expandedId === risk.id;
                 const isAboveAppetite = risk.aboveAppetite || ((risk.residualScore ?? risk.score) > workspaceSettings.riskAppetiteThreshold);
@@ -100,12 +100,12 @@ export const RiskTable: React.FC<RiskTableProps> = ({ risks }) => {
 
                 return (
                   <React.Fragment key={`${risk.id}-${idx}`}>
-                    <tr className={`hover:bg-slate-50/80 transition-colors ${isExpanded ? 'bg-slate-50/60' : ''}`}>
+                    <tr className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors ${isExpanded ? 'bg-slate-50/60 dark:bg-slate-800/30' : ''}`}>
                       {/* Toggle Expand */}
-                      <td className="py-3.5 px-4 font-mono font-bold text-slate-500 text-center">
+                      <td className="py-3.5 px-4 font-mono font-bold text-slate-500 dark:text-slate-400 text-center">
                         <button
                           onClick={() => toggleExpand(risk.id)}
-                          className="p-1 hover:bg-slate-200 rounded text-slate-600 transition-colors"
+                          className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-300 transition-colors"
                           title="Toggle Details"
                         >
                           {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -115,20 +115,20 @@ export const RiskTable: React.FC<RiskTableProps> = ({ risks }) => {
                       {/* Risk Title & Department */}
                       <td className="py-3.5 px-4 max-w-sm">
                         <div className="flex items-start gap-2">
-                          <span className="font-mono text-[10px] text-slate-400 mt-0.5">{risk.id}</span>
+                          <span className="font-mono text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{risk.id}</span>
                           <div>
                             <button
                               onClick={() => router.push(`/risk/${risk.id}`)}
-                              className="font-bold text-slate-900 hover:text-indigo-600 text-left transition-colors flex items-center gap-1.5"
+                              className="font-bold text-slate-900 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-400 text-left transition-colors flex items-center gap-1.5"
                             >
                               <span>{risk.title}</span>
                               {risk.aiSuggested && (
-                                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                  Copilot AI
+                                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                                  Assisted
                                 </span>
                               )}
                             </button>
-                            <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
                               {risk.department || 'MNB Research'} • {risk.description}
                             </p>
                           </div>
@@ -150,7 +150,7 @@ export const RiskTable: React.FC<RiskTableProps> = ({ risks }) => {
                           }`}>
                             {risk.inherentScore}
                           </span>
-                          <div className="text-[10px] font-semibold text-slate-500">
+                          <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
                             P:{risk.inherentProbability} × I:{risk.inherentImpact}
                           </div>
                         </div>
@@ -160,13 +160,13 @@ export const RiskTable: React.FC<RiskTableProps> = ({ risks }) => {
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <span className={`px-2 py-0.5 rounded text-xs font-mono font-extrabold border ${
-                            risk.residualSeverity === 'Critical' ? 'bg-red-50 text-red-700 border-red-200' :
-                            risk.residualSeverity === 'High' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                            risk.residualSeverity === 'Medium' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            risk.residualSeverity === 'Critical' ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900/50' :
+                            risk.residualSeverity === 'High' ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-900/50' :
+                            risk.residualSeverity === 'Medium' ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900/50' : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/50'
                           }`}>
                             {risk.residualScore}
                           </span>
-                          <div className="text-[10px] font-semibold text-slate-500">
+                          <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
                             P:{risk.residualProbability} × I:{risk.residualImpact}
                           </div>
                         </div>
@@ -176,19 +176,19 @@ export const RiskTable: React.FC<RiskTableProps> = ({ risks }) => {
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <div className="space-y-1">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200 block w-fit">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 block w-fit">
                               {risk.treatmentStrategy || 'Mitigate'}
                             </span>
-                            <span className="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                            <span className="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
                               {risk.lifecycleStage || (risk.status === 'Closed' ? 'Close' : isAboveAppetite ? 'Approve' : 'Monitor')}
                             </span>
                           </div>
                           {isAboveAppetite ? (
-                            <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-red-100 text-red-700 inline-flex items-center gap-1">
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400 inline-flex items-center gap-1 border border-red-200 dark:border-red-900/50">
                               <AlertTriangle className="w-2.5 h-2.5" /> Above Appetite
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-100 text-emerald-800">
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50">
                               Within Appetite
                             </span>
                           )}
@@ -201,13 +201,13 @@ export const RiskTable: React.FC<RiskTableProps> = ({ risks }) => {
                           {risk.ownerAvatar ? (
                             <img src={risk.ownerAvatar} alt={risk.ownerName} className="w-6 h-6 rounded-full object-cover shrink-0" />
                           ) : (
-                            <div className="w-6 h-6 rounded-full bg-slate-900 text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                            <div className="w-6 h-6 rounded-full bg-slate-900 dark:bg-slate-700 text-white text-[10px] font-bold flex items-center justify-center shrink-0">
                               {risk.ownerName.charAt(0)}
                             </div>
                           )}
                           <div>
-                            <div className="font-semibold text-slate-900 text-[11px]">{risk.ownerName}</div>
-                            <div className="text-[10px] text-slate-500">{risk.ownerRole}</div>
+                            <div className="font-semibold text-slate-900 dark:text-slate-100 text-[11px]">{risk.ownerName}</div>
+                            <div className="text-[10px] text-slate-500 dark:text-slate-400">{risk.ownerRole}</div>
                           </div>
                         </div>
                       </td>
@@ -218,10 +218,10 @@ export const RiskTable: React.FC<RiskTableProps> = ({ risks }) => {
                           value={risk.status}
                           onChange={(e) => updateRiskStatus(risk.id, e.target.value as StatusLevel)}
                           className={`text-xs font-semibold px-2 py-1 rounded-md border cursor-pointer focus:outline-none ${
-                            risk.status === 'Open' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
-                            risk.status === 'Monitoring' ? 'bg-amber-50 text-amber-800 border-amber-200' :
-                            risk.status === 'Mitigated' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' :
-                            'bg-slate-100 text-slate-600 border-slate-200'
+                            risk.status === 'Open' ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800' :
+                            risk.status === 'Monitoring' ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border-amber-200 dark:border-amber-800' :
+                            risk.status === 'Mitigated' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' :
+                            'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'
                           }`}
                         >
                           <option value="Open">Open</option>
@@ -236,7 +236,7 @@ export const RiskTable: React.FC<RiskTableProps> = ({ risks }) => {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => setEditingRisk(risk)}
-                            className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                            className="p-1.5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                             title="Edit Risk"
                           >
                             <Edit2 className="w-4 h-4" />
@@ -244,7 +244,7 @@ export const RiskTable: React.FC<RiskTableProps> = ({ risks }) => {
 
                           <button
                             onClick={() => router.push(`/risk/${risk.id}`)}
-                            className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors"
+                            className="p-1.5 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                             title="Open Detail View"
                           >
                             <ExternalLink className="w-4 h-4" />
@@ -256,7 +256,7 @@ export const RiskTable: React.FC<RiskTableProps> = ({ risks }) => {
                                 deleteRisk(risk.id);
                               }
                             }}
-                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
                             title="Delete Risk"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -267,71 +267,71 @@ export const RiskTable: React.FC<RiskTableProps> = ({ risks }) => {
 
                     {/* Expanded Row Details */}
                     {isExpanded && (
-                      <tr className="bg-slate-50/90 border-b border-slate-200 animate-in fade-in-50">
+                      <tr className="bg-slate-50/90 dark:bg-slate-950/40 border-b border-slate-200 dark:border-slate-800 animate-in fade-in-50">
                         <td colSpan={9} className="p-4">
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                             {/* Proactive Strategy & Controls */}
-                            <div className="space-y-2 bg-white p-3 rounded-xl border border-slate-200">
-                              <h5 className="font-bold text-slate-900 flex items-center gap-1.5">
-                                <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" /> Linked Controls ({linkedCtrls.length})
+                            <div className="space-y-2 bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                              <h5 className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                                <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" /> Linked Controls ({linkedCtrls.length})
                               </h5>
                               {linkedCtrls.length > 0 ? (
                                 <div className="space-y-1">
                                   {linkedCtrls.map(c => (
-                                    <div key={c.id} className="p-1.5 bg-slate-50 border rounded text-[11px]">
-                                      <div className="font-bold text-slate-800">{c.name}</div>
-                                      <div className="text-[10px] text-slate-500">{c.type} • {c.effectiveness}</div>
+                                    <div key={c.id} className="p-1.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded text-[11px]">
+                                      <div className="font-bold text-slate-800 dark:text-slate-200">{c.name}</div>
+                                      <div className="text-[10px] text-slate-500 dark:text-slate-400">{c.type} • {c.effectiveness}</div>
                                     </div>
                                   ))}
                                 </div>
                               ) : (
-                                <p className="text-[11px] text-slate-400 italic">No controls linked yet.</p>
+                                <p className="text-[11px] text-slate-400 dark:text-slate-500 italic">No controls linked yet.</p>
                               )}
                             </div>
 
                             {/* Mitigation Actions */}
-                            <div className="bg-white p-3 rounded-xl border border-slate-200">
-                              <h5 className="font-bold text-slate-900 mb-2 flex items-center gap-1.5">
-                                <CheckSquare className="w-3.5 h-3.5 text-indigo-600" /> Linked Actions ({linkedActs.length})
+                            <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                              <h5 className="font-bold text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-1.5">
+                                <CheckSquare className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" /> Linked Actions ({linkedActs.length})
                               </h5>
                               {linkedActs.length > 0 ? (
                                 <div className="space-y-1">
                                   {linkedActs.map(a => (
-                                    <div key={a.id} className="p-1.5 bg-slate-50 border rounded text-[11px] flex justify-between">
+                                    <div key={a.id} className="p-1.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded text-[11px] flex justify-between">
                                       <div>
-                                        <div className="font-bold text-slate-800">{a.title}</div>
-                                        <div className="text-[10px] text-slate-500">Due: {a.dueDate}</div>
+                                        <div className="font-bold text-slate-800 dark:text-slate-200">{a.title}</div>
+                                        <div className="text-[10px] text-slate-500 dark:text-slate-400">Due: {a.dueDate}</div>
                                       </div>
-                                      <span className="font-bold text-indigo-600">{a.progressPct}%</span>
+                                      <span className="font-bold text-indigo-600 dark:text-indigo-400">{a.progressPct}%</span>
                                     </div>
                                   ))}
                                 </div>
                               ) : (
-                                <p className="text-[11px] text-slate-400 italic">No mitigation actions defined yet.</p>
+                                <p className="text-[11px] text-slate-400 dark:text-slate-500 italic">No mitigation actions defined yet.</p>
                               )}
                             </div>
 
                             {/* Evidence Files & Details */}
-                            <div className="bg-white p-3 rounded-xl border border-slate-200">
-                              <h5 className="font-bold text-slate-900 mb-2 flex items-center gap-1.5">
-                                <FileCheck className="w-3.5 h-3.5 text-indigo-600" /> Linked Evidence ({linkedEvs.length})
+                            <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                              <h5 className="font-bold text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-1.5">
+                                <FileCheck className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" /> Linked Evidence ({linkedEvs.length})
                               </h5>
                               {linkedEvs.length > 0 ? (
                                 <div className="space-y-1">
                                   {linkedEvs.map(e => (
-                                    <div key={e.id} className="p-1.5 bg-slate-50 border rounded text-[11px]">
-                                      <div className="font-bold text-slate-800 truncate">{e.fileName}</div>
-                                      <div className="text-[10px] text-slate-500">Uploaded by {e.uploadedBy}</div>
+                                    <div key={e.id} className="p-1.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded text-[11px]">
+                                      <div className="font-bold text-slate-800 dark:text-slate-200 truncate">{e.fileName}</div>
+                                      <div className="text-[10px] text-slate-500 dark:text-slate-400">Uploaded by {e.uploadedBy}</div>
                                     </div>
                                   ))}
                                 </div>
                               ) : (
-                                <p className="text-[11px] text-slate-400 italic">No evidence files uploaded.</p>
+                                <p className="text-[11px] text-slate-400 dark:text-slate-500 italic">No evidence files uploaded.</p>
                               )}
-                              <div className="mt-3 pt-2 border-t border-slate-100 text-right">
+                              <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 text-right">
                                 <button
                                   onClick={() => router.push(`/risk/${risk.id}`)}
-                                  className="text-xs font-semibold text-indigo-600 hover:underline"
+                                  className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
                                 >
                                   View full detail view →
                                 </button>
@@ -349,28 +349,28 @@ export const RiskTable: React.FC<RiskTableProps> = ({ risks }) => {
         </div>
 
         {/* Pagination Footer */}
-        <div className="p-4 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between text-xs">
-          <span className="text-slate-500 font-medium">
-            Showing <span className="font-bold text-slate-800">{Math.min((currentPage - 1) * itemsPerPage + 1, risks.length)}</span> to{' '}
-            <span className="font-bold text-slate-800">{Math.min(currentPage * itemsPerPage, risks.length)}</span> of{' '}
-            <span className="font-bold text-slate-800">{risks.length}</span> risks
+        <div className="p-4 bg-slate-50/80 dark:bg-slate-850 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
+          <span className="text-slate-500 dark:text-slate-400 font-medium">
+            Showing <span className="font-bold text-slate-800 dark:text-slate-200">{Math.min((currentPage - 1) * itemsPerPage + 1, risks.length)}</span> to{' '}
+            <span className="font-bold text-slate-800 dark:text-slate-200">{Math.min(currentPage * itemsPerPage, risks.length)}</span> of{' '}
+            <span className="font-bold text-slate-800 dark:text-slate-200">{risks.length}</span> risks
           </span>
 
           <div className="flex items-center gap-2">
             <button
               onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
               disabled={currentPage === 1}
-              className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="px-3 py-1 font-semibold text-slate-700">
+            <span className="px-3 py-1 font-semibold text-slate-700 dark:text-slate-300">
               Page {currentPage} of {totalPages}
             </span>
             <button
               onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
               disabled={currentPage === totalPages}
-              className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

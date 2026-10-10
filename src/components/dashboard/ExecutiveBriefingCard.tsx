@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRiskContext } from '../../context/RiskContext';
-import { Sparkles, ShieldCheck, AlertTriangle, RefreshCw, Volume2, VolumeX, Play, Pause } from 'lucide-react';
+import { ShieldCheck, AlertTriangle, RefreshCw, Volume2, VolumeX, Play, Pause, FileText } from 'lucide-react';
 import { Button } from '../ui/Button';
 
 export const ExecutiveBriefingCard: React.FC = () => {
@@ -91,55 +91,56 @@ export const ExecutiveBriefingCard: React.FC = () => {
   const topActions = briefing?.topPriorityActions || [];
 
   return (
-    <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white shadow-xl border border-indigo-900/50 relative overflow-hidden space-y-4">
-      {/* Background Decorative Glow */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-
+    <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-900 dark:text-slate-100 shadow-card space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-indigo-900/60 pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200/80 dark:border-slate-800">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-indigo-600/30 border border-indigo-500/40 text-indigo-400 flex items-center justify-center">
-            <Sparkles className="w-4.5 h-4.5" />
+          <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold shadow-xs">
+            <FileText className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
-              <span>Executive AI Risk Briefing</span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                Enterprise AI Copilot
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
+                Executive Risk Briefing
+              </h3>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                Quarterly Posture
               </span>
-            </h3>
-            <p className="text-[11px] text-slate-400">AI-synthesized C-Suite operational posture & strategic priority roadmap</p>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Authoritative risk posture synthesis and strategic priority roadmap grounded in register data.
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {briefing && (
             <button
               onClick={toggleAudioPlayback}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 rounded-lg hover:bg-indigo-500/30 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-200/70 dark:hover:bg-slate-700 transition-colors cursor-pointer"
             >
               {isPlayingAudio ? (
                 <>
-                  <Pause className="w-3.5 h-3.5 text-indigo-400" />
+                  <Pause className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                   <span>Pause Voice</span>
                 </>
               ) : (
                 <>
-                  <Volume2 className="w-3.5 h-3.5 text-indigo-400" />
-                  <span>Play AI Audio</span>
+                  <Volume2 className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                  <span>Listen</span>
                 </>
               )}
             </button>
           )}
 
           <Button
-            variant="copilot"
+            variant="primary"
             size="sm"
             disabled={loading}
             onClick={fetchBriefing}
             icon={<RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />}
           >
-            {loading ? 'Synthesizing...' : briefing ? 'Re-Synthesize' : 'Generate Briefing'}
+            {loading ? 'Synthesizing...' : briefing ? 'Refresh Briefing' : 'Generate Briefing'}
           </Button>
         </div>
       </div>
@@ -148,41 +149,41 @@ export const ExecutiveBriefingCard: React.FC = () => {
       {briefing ? (
         <div className="space-y-4 text-xs animate-in fade-in-50">
           {/* Executive Summary Paragraph */}
-          <div className="p-3.5 rounded-xl bg-indigo-950/40 border border-indigo-800/40 space-y-1.5">
-            <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-wider block">Executive Posture Summary</span>
-            <p className="text-slate-200 leading-relaxed font-medium">{briefing.executiveSummary}</p>
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80 space-y-1.5">
+            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Executive Posture Summary</span>
+            <p className="text-slate-800 dark:text-slate-200 leading-relaxed font-medium text-xs sm:text-sm">{briefing.executiveSummary}</p>
           </div>
 
-          {/* Metrics Pills */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
+          {/* Metrics Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="p-3.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Vulnerability Score</span>
-                <span className="text-lg font-black text-amber-400">{briefing.financialVulnerabilityScore} / 100</span>
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Vulnerability Index</span>
+                <span className="text-xl font-extrabold text-amber-600 dark:text-amber-400 font-mono-code">{briefing.financialVulnerabilityScore} / 100</span>
               </div>
-              <AlertTriangle className="w-5 h-5 text-amber-400/80" />
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
             </div>
 
-            <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
+            <div className="p-3.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Governance Status</span>
-                <span className="text-sm font-bold text-emerald-400">{briefing.governanceRating}</span>
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Governance Status</span>
+                <span className="text-sm font-bold text-emerald-700 dark:text-emerald-400">{briefing.governanceRating}</span>
               </div>
-              <ShieldCheck className="w-5 h-5 text-emerald-400/80" />
+              <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             </div>
           </div>
 
           {/* Top Priority Actions */}
           {topActions.length > 0 && (
-            <div className="space-y-2">
-              <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-wider block">Top 3 Strategic Priority Actions</span>
+            <div className="space-y-2 pt-1">
+              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Strategic Priority Actions</span>
               <div className="space-y-2">
                 {topActions.map((action, idx) => (
-                  <div key={idx} className="flex items-start gap-2.5 p-2.5 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                    <span className="w-5 h-5 rounded-full bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+                  <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80">
+                    <span className="w-5 h-5 rounded-md bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
                       {idx + 1}
                     </span>
-                    <p className="text-slate-300 font-medium leading-normal">{action}</p>
+                    <p className="text-slate-700 dark:text-slate-300 font-medium leading-relaxed">{action}</p>
                   </div>
                 ))}
               </div>
@@ -190,9 +191,9 @@ export const ExecutiveBriefingCard: React.FC = () => {
           )}
         </div>
       ) : (
-        <div className="py-6 text-center space-y-2">
-          <p className="text-xs text-slate-400 max-w-md mx-auto">
-            Click <strong className="text-white">Generate Briefing</strong> to synthesize live risk metrics, estimated USD financial exposure, and strategic priority actions using Enterprise AI Copilot.
+        <div className="py-8 text-center space-y-2 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+            Click <strong className="text-slate-800 dark:text-slate-200">Generate Briefing</strong> to synthesize live risk metrics, financial exposure tiers, and strategic priority actions grounded in approved risk register data.
           </p>
         </div>
       )}
