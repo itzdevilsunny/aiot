@@ -131,58 +131,16 @@ Return ONLY valid JSON with no markdown syntax.`;
         console.warn('Gemini bulk generation parse note:', err?.message || err);
       }
     }
-
-    // 3. High-Quality Dynamic Fallback
-    return NextResponse.json({
-      risks: [
-        {
-          title: `Cloud Capacity & Service Availability Constraint`,
-          description: `Identified capacity bottleneck during ${topic} rollout.`,
-          category: 'Technical',
-          probability: 4,
-          impact: 4,
-          score: 16,
-          severity: 'High',
-          suggestedOwnerName: 'Sunny Prasad',
-          suggestedOwnerRole: 'Business Operations Intern & Risk Lead',
-          mitigationPlan: 'Reserve spot instance fallback pools and request cloud regional quota increase.',
-          contingencyPlan: 'Shift non-critical evaluations to quantization pipelines to reduce compute footprint.',
-          aiConfidence: 95,
-          estimatedImpactUsd: 40000
-        },
-        {
-          title: `Integration SLA Latency Spike`,
-          description: `API rate limits during peak analytical workload execution for ${topic}.`,
-          category: 'External',
-          probability: 3,
-          impact: 4,
-          score: 12,
-          severity: 'High',
-          suggestedOwnerName: 'Yash Raj',
-          suggestedOwnerRole: 'Operations Lead & Governance Officer',
-          mitigationPlan: 'Implement exponential backoff queue with jitter and request higher rate limits.',
-          contingencyPlan: 'Route traffic to secondary open-source endpoint model.',
-          aiConfidence: 92,
-          estimatedImpactUsd: 30000
-        },
-        {
-          title: `Compliance Audit Log Retention Evidence Gap`,
-          description: `Log archiving policies for ${topic} require immutable retention locks.`,
-          category: 'Compliance',
-          probability: 2,
-          impact: 4,
-          score: 8,
-          severity: 'Medium',
-          suggestedOwnerName: 'Priya Sharma',
-          suggestedOwnerRole: 'Compliance, Regulatory & Audit Lead',
-          mitigationPlan: 'Enforce Object Lock in compliance mode with 365-day retention policies.',
-          contingencyPlan: 'Engage compliance auditor for 1-week extension window with mitigation memo.',
-          aiConfidence: 94,
-          estimatedImpactUsd: 20000
-        }
-      ],
-      provider: 'Dynamic Context Engine'
-    });
+    // If neither provider succeeded, return an honest error
+    return NextResponse.json(
+      {
+        error: 'AI bulk risk generation service temporarily unavailable.',
+        details: 'Neither Groq nor Google Gemini returned structured risk items for this topic.',
+        groqStatus: groqResult.error || (groqResult.success ? 'No risks parsed' : 'Provider call failed'),
+        geminiStatus: geminiResult.error || (geminiResult.success ? 'No risks parsed' : 'Provider call failed')
+      },
+      { status: 503 }
+    );
   } catch (err: any) {
     console.error('Bulk API Error:', err);
     return NextResponse.json({ error: err.message || 'Failed to generate project risks' }, { status: 500 });

@@ -54,21 +54,10 @@ export const AICascadeSimModal: React.FC<AICascadeSimModalProps> = ({
       const data = await res.json();
       setCascadeData(data);
       addToast('Cascade Simulation Complete', `Total blast-radius exposure evaluated at ${formatCurrency(data.totalCascadeLoss || 515000)}.`, 'success');
-    } catch (err) {
-      console.error(err);
-      setCascadeData({
-        triggerNode: { id: triggerRiskId, label: 'Database Connection Pool Lock', exposureUsd: 150000 },
-        subsystems: [
-          { id: 'SVC-API', label: 'API Gateway Timeout & 504 Error Spike', impactUsd: 85000 },
-          { id: 'SVC-AUTH', label: 'User Authentication Session Drop', impactUsd: 45000 }
-        ],
-        businessImpact: { id: 'BIZ-REVENUE', label: 'Checkout Cart Abandonment & SLA Fine', finalExposureUsd: 280000 },
-        totalCascadeLoss: 560000,
-        containmentPlaybook: [
-          `Deploy circuit breaker pattern on ${triggerRiskId} microservice endpoint.`,
-          'Enable fallback response caching to prevent API gateway 504 timeouts.'
-        ]
-      });
+    } catch (err: any) {
+      console.error('Cascade simulation error:', err);
+      setCascadeData(null);
+      addToast('Cascade Simulation Failed', err?.message || 'AI cascade service is temporarily unavailable. Please retry later.', 'error');
     } finally {
       setIsLoading(false);
     }

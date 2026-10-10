@@ -54,35 +54,9 @@ export const AIRedTeamerModal: React.FC<AIRedTeamerModalProps> = ({ isOpen, onCl
       setRedTeamData(data);
       addToast('Red-Team Audit Complete', 'Synthesized 3-tier defense strategy and blind spot analysis.', 'success');
     } catch (err: any) {
-      console.error(err);
-      // Fallback
-      setRedTeamData({
-        blindSpots: [
-          'Underestimating database connection pool starvation under peak load.',
-          'Assumes third-party API provider guarantees 99.99% uptime without contractual penalty.',
-          'Lacks automated verification for backup restoration scripts.'
-        ],
-        challengedLikelihood: Math.min(5, risk.probability + 1),
-        challengedImpact: Math.min(5, risk.impact + 1),
-        challengedScore: Math.min(25, (risk.probability + 1) * (risk.impact + 1)),
-        strategies: {
-          preventative: [
-            'Enforce mandatory connection pool circuit breakers.',
-            'Deploy secondary failover provider with instant DNS routing.',
-            'Establish 24/7 on-call DevOps rotation with automated page alerts.'
-          ],
-          detective: [
-            'Implement 5-second synthetic health check monitors.',
-            'Stream error log spikes to real-time Slack incident channel.',
-            'Enable continuous IAM permission auditing.'
-          ],
-          corrective: [
-            'Automate snapshot rollback script execution within 2 minutes.',
-            'Activate read-only database replica fallback.',
-            'Issue post-mortem RCA report within 24 hours.'
-          ]
-        }
-      });
+      console.error('Red-Team audit error:', err);
+      setRedTeamData(null);
+      addToast('Red-Team Audit Failed', err?.message || 'AI Red-Team service is temporarily unavailable. Please retry later.', 'error');
     } finally {
       setIsLoading(false);
     }

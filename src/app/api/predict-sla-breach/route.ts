@@ -54,22 +54,15 @@ Respond ONLY with a valid JSON object matching this exact structure:
       }
     }
 
-    // 2. Dynamic Fallback
-    const progress = risk.mitigationProgress || 0;
-    const isBreached = progress < 30 && (risk.severity === 'Critical' || risk.severity === 'High');
-
-    return NextResponse.json({
-      slaViolationProbability: isBreached ? 82 : 28,
-      predictedBreachDays: isBreached ? 4 : 21,
-      riskLevel: isBreached ? 'High Risk of Breach' : 'Low Risk of Breach',
-      recommendations: [
-        `Reassign secondary backup owner (Ritika - Product Manager or Yash Raj) to assist ${risk.ownerName || 'Sunny Prasad'}.`,
-        'Automate daily progress reminders via Slack webhook.',
-        'Request 14-day SLA review window extension from Enterprise Risk Officer.'
-      ],
-      suggestedBackupOwner: 'Ritika (Product Manager & Strategic Execution Lead)',
-      source: 'Dynamic Context Engine'
-    });
+    // If provider call did not succeed, return an honest error
+    return NextResponse.json(
+      {
+        error: 'SLA violation prediction service temporarily unavailable.',
+        details: 'Neither Groq nor Google Gemini could predict SLA violation milestones.',
+        groqStatus: groqResult.error || (groqResult.success ? 'Invalid structured output' : 'Provider call failed')
+      },
+      { status: 503 }
+    );
   } catch (error: any) {
     console.error('SLA API error:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });

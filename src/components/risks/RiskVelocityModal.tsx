@@ -53,22 +53,10 @@ export const RiskVelocityModal: React.FC<RiskVelocityModalProps> = ({ isOpen, on
       const data = await res.json();
       setVelocityData(data);
       addToast('Velocity Simulation Complete', `Evaluated ${data.velocityCategory} impact window.`, 'success');
-    } catch (err) {
-      console.error(err);
-      // Fallback
-      setVelocityData({
-        velocityCategory: 'Rapid',
-        timeToImpactHours: 6,
-        estimatedMitigationHours: 12,
-        slaBufferHours: -6,
-        slaStatus: 'CRITICAL SLA DEFICIT',
-        cascadePathways: [
-          'Primary service API response latency exceeds 2.5s',
-          'Database read connection pool locks up',
-          'End-user checkout transactions fail silently'
-        ],
-        recommendedUrgency: 'Immediate On-Call Escalation'
-      });
+    } catch (err: any) {
+      console.error('Velocity analysis error:', err);
+      setVelocityData(null);
+      addToast('Velocity Analysis Failed', err?.message || 'AI velocity analysis service is temporarily unavailable. Please retry later.', 'error');
     } finally {
       setIsLoading(false);
     }

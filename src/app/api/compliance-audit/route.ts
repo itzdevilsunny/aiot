@@ -89,67 +89,16 @@ Respond ONLY with valid JSON.`;
       }
     }
 
-    // 2. High-Precision Smart Dynamic Compliance Audit Fallback
-    const totalRisks = activeRisks.length;
-    const criticalCount = activeRisks.filter((r: any) => r.severity === 'Critical' || r.score >= 17).length;
-    const highCount = activeRisks.filter((r: any) => r.severity === 'High' || (r.score >= 10 && r.score < 17)).length;
-    const unmitigatedCount = activeRisks.filter((r: any) => (r.mitigationProgress || 0) < 50).length;
-
-    let baseScore = 94 - (criticalCount * 12) - (highCount * 5) - (unmitigatedCount * 3);
-    baseScore = Math.max(50, Math.min(99, baseScore));
-
-    const gaps = [];
-
-    if (unmitigatedCount > 0 || criticalCount > 0) {
-      gaps.push({
-        controlId: 'NIST-RA-1',
-        framework: 'NIST SP 800-30',
-        title: 'Threat Source & Vulnerability Analysis',
-        severity: criticalCount > 0 ? 'High' : 'Medium',
-        issue: `${criticalCount + unmitigatedCount} active project risks have unmitigated exposure (<50% progress) requiring continuous vulnerability monitoring.`,
-        remediation: 'Implement automated daily CVE dependency monitoring and establish automated patch SLAs.',
-        associatedRiskIds: activeRisks.slice(0, 2).map((r: any) => r.id)
-      });
-    }
-
-    if (activeRisks.some((r: any) => r.category === 'Security' || r.category === 'Compliance')) {
-      gaps.push({
-        controlId: 'SOC2-CC6.1',
-        framework: 'SOC 2 Type II',
-        title: 'Logical Access & Authentication Safeguards',
-        severity: 'Medium',
-        issue: 'Access control and RBAC telemetry audit logs require multi-factor enforcement across operational endpoints.',
-        remediation: 'Enforce MFA and IP-whitelisted access tokens on operational API routes.',
-        associatedRiskIds: activeRisks.filter((r: any) => r.category === 'Security').map((r: any) => r.id)
-      });
-    }
-
-    if (gaps.length === 0) {
-      gaps.push({
-        controlId: 'ISO-6.5',
-        framework: 'ISO 31000',
-        title: 'Proactive Risk Treatment Protocol',
-        severity: 'Low',
-        issue: 'Continuous audit monitoring recommended to sustain high compliance posture across future release cycles.',
-        remediation: 'Schedule quarterly CISO review spikes and automate audit log archiving.',
-        associatedRiskIds: activeRisks.map((r: any) => r.id)
-      });
-    }
-
-    return NextResponse.json({
-      healthScore: baseScore,
-      executiveSummary: `Enterprise compliance assessment evaluated across ${totalRisks} active risk items. Current readiness rating is ${baseScore}%. Controls for ISO 31000 and SOC 2 Type II are operating within acceptable thresholds with ${gaps.length} actionable control recommendations.`,
-      frameworkScores: {
-        'ISO 31000': Math.min(100, baseScore + 4),
-        'NIST SP 800-30': Math.max(60, baseScore - 3),
-        'SOC 2 Type II': Math.min(100, baseScore + 2),
-        'GDPR': Math.min(100, baseScore + 1),
-        'PCI DSS 4.0': Math.max(65, baseScore - 2)
+    // If neither provider succeeded, return an honest error
+    return NextResponse.json(
+      {
+        error: 'Compliance audit synthesis service temporarily unavailable.',
+        details: 'Neither Groq nor Google Gemini could generate a compliance audit gap assessment.',
+        groqStatus: groqResult.error || (groqResult.success ? 'Invalid structured output' : 'Provider call failed'),
+        geminiStatus: geminiResult.error || (geminiResult.success ? 'Invalid structured output' : 'Provider call failed')
       },
-      gaps,
-      auditorMemo: `Official Auditor Sign-off by Priya Sharma (Compliance & Audit Lead): Live telemetry demonstrates an enterprise readiness rating of ${baseScore}%. Mandatory control remediations are tracked under internal CISO governance protocols.`,
-      provider: 'Dynamic Context Engine'
-    });
+      { status: 503 }
+    );
   } catch (error: any) {
     console.error('Compliance Audit API error:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });

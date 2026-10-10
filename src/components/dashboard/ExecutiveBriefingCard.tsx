@@ -65,24 +65,10 @@ export const ExecutiveBriefingCard: React.FC = () => {
       } else {
         throw new Error(data?.error || 'Invalid briefing structure');
       }
-    } catch (err) {
-      console.warn('Briefing fetch note (Using resilient fallback):', err);
-      
-      const totalRisks = risks.length;
-      const criticalCount = risks.filter(r => r.severity === 'Critical').length;
-      const totalExposure = risks.reduce((acc, r) => acc + (r.estimatedImpactUsd || 0), 0);
-
-      setBriefing({
-        executiveSummary: `MNB Research currently monitors ${totalRisks} active project risks (${criticalCount} critical vulnerabilities) with total exposure estimated at $${totalExposure.toLocaleString()} USD across core technical and operational workstreams.`,
-        topPriorityActions: [
-          'Accelerate technical discovery spikes to address key developer capacity constraints before production deployment.',
-          'Enforce automated billing alerts at 80% threshold to prevent cloud infrastructure cost variance overruns.',
-          'Audit third-party compliance evidence logging policies to maintain SOC2 audit readiness.'
-        ],
-        financialVulnerabilityScore: criticalCount > 2 ? 78 : 55,
-        governanceRating: criticalCount > 2 ? 'Action Required' : 'Moderate Exposure'
-      });
-      addToast('Executive Briefing Ready', 'Synthesized risk posture summary.', 'info');
+    } catch (err: any) {
+      console.error('Briefing fetch error:', err);
+      setBriefing(null);
+      addToast('Executive Briefing Unavailable', err?.message || 'AI briefing service is temporarily unavailable. Please retry later.', 'error');
     } finally {
       setLoading(false);
     }

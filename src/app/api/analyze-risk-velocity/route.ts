@@ -49,26 +49,15 @@ Respond ONLY with a valid JSON object matching this structure:
       }
     }
 
-    // 2. Dynamic Fallback
-    const isTechOrSec = risk.category === 'Technical' || risk.category === 'Security';
-    const timeToImpactHours = isTechOrSec ? 4 : 48;
-    const estimatedMitigationHours = 12;
-    const slaBufferHours = timeToImpactHours - estimatedMitigationHours;
-
-    return NextResponse.json({
-      velocityCategory: isTechOrSec ? 'Explosive' : 'Rapid',
-      timeToImpactHours,
-      estimatedMitigationHours,
-      slaBufferHours,
-      slaStatus: slaBufferHours < 0 ? 'CRITICAL SLA DEFICIT' : slaBufferHours < 12 ? 'WARNING' : 'HEALTHY',
-      cascadePathways: [
-        `Primary trigger in ${risk.category} infrastructure for [${risk.id || 'RSK'}]`,
-        `Cascades into customer facing service degradation within ${timeToImpactHours}h`,
-        'Financial exposure SLA breach threshold reached'
-      ],
-      recommendedUrgency: slaBufferHours < 0 ? 'Immediate On-Call Escalation' : 'Standard 24h Review Window',
-      source: 'Dynamic Context Engine'
-    });
+    // If provider call did not succeed, return an honest error
+    return NextResponse.json(
+      {
+        error: 'Risk velocity analysis service temporarily unavailable.',
+        details: 'Neither Groq nor Google Gemini could compute cascade velocity metrics.',
+        groqStatus: groqResult.error || (groqResult.success ? 'Invalid structured output' : 'Provider call failed')
+      },
+      { status: 503 }
+    );
   } catch (error: any) {
     console.error('Risk Velocity API error:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });

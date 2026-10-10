@@ -49,39 +49,15 @@ Respond ONLY with valid JSON.`;
       }
     }
 
-    // 2. High-Precision Smart Dynamic Fallback
-    const totalKris = (kris || []).length;
-    const breachedCount = (kris || []).filter((k: any) => k.status === 'Breached').length;
-    const warningCount = (kris || []).filter((k: any) => k.status === 'Warning').length;
-
-    const healthScore = Math.max(40, 100 - (breachedCount * 25) - (warningCount * 10));
-
-    const kriAnalyses = (kris || []).map((k: any) => {
-      const isBreached = k.status === 'Breached';
-      const isWarning = k.status === 'Warning';
-      return {
-        kriId: k.id,
-        predicted30DayValue: Math.round((k.currentValue * (isBreached ? 1.15 : isWarning ? 1.08 : 0.95)) * 10) / 10,
-        breachProbability: isBreached ? 95 : isWarning ? 68 : 12,
-        rootCause: isBreached
-          ? `Metric ${k.id} (${k.name}) exceeded critical threshold (${k.criticalThreshold} ${k.unit}) due to elevated operational load.`
-          : `Metric ${k.id} is operating within normal baseline threshold margins.`,
-        preventiveAction: `Scale infrastructure capacity, enforce automated rate-limiting, and review linked risk ${k.linkedRiskId}.`
-      };
-    });
-
-    return NextResponse.json({
-      overallHealthScore: healthScore,
-      anomalyRating: breachedCount > 0 ? 'Critical SLA Breach Risk' : warningCount > 0 ? 'Moderate Anomaly' : 'Low Risk',
-      executiveSummary: `KRI telemetry engine evaluated ${totalKris} active metrics. Found ${breachedCount} SLA breaches and ${warningCount} warning indicators. Immediate mitigation required for breached operational metrics.`,
-      kriAnalyses,
-      recommendedPlaybookTasks: [
-        'Autoscale database pool connections to mitigate lock saturation.',
-        'Optimize API gateway caching layers to reduce p99 latency below 150ms.',
-        'Execute cloud infrastructure cost optimization audit.'
-      ],
-      provider: 'Dynamic Context Engine'
-    });
+    // If provider call did not succeed, return an honest error
+    return NextResponse.json(
+      {
+        error: 'KRI telemetry predictive analysis service temporarily unavailable.',
+        details: 'Neither Groq nor Google Gemini could generate predictive KRI forecasts.',
+        groqStatus: groqResult.error || (groqResult.success ? 'Invalid structured output' : 'Provider call failed')
+      },
+      { status: 503 }
+    );
   } catch (error: any) {
     console.error('KRI Telemetry API error:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });

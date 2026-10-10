@@ -98,50 +98,16 @@ Respond ONLY with valid JSON.`;
       }
     }
 
-    // 2. Dynamic Fallback
-    const baseLoss = triggerRisk.estimatedImpactUsd || ((triggerRisk.score || 16) * 15000);
-    const sub1Loss = Math.round(baseLoss * 0.55);
-    const sub2Loss = Math.round(baseLoss * 0.30);
-    const bizLoss = Math.round(baseLoss * 1.85);
-    const totalCascadeLoss = baseLoss + sub1Loss + sub2Loss + bizLoss;
-
-    return NextResponse.json({
-      triggerNode: {
-        id: triggerRisk.id,
-        label: triggerRisk.title,
-        severity: triggerRisk.severity || 'Critical',
-        exposureUsd: baseLoss
+    // If neither provider succeeded, return an honest error
+    return NextResponse.json(
+      {
+        error: 'Cascade threat topology simulation service temporarily unavailable.',
+        details: 'Neither Groq nor Google Gemini could simulate failure propagation graphs for this trigger node.',
+        groqStatus: groqResult.error || (groqResult.success ? 'Invalid structured output' : 'Provider call failed'),
+        geminiStatus: geminiResult.error || (geminiResult.success ? 'Invalid structured output' : 'Provider call failed')
       },
-      subsystems: [
-        {
-          id: 'SVC-API',
-          label: `${triggerRisk.category} API Gateway & Microservice Timeout`,
-          latency: '< 30s',
-          impactUsd: sub1Loss,
-          status: 'Active Threat'
-        },
-        {
-          id: 'SVC-AUTH',
-          label: 'User Authentication Session Drop',
-          latency: '< 2m',
-          impactUsd: sub2Loss,
-          status: 'Contained'
-        }
-      ],
-      businessImpact: {
-        id: 'BIZ-REVENUE',
-        label: 'Checkout Cart Abandonment & SLA Fine Escalation',
-        slaBreach: true,
-        finalExposureUsd: bizLoss
-      },
-      totalCascadeLoss,
-      containmentPlaybook: [
-        `Deploy circuit breaker pattern on ${triggerRisk.id} microservice endpoint.`,
-        'Enable fallback response caching to prevent API gateway 504 timeouts.',
-        'Isolate database read replicas and autoscale connection pool.'
-      ],
-      provider: 'Dynamic Context Engine'
-    });
+      { status: 503 }
+    );
   } catch (error: any) {
     console.error('Cascade Simulation API error:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });

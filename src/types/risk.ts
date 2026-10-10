@@ -325,4 +325,5 @@ export interface AIRiskAnalysisResult {
   suggestedControls?: string[];
   suggestedActions?: string[];
   suggestedKRIs?: string[];
+  provider?: string;
 }

@@ -66,10 +66,13 @@ export async function GET() {
         provider: `Google Gemini (${geminiRes.model})`
       });
     }
-    return NextResponse.json({
-      insight: 'Copilot Telemetry: Risk portfolio within active governance thresholds. Monitor cryptographic key rotation.',
-      provider: 'System Telemetry'
-    });
+    return NextResponse.json(
+      {
+        error: 'Executive telemetry insight service temporarily unavailable.',
+        details: 'Neither Groq nor Google Gemini generated an executive telemetry insight.'
+      },
+      { status: 503 }
+    );
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

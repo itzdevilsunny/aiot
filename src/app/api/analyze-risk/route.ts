@@ -136,87 +136,14 @@ Return ONLY valid JSON with no markdown formatting.`;
     }
   }
 
-  // 3. High-Precision Smart Dynamic NLP Analysis Engine Fallback
-  const p = prompt.toLowerCase();
-  
-  let category = 'Operational';
-  let suggestedOwnerName = 'Sunny Prasad';
-  let suggestedOwnerRole = 'Business Operations Intern & Risk Lead';
-
-  if (p.includes('security') || p.includes('auth') || p.includes('leak') || p.includes('breach') || p.includes('vulnerability') || p.includes('hacked') || p.includes('token')) {
-    category = 'Security';
-    suggestedOwnerName = 'Priya Sharma';
-    suggestedOwnerRole = 'Compliance, Regulatory & Audit Lead';
-  } else if (p.includes('audit') || p.includes('soc2') || p.includes('compliance') || p.includes('legal') || p.includes('policy') || p.includes('gdpr') || p.includes('regulatory')) {
-    category = 'Compliance';
-    suggestedOwnerName = 'Priya Sharma';
-    suggestedOwnerRole = 'Compliance, Regulatory & Audit Lead';
-  } else if (p.includes('database') || p.includes('sql') || p.includes('server') || p.includes('latency') || p.includes('crash') || p.includes('lock') || p.includes('memory') || p.includes('api') || p.includes('timeout')) {
-    category = 'Technical';
-    suggestedOwnerName = 'Sunny Prasad';
-    suggestedOwnerRole = 'Business Operations Intern & Risk Lead';
-  } else if (p.includes('delay') || p.includes('schedule') || p.includes('deadline') || p.includes('milestone') || p.includes('feature') || p.includes('product')) {
-    category = 'Schedule';
-    suggestedOwnerName = 'Ritika';
-    suggestedOwnerRole = 'Product Manager & Strategic Execution Lead';
-  } else if (p.includes('leave') || p.includes('developer') || p.includes('engineer') || p.includes('capacity') || p.includes('hiring') || p.includes('staff') || p.includes('workforce')) {
-    category = 'Resource';
-    suggestedOwnerName = 'Sumit';
-    suggestedOwnerRole = 'Resource Manager & Workforce Allocation';
-  } else if (p.includes('cost') || p.includes('budget') || p.includes('price') || p.includes('financial') || p.includes('overrun') || p.includes('billing')) {
-    category = 'Financial';
-    suggestedOwnerName = 'Yash Raj';
-    suggestedOwnerRole = 'Operations Lead & Governance Officer';
-  } else if (p.includes('vendor') || p.includes('third-party') || p.includes('supplier') || p.includes('partner') || p.includes('external')) {
-    category = 'External';
-    suggestedOwnerName = 'Yash Raj';
-    suggestedOwnerRole = 'Operations Lead & Governance Officer';
-  }
-
-  let probability = 3;
-  let impact = 3;
-
-  if (p.includes('critical') || p.includes('catastrophic') || p.includes('severe') || p.includes('immediate') || p.includes('down') || p.includes('breach')) {
-    impact = 5;
-    probability = 4;
-  } else if (p.includes('high') || p.includes('frequent') || p.includes('spike') || p.includes('crash') || p.includes('fail')) {
-    impact = 4;
-    probability = 4;
-  } else if (p.includes('low') || p.includes('minor') || p.includes('unlikely') || p.includes('slight')) {
-    impact = 2;
-    probability = 2;
-  }
-
-  const score = probability * impact;
-  let severity = 'Low';
-  if (score >= 17) severity = 'Critical';
-  else if (score >= 10) severity = 'High';
-  else if (score >= 5) severity = 'Medium';
-
-  let cleanTitle = prompt.trim();
-  cleanTitle = cleanTitle.replace(/^there is a /i, '').replace(/^we are facing /i, '').replace(/^potential risk of /i, '');
-  if (cleanTitle.length > 60) {
-    cleanTitle = cleanTitle.substring(0, 57) + '...';
-  }
-  cleanTitle = cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1);
-
-  const mitigationPlan = `Enforce targeted safeguards for ${category.toLowerCase()} exposure: Conduct technical discovery, isolate root dependencies, document operational procedures, and set up real-time monitoring alerts.`;
-  const contingencyPlan = `Activate emergency fallback protocol: Isolate affected sub-system, deploy backup procedures, notify team leads (${suggestedOwnerName}), and initiate recovery workflow.`;
-
-  return NextResponse.json({
-    title: cleanTitle,
-    description: prompt,
-    category,
-    probability,
-    impact,
-    score,
-    severity,
-    suggestedOwnerName,
-    suggestedOwnerRole,
-    mitigationPlan,
-    contingencyPlan,
-    aiConfidence: 96,
-    estimatedImpactUsd: Math.round(score * 3200),
-    provider: 'Dynamic Context Engine'
-  });
+  // If neither provider succeeded, return an honest HTTP 503 error
+  return NextResponse.json(
+    {
+      error: 'AI risk analysis service temporarily unavailable.',
+      details: 'Neither Groq nor Google Gemini returned a valid structured assessment. Please verify API keys and network connectivity.',
+      groqStatus: groqResult.error || (groqResult.success ? 'Invalid structured output' : 'Provider call failed'),
+      geminiStatus: geminiResult.error || (geminiResult.success ? 'Invalid structured output' : 'Provider call failed')
+    },
+    { status: 503 }
+  );
 }

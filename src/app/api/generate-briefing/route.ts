@@ -105,9 +105,14 @@ Respond strictly in valid JSON format without markdown code fences.
     }
   }
 
-  // Fallback: Dynamic Sanitized Synthesis
-  return NextResponse.json({
-    ...sanitizeResponse(null),
-    provider: 'Dynamic Context Engine'
-  });
+  // If neither provider succeeded, return an honest HTTP 503 error
+  return NextResponse.json(
+    {
+      error: 'Executive AI briefing service temporarily unavailable.',
+      details: 'Neither Groq nor Google Gemini could generate an executive synthesis from the risk register.',
+      groqStatus: groqResult.error || (groqResult.success ? 'Invalid structured output' : 'Provider call failed'),
+      geminiStatus: geminiResult.error || (geminiResult.success ? 'Invalid structured output' : 'Provider call failed')
+    },
+    { status: 503 }
+  );
 }

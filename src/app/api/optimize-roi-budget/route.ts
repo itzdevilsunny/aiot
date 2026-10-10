@@ -89,45 +89,16 @@ Respond ONLY with valid JSON.`;
       }
     }
 
-    // 2. High-Precision Smart Dynamic ROI Fallback
-    let budgetRemaining = Number(totalBudget) || 25000;
-    const sorted = [...activeRisks].sort((a: any, b: any) => (b.score || 1) - (a.score || 1));
-
-    let totalLossAvoided = 0;
-    let capitalAllocated = 0;
-
-    const allocations = sorted.map((r: any, idx: number) => {
-      const estimatedLoss = r.estimatedImpactUsd || ((r.score || 5) * 25000);
-      const reqBudget = Math.min(budgetRemaining, Math.round(estimatedLoss * 0.12));
-      budgetRemaining -= reqBudget;
-      capitalAllocated += reqBudget;
-
-      const lossAvoided = Math.round(estimatedLoss * 0.75);
-      totalLossAvoided += lossAvoided;
-      const roiPercent = reqBudget > 0 ? Math.round(((lossAvoided - reqBudget) / reqBudget) * 100) : 0;
-
-      return {
-        riskId: r.id,
-        title: r.title,
-        recommendedBudget: reqBudget,
-        expectedLossAvoided: lossAvoided,
-        roiPercent,
-        priorityRank: idx + 1,
-        justification: `Allocating $${reqBudget.toLocaleString()} to ${r.id} achieves a ${roiPercent}% return by preventing up to $${lossAvoided.toLocaleString()} in operational loss.`
-      };
-    });
-
-    const optimizedRoi = capitalAllocated > 0 ? Math.round(((totalLossAvoided - capitalAllocated) / capitalAllocated) * 100) : 485;
-
-    return NextResponse.json({
-      optimizedRoi,
-      capitalAllocated,
-      totalLossAvoided,
-      executiveSummary: `Capital budget allocation model optimized $${capitalAllocated.toLocaleString()} across ${activeRisks.length} active risks. Yields a net portfolio return on investment of +${optimizedRoi}% with $${totalLossAvoided.toLocaleString()} in avoided capital losses.`,
-      allocations,
-      cfoMemo: `Official CFO Expenditure Sign-off: Budget allocation plan yields maximum capital preservation with a +${optimizedRoi}% financial return on investment.`,
-      provider: 'Dynamic Context Engine'
-    });
+    // If neither provider succeeded, return an honest error
+    return NextResponse.json(
+      {
+        error: 'AI budget optimization service temporarily unavailable.',
+        details: 'Neither Groq nor Google Gemini could generate a capital budget optimization plan.',
+        groqStatus: groqResult.error || (groqResult.success ? 'Invalid structured output' : 'Provider call failed'),
+        geminiStatus: geminiResult.error || (geminiResult.success ? 'Invalid structured output' : 'Provider call failed')
+      },
+      { status: 503 }
+    );
   } catch (error: any) {
     console.error('ROI Optimization API error:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });

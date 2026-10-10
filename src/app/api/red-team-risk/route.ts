@@ -51,37 +51,15 @@ Respond ONLY with a valid JSON object matching this structure:
       }
     }
 
-    // 2. Dynamic Fallback
-    const chLikelihood = Math.min(5, (risk.probability || 3) + 1);
-    const chImpact = Math.min(5, (risk.impact || 3) + 1);
-    return NextResponse.json({
-      blindSpots: [
-        `Underestimating single point of failure in [${risk.id || 'RSK'}] failover SLA.`,
-        'Assumes external third-party vendor will provide 24/7 on-call response during weekend freeze.',
-        'Missing automated automated roll-back validation verification.'
-      ],
-      challengedLikelihood: chLikelihood,
-      challengedImpact: chImpact,
-      challengedScore: chLikelihood * chImpact,
-      strategies: {
-        preventative: [
-          'Implement mandatory multi-region database read-replica auto-failover.',
-          'Enforce zero-trust credential rotation every 14 days.',
-          'Contract dedicated SLA extension with primary cloud infrastructure vendor.'
-        ],
-        detective: [
-          'Set up synthetic ping monitors probing API endpoints every 10 seconds.',
-          'Deploy anomaly detection rule for uncharacteristic query volume spikes.',
-          'Enable continuous real-time audit log streaming to cold storage.'
-        ],
-        corrective: [
-          'Automate snapshot rollback script triggering within 60 seconds of failure.',
-          'Activate secondary DNS routing to standby cluster.',
-          'Initiate post-mortem incident RCA memo within 24 hours.'
-        ]
+    // If provider call did not succeed, return an honest error
+    return NextResponse.json(
+      {
+        error: 'AI red-team threat challenge service temporarily unavailable.',
+        details: 'Neither Groq nor Google Gemini could challenge risk mitigation assumptions.',
+        groqStatus: groqResult.error || (groqResult.success ? 'Invalid structured output' : 'Provider call failed')
       },
-      source: 'Dynamic Context Engine'
-    });
+      { status: 503 }
+    );
   } catch (error: any) {
     console.error('Red-Team API error:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });

@@ -55,24 +55,10 @@ export const AIBudgetOptimizerModal: React.FC<AIBudgetOptimizerModalProps> = ({
       const data = await res.json();
       setOptData(data);
       addToast('Capital Optimization Complete', `Net portfolio ROI evaluated at +${data.optimizedRoi || 498}%.`, 'success');
-    } catch (err) {
-      console.error(err);
-      setOptData({
-        optimizedRoi: 512,
-        capitalAllocated: targetBudget,
-        totalLossAvoided: Math.round(targetBudget * 5.2),
-        executiveSummary: `Capital budget allocation model optimized $${targetBudget.toLocaleString()} across active risks. Yields a net portfolio return on investment of +512% with $${(targetBudget * 5.2).toLocaleString()} in avoided capital losses.`,
-        allocations: risks.slice(0, 4).map((r, i) => ({
-          riskId: r.id,
-          title: r.title,
-          recommendedBudget: Math.round(targetBudget * 0.25),
-          expectedLossAvoided: Math.round(targetBudget * 1.3),
-          roiPercent: 420 + (i * 40),
-          priorityRank: i + 1,
-          justification: `Allocating capital to ${r.id} achieves maximum loss prevention.`
-        })),
-        cfoMemo: `Official CFO Expenditure Sign-off: Budget allocation plan yields maximum capital preservation with a +512% financial return on investment.`
-      });
+    } catch (err: any) {
+      console.error('Budget optimization error:', err);
+      setOptData(null);
+      addToast('Capital Optimization Failed', err?.message || 'AI budget optimization service is temporarily unavailable. Please retry later.', 'error');
     } finally {
       setIsLoading(false);
     }

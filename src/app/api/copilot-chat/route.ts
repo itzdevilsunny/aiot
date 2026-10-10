@@ -137,59 +137,24 @@ INSTRUCTIONS FOR COPILOT:
       });
     }
 
-    // 3. Intelligent Dynamic Calculation Fallback (If both cloud AI providers unreachable)
-    const q = String(userQuery || '').toLowerCase();
-    let dynamicReply = '';
-
-    if (q.includes('sunny') || q.includes('workload')) {
-      const sunnyRisks = risks.filter((r: any) => String(r.ownerName || '').toLowerCase().includes('sunny'));
-      const openSunny = sunnyRisks.filter((r: any) => r.status === 'Open');
-      const sunnyExp = sunnyRisks.reduce((s: number, r: any) => s + (r.estimatedImpactUsd || r.score * 2500), 0);
-      dynamicReply = `### 👤 Sunny Prasad (Business Operations Intern & Risk Lead) — Workload & Exposure Audit\n\n` +
-        `• **Assigned Risks:** **${sunnyRisks.length} active risks** (${openSunny.length} Open, ${sunnyRisks.length - openSunny.length} In Progress/Closed)\n` +
-        `• **Total Financial Exposure Managed:** **$${sunnyExp.toLocaleString()} USD**\n` +
-        `• **Active Risk Details:**\n` +
-        sunnyRisks.map((r: any) => `  - **[${r.id}] ${r.title}**: Score **${r.score}/25** (${r.severity}) | Progress: **${r.mitigationProgress || 0}%** | Phase: **${r.lifecyclePhase || 'Assess'}**`).join('\n') +
-        `\n\n**Leadership Assessment:** Sunny is currently leading critical operational and database mitigation workflows. Capacity utilization is at **68%** (Optimal).`;
-    } else if (q.includes('yash')) {
-      const yashRisks = risks.filter((r: any) => String(r.ownerName || '').toLowerCase().includes('yash'));
-      dynamicReply = `### 👤 Yash Raj (Operations Lead & Governance Officer) — Portfolio Overview\n\n` +
-        `• **Assigned Oversight Items:** **${yashRisks.length} risks**\n` +
-        `• **Focus Areas:** Operational resilience, disaster recovery failover, and high-concurrency escalation pathways.\n` +
-        yashRisks.map((r: any) => `  - **[${r.id}] ${r.title}**: Score **${r.score}/25** (${r.severity})`).join('\n') +
-        `\n\n**Governance Directives:** Yash is coordinating executive review checkpoints for high-severity operational items.`;
-    } else if (q.includes('ritika')) {
-      const ritikaRisks = risks.filter((r: any) => String(r.ownerName || '').toLowerCase().includes('ritika'));
-      dynamicReply = `### 👤 Ritika (Product Manager & Strategic Execution Lead) — Product Risk Alignment\n\n` +
-        `• **Assigned Items:** **${ritikaRisks.length} risks**\n` +
-        `• **Focus Areas:** Product release velocity, sprint dependencies, third-party vendor integrations.\n` +
-        ritikaRisks.map((r: any) => `  - **[${r.id}] ${r.title}**: Score **${r.score}/25** (${r.severity})`).join('\n') +
-        `\n\n**Roadmap Status:** Mitigation milestones are synchronised with product release gates.`;
-    } else if (q.includes('priya') || q.includes('compliance') || q.includes('audit')) {
-      dynamicReply = `### 👤 Priya Sharma (Compliance & Audit Lead) — Regulatory Governance\n\n` +
-        `• **Frameworks Under Active Surveillance:** ISO 31000, SOC2 Type II, ISO 27001\n` +
-        `• **Audit Verification:** Continuous automated control validation active.\n` +
-        `• **Active Regulatory Approvals:** ${approvals.length} sign-offs logged in the governance ledger.`;
-    } else {
-      const top3 = [...risks].sort((a: any, b: any) => b.score - a.score).slice(0, 3);
-      dynamicReply = `### 🛡️ Enterprise Risk Register Synthesis (${totalRisks} Active Items | $${totalExposureUsd.toLocaleString()} USD Total Exposure)\n\n` +
-        `• **Critical Threats:** **${criticalRisks.length}** | **High Threats:** **${highRisks.length}**\n` +
-        `• **Top Priority Threats by Score:**\n` +
-        top3.map((r: any, idx: number) => `  ${idx + 1}. **[${r.id}] ${r.title}** (Score: **${r.score}/25** | Owner: **${r.ownerName}** | Exposure: **$${(r.estimatedImpactUsd || r.score * 2500).toLocaleString()} USD**)`).join('\n') +
-        `\n\n**Continuous 10-Step Lifecycle Status:** Risks are progressing through *Identify → Assess → Prioritise → Treat → Assign → Monitor → Review → Approve → Report → Close*.`;
-    }
-
-    return NextResponse.json({
-      reply: dynamicReply,
-      provider: 'Dynamic Context Engine (Live Supabase Telemetry)',
-      success: true
-    });
+    // If neither cloud AI provider succeeded, return an honest error
+    return NextResponse.json(
+      {
+        reply: 'AI Copilot inference service is temporarily unavailable. Neither Groq nor Google Gemini could process your request. Please verify your provider API keys and network connectivity.',
+        success: false,
+        error: 'AI service unavailable',
+        groqStatus: groqResult.error || (groqResult.success ? 'No reply generated' : 'Provider call failed'),
+        geminiStatus: geminiResult.error || (geminiResult.success ? 'No reply generated' : 'Provider call failed')
+      },
+      { status: 503 }
+    );
 
   } catch (error: any) {
     console.error('Error in copilot-chat:', error);
     return NextResponse.json({ 
-      reply: 'The AI Copilot is currently monitoring live enterprise data. All metrics synced.',
-      success: false
-    });
+      reply: 'An internal server error occurred while contacting the AI inference engines. Please check server logs.',
+      success: false,
+      error: error?.message || 'Internal server error'
+    }, { status: 500 });
   }
 }

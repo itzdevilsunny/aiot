@@ -86,40 +86,16 @@ Respond ONLY with valid JSON.`;
       }
     }
 
-    // 2. High-Precision Dynamic Fallback Engine
-    const baselineExposure = activeRisks.reduce((acc: number, r: any) => acc + (r.estimatedImpactUsd || (r.score * 2500)), 0);
-    const v = Number(velocity) || 3;
-
-    const months = ['Month 1', 'Month 2', 'Month 3', 'Month 4', 'Month 5', 'Month 6', 'Month 7', 'Month 8', 'Month 9', 'Month 10', 'Month 11', 'Month 12'];
-    const trajectory = months.map((month, idx) => {
-      const unmitigated = Math.round(baselineExposure * Math.pow(1.02, idx));
-      const factor = Math.max(0, 1 - (idx + 1) * (v * 0.08));
-      const mitigated = Math.round(baselineExposure * factor);
-      return { month, unmitigated, mitigated };
-    });
-
-    const categoryTotals: Record<string, number> = {};
-    activeRisks.forEach((r: any) => {
-      categoryTotals[r.category] = (categoryTotals[r.category] || 0) + (r.estimatedImpactUsd || (r.score * 2500));
-    });
-
-    const categoryRadar = Object.entries(categoryTotals).map(([cat, total]) => ({
-      category: cat,
-      exposure: Math.round(total / 1000)
-    }));
-
-    const projectedYearEndExposure = trajectory[11]?.mitigated || 0;
-    const netRiskReductionPercent = Math.round(((baselineExposure - projectedYearEndExposure) / (baselineExposure || 1)) * 100);
-
-    return NextResponse.json({
-      baselineExposure,
-      projectedYearEndExposure,
-      netRiskReductionPercent,
-      executiveSummary: `12-month trajectory model projects baseline financial risk of $${baselineExposure.toLocaleString()} reducing to $${projectedYearEndExposure.toLocaleString()} at a mitigation velocity of ${v} risks/month. Yields a net risk reduction efficiency of ${netRiskReductionPercent}%.`,
-      trajectory,
-      categoryRadar,
-      provider: 'Dynamic Context Engine'
-    });
+    // If neither provider succeeded, return an honest error
+    return NextResponse.json(
+      {
+        error: 'AI loss trajectory prediction service temporarily unavailable.',
+        details: 'Neither Groq nor Google Gemini could predict financial risk trajectories for the current portfolio.',
+        groqStatus: groqResult.error || (groqResult.success ? 'Invalid structured output' : 'Provider call failed'),
+        geminiStatus: geminiResult.error || (geminiResult.success ? 'Invalid structured output' : 'Provider call failed')
+      },
+      { status: 503 }
+    );
   } catch (error: any) {
     console.error('Loss Trajectory API error:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });

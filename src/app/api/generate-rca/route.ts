@@ -83,27 +83,16 @@ Respond ONLY with a valid JSON object matching this exact structure:
       }
     }
 
-    // 2. Dynamic Fallback
-    return NextResponse.json({
-      rcaTitle: `Post-Mortem & 5-Whys Retrospective: ${risk.title}`,
-      fiveWhys: [
-        `Why did [${risk.id || 'RSK'}] manifest? High load exceeded baseline thresholds during operation.`,
-        'Why did load exceed limits? Automated traffic scaling rules experienced telemetry lag.',
-        'Why did lag occur? Health check metric polling was saturated by concurrent tasks.',
-        'Why was polling saturated? Telemetry monitoring operated on shared node capacity.',
-        `Root Cause: Absence of isolated redundant health check polling agents for ${risk.title}.`
-      ],
-      lessonsLearned: [
-        'Telemetry monitoring must operate independently from primary application subnets.',
-        'Automated canary releases must require mandatory load testing before production promotion.'
-      ],
-      preventativeActions: [
-        'Deploy multi-region synthetic monitoring agents.',
-        'Enforce SLA alerts at 70% threshold instead of 90%.'
-      ],
-      executiveSummary: `Post-incident analysis for [${risk.id || 'RSK'}] "${risk.title}" confirmed root cause and deployed remediation roadmap.`,
-      source: 'Dynamic Context Engine'
-    });
+    // If neither provider succeeded, return an honest error
+    return NextResponse.json(
+      {
+        error: 'AI 5-Whys root cause analysis service temporarily unavailable.',
+        details: 'Neither Groq nor Google Gemini could generate a retrospective analysis for this risk.',
+        groqStatus: groqResult.error || (groqResult.success ? 'Invalid structured output' : 'Provider call failed'),
+        geminiStatus: geminiResult.error || (geminiResult.success ? 'Invalid structured output' : 'Provider call failed')
+      },
+      { status: 503 }
+    );
   } catch (error: any) {
     console.error('RCA API error:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });

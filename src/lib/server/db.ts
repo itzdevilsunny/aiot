@@ -89,65 +89,114 @@ export async function syncFromSupabase(): Promise<boolean> {
   try {
     const supabase = getSupabaseServerClient();
     if (!supabase) return false;
-    const { data, error } = await supabase.from('risks').select('*');
-    if (error || !data || data.length === 0) return false;
+
+    // 1. Sync risks from Supabase
+    const { data: riskData, error: riskError } = await supabase.from('risks').select('*');
+    if (riskError) {
+      console.warn('[Server DB] Supabase risks query note:', riskError.message);
+    }
+
+    // 2. Sync projects from Supabase
+    const { data: projectData, error: projectError } = await supabase.from('projects').select('*');
+    if (projectError) {
+      console.warn('[Server DB] Supabase projects query note:', projectError.message);
+    }
+
+    // 3. Sync team_members from Supabase
+    const { data: memberData, error: memberError } = await supabase.from('team_members').select('*');
+    if (memberError) {
+      console.warn('[Server DB] Supabase team_members query note:', memberError.message);
+    }
 
     const db = getDatabase();
-    const mappedRisks: RiskItem[] = data.map((row: any) => {
-      const prob = (row.probability || 3) as ProbabilityLevel;
-      const imp = (row.impact || 3) as ImpactLevel;
-      const score = (row.score || prob * imp);
-      const sev = (row.severity || calculateSeverity(score)) as SeverityLevel;
-      
-      const resProb = Math.max(1, prob - (row.mitigation_progress >= 50 ? 2 : row.mitigation_progress >= 20 ? 1 : 0)) as ProbabilityLevel;
-      const resImp = Math.max(1, imp - (row.mitigation_progress >= 70 ? 1 : 0)) as ImpactLevel;
-      const resScore = resProb * resImp;
 
-      return {
+    if (riskData && Array.isArray(riskData) && riskData.length > 0) {
+      const mappedRisks: RiskItem[] = riskData.map((row: any) => {
+        const prob = (row.probability || 3) as ProbabilityLevel;
+        const imp = (row.impact || 3) as ImpactLevel;
+        const score = (row.score || prob * imp);
+        const sev = (row.severity || calculateSeverity(score)) as SeverityLevel;
+        
+        const resProb = Math.max(1, prob - (row.mitigation_progress >= 50 ? 2 : row.mitigation_progress >= 20 ? 1 : 0)) as ProbabilityLevel;
+        const resImp = Math.max(1, imp - (row.mitigation_progress >= 70 ? 1 : 0)) as ImpactLevel;
+        const resScore = resProb * resImp;
+
+        return {
+          id: row.id,
+          title: row.title,
+          description: row.description || '',
+          category: row.category || 'Operational',
+          subcategory: row.subcategory || '',
+          department: row.department || 'MNB Research · Business Operations',
+          affectedProcess: row.affected_process || '',
+          probability: prob,
+          impact: imp,
+          score,
+          severity: sev,
+          inherentProbability: prob,
+          inherentImpact: imp,
+          inherentScore: score,
+          inherentSeverity: sev,
+          residualProbability: resProb,
+          residualImpact: resImp,
+          residualScore: resScore,
+          residualSeverity: calculateSeverity(resScore),
+          status: row.status || 'Open',
+          projectId: row.project_id || 'proj-1',
+          projectName: row.project_name || 'Enterprise Operations',
+          ownerId: row.owner_id || 'usr-1',
+          ownerName: row.owner_name || 'Sunny Prasad',
+          ownerRole: row.owner_role || 'Business Operations Intern & Risk Lead',
+          ownerAvatar: row.owner_avatar,
+          coOwnerName: row.co_owner_name,
+          coOwnerRole: row.co_owner_role,
+          mitigationPlan: row.mitigation_plan || '',
+          contingencyPlan: row.contingency_plan || '',
+          mitigationProgress: row.mitigation_progress || 0,
+          dueDate: row.due_date || new Date().toISOString().split('T')[0],
+          checklist: Array.isArray(row.checklist) ? row.checklist : [],
+          activityLogs: Array.isArray(row.activity_logs) ? row.activity_logs : [],
+          aiSuggested: !!row.ai_suggested,
+          aiConfidence: row.ai_confidence || 90,
+          estimatedImpactUsd: row.estimated_impact_usd || (score * 2500),
+          lastUpdated: row.last_updated || 'Just now',
+          createdAt: row.created_at ? row.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+          aboveAppetite: resScore > (db.settings.riskAppetiteThreshold || 15)
+        };
+      });
+      db.risks = mappedRisks;
+    }
+
+    if (projectData && Array.isArray(projectData) && projectData.length > 0) {
+      db.projects = projectData.map((row: any) => ({
         id: row.id,
-        title: row.title,
+        name: row.name,
+        code: row.code || row.id,
         description: row.description || '',
-        category: row.category || 'Operational',
-        subcategory: row.subcategory || '',
-        department: row.department || 'MNB Research · Business Operations',
-        affectedProcess: row.affected_process || '',
-        probability: prob,
-        impact: imp,
-        score,
-        severity: sev,
-        inherentProbability: prob,
-        inherentImpact: imp,
-        inherentScore: score,
-        inherentSeverity: sev,
-        residualProbability: resProb,
-        residualImpact: resImp,
-        residualScore: resScore,
-        residualSeverity: calculateSeverity(resScore),
-        status: row.status || 'Open',
-        projectId: row.project_id || 'proj-1',
-        projectName: row.project_name || 'Enterprise Operations',
-        ownerId: row.owner_id || 'usr-1',
-        ownerName: row.owner_name || 'Sunny Prasad',
-        ownerRole: row.owner_role || 'Business Operations Intern & Risk Lead',
-        ownerAvatar: row.owner_avatar,
-        coOwnerName: row.co_owner_name,
-        coOwnerRole: row.co_owner_role,
-        mitigationPlan: row.mitigation_plan || '',
-        contingencyPlan: row.contingency_plan || '',
+        status: row.status || 'Active',
+        leadName: row.lead_name || 'Sunny Prasad (Business Operations Intern)',
+        totalRisks: db.risks.filter(r => r.projectId === row.id).length,
+        criticalRisks: db.risks.filter(r => r.projectId === row.id && r.severity === 'Critical').length,
         mitigationProgress: row.mitigation_progress || 0,
-        dueDate: row.due_date || new Date().toISOString().split('T')[0],
-        checklist: Array.isArray(row.checklist) ? row.checklist : [],
-        activityLogs: Array.isArray(row.activity_logs) ? row.activity_logs : [],
-        aiSuggested: !!row.ai_suggested,
-        aiConfidence: row.ai_confidence || 90,
-        estimatedImpactUsd: row.estimated_impact_usd || (score * 2500),
-        lastUpdated: row.last_updated || 'Just now',
-        createdAt: row.created_at ? row.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
-        aboveAppetite: resScore > (db.settings.riskAppetiteThreshold || 15)
-      };
-    });
+        lastUpdated: row.last_updated || 'Just now'
+      }));
+    }
 
-    db.risks = mappedRisks;
+    if (memberData && Array.isArray(memberData) && memberData.length > 0) {
+      db.teamMembers = memberData.map((row: any) => ({
+        id: row.id,
+        name: row.name,
+        email: row.email || '',
+        role: row.role || 'Risk Assessor',
+        avatar: row.avatar || '',
+        department: row.department || 'MNB Research · Business Operations',
+        assignedRisksCount: db.risks.filter(r => r.ownerId === row.id).length,
+        openRisksCount: db.risks.filter(r => r.ownerId === row.id && r.status === 'Open').length,
+        criticalRisksCount: db.risks.filter(r => r.ownerId === row.id && r.severity === 'Critical').length,
+        mitigationProgress: row.mitigation_progress || 0
+      }));
+    }
+
     saveDatabase(db);
     return true;
   } catch (err) {
@@ -191,17 +240,18 @@ function ensureDataDir(): void {
 }
 
 function getInitialDatabase(): EnterpriseDatabase {
+  const isTest = process.env.NODE_ENV === 'test';
   return {
-    risks: MOCK_RISKS,
-    projects: MOCK_PROJECTS,
-    teamMembers: MOCK_TEAM_MEMBERS,
-    controls: MOCK_CONTROLS,
-    actions: MOCK_MITIGATION_ACTIONS,
-    evidence: MOCK_EVIDENCE_RECORDS,
-    kris: MOCK_KRIS,
-    reviews: MOCK_REVIEWS,
-    approvals: MOCK_APPROVALS,
-    auditLogs: MOCK_AUDIT_LOGS,
+    risks: isTest ? MOCK_RISKS : [],
+    projects: isTest ? MOCK_PROJECTS : [],
+    teamMembers: isTest ? MOCK_TEAM_MEMBERS : [],
+    controls: isTest ? MOCK_CONTROLS : [],
+    actions: isTest ? MOCK_MITIGATION_ACTIONS : [],
+    evidence: isTest ? MOCK_EVIDENCE_RECORDS : [],
+    kris: isTest ? MOCK_KRIS : [],
+    reviews: isTest ? MOCK_REVIEWS : [],
+    approvals: isTest ? MOCK_APPROVALS : [],
+    auditLogs: isTest ? MOCK_AUDIT_LOGS : [],
     settings: {
       workspaceName: 'MNB Research Business Operations',
       riskIdPrefix: 'RSK-',

@@ -166,34 +166,24 @@ export const AIRiskAnalyzer: React.FC = () => {
       attachedImage?.mimeType
     );
 
-    const finalRes: AIRiskAnalysisResult = res || {
-      title: 'Identified Operational Threat Risk',
-      description: promptText,
-      category: 'Technical',
-      probability: 4,
-      impact: 4,
-      score: 16,
-      severity: 'High',
-      suggestedOwnerName: 'Sunny Prasad',
-      suggestedOwnerRole: 'Business Operations Intern',
-      mitigationPlan: 'Conduct technical discovery spike, isolate root dependencies, and deploy automated monitoring safeguards.',
-      contingencyPlan: 'Activate backup server pool and apply feature flags to isolate failing code path.',
-      aiConfidence: 94,
-      estimatedImpactUsd: 25000
-    };
-
-    setResult(finalRes);
-
-    setEditedTitle(finalRes.title);
-    setEditedCategory(finalRes.category);
-    setEditedProb(finalRes.probability);
-    setEditedImp(finalRes.impact);
-    setEditedMitigation(finalRes.mitigationPlan);
-    setEditedContingency(finalRes.contingencyPlan);
-    setEditedOwner(finalRes.suggestedOwnerName);
-
     setAnalyzingStep(0);
-    addToast('Gemini AI Synthesis Complete', `Quantified 5x5 threat matrix with ${finalRes.aiConfidence}% confidence.`, 'success');
+
+    if (!res) {
+      addToast('AI Analysis Failed', 'AI services are currently unavailable or encountered an error. Please verify API configuration or enter risk details manually.', 'error');
+      return;
+    }
+
+    setResult(res);
+
+    setEditedTitle(res.title);
+    setEditedCategory(res.category);
+    setEditedProb(res.probability);
+    setEditedImp(res.impact);
+    setEditedMitigation(res.mitigationPlan);
+    setEditedContingency(res.contingencyPlan);
+    setEditedOwner(res.suggestedOwnerName);
+
+    addToast('AI Risk Assessment Complete', `Quantified 5x5 threat matrix with ${res.aiConfidence || 95}% confidence via ${res.provider || 'AI'}.`, 'success');
   };
 
   const handleSaveSingleToRegister = async () => {
@@ -259,45 +249,16 @@ export const AIRiskAnalyzer: React.FC = () => {
         const data = await res.json();
         if (data.risks && data.risks.length > 0) {
           setGeneratedBulkRisks(data.risks);
-          addToast('Bulk Risks Generated', `Created ${data.risks.length} AI risk records for ${projectObj.name}.`, 'success');
+          addToast('Bulk Risks Generated', `Generated ${data.risks.length} AI risk records for ${projectObj.name}.`, 'success');
+        } else {
+          addToast('Bulk Generation Empty', 'No risk records were generated. Please try a more specific topic.', 'warning');
         }
+      } else {
+        const errData = await res.json().catch(() => null);
+        addToast('Bulk Generation Failed', errData?.details || errData?.error || 'AI generation service failed.', 'error');
       }
-    } catch (err) {
-      // Fallback generator
-      const fallback: AIRiskAnalysisResult[] = [
-        {
-          title: 'Infrastructure Capacity Lock',
-          description: bulkTopic,
-          category: 'Technical',
-          probability: 4,
-          impact: 4,
-          score: 16,
-          severity: 'High',
-          suggestedOwnerName: 'Sunny Prasad',
-          suggestedOwnerRole: 'Business Operations Intern',
-          mitigationPlan: 'Provision redundant cluster capacity and enable auto-healing.',
-          contingencyPlan: 'Failover to secondary region snapshot.',
-          aiConfidence: 95,
-          estimatedImpactUsd: 20000
-        },
-        {
-          title: 'Resource Allocation Bottleneck',
-          description: bulkTopic,
-          category: 'Resource',
-          probability: 3,
-          impact: 4,
-          score: 12,
-          severity: 'High',
-          suggestedOwnerName: 'Yash Raj',
-          suggestedOwnerRole: 'Operations Lead',
-          mitigationPlan: 'Reallocate secondary team members for sprint 5.',
-          contingencyPlan: 'Scope out non-critical features.',
-          aiConfidence: 92,
-          estimatedImpactUsd: 15000
-        }
-      ];
-      setGeneratedBulkRisks(fallback);
-      addToast('Bulk Risks Generated', 'Synthesized operational risk items.', 'info');
+    } catch (err: any) {
+      addToast('Bulk Generation Error', err?.message || 'Network error communicating with AI service.', 'error');
     } finally {
       setIsGeneratingBulk(false);
     }

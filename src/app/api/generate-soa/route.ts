@@ -45,36 +45,15 @@ Respond ONLY with a valid JSON object matching this exact structure:
       }
     }
 
-    // 2. Dynamic Fallback
-    return NextResponse.json({
-      soaTitle: 'ISO 27001:2022 Statement of Applicability (SoA) & Control Assurance',
-      overview: 'Formal Information Security Management System (ISMS) Statement of Applicability generated from live risk register telemetry.',
-      controls: [
-        {
-          controlId: 'A.5.15',
-          name: 'Access Control & Authentication Safeguards',
-          applicable: true,
-          justification: 'Critical for protecting cloud infrastructure and API routes against unauthorized access.',
-          implementationStatus: 'Implemented & Monitored'
-        },
-        {
-          controlId: 'A.8.8',
-          name: 'Management of Technical Vulnerabilities',
-          applicable: true,
-          justification: 'Automated CVE scanning and patch management cycle for all container dependencies.',
-          implementationStatus: 'Implemented'
-        },
-        {
-          controlId: 'A.8.12',
-          name: 'Data Leakage Prevention & Incident Response',
-          applicable: true,
-          justification: 'Real-time telemetry and 5-Whys RCA post-mortem protocols.',
-          implementationStatus: 'Implemented & Monitored'
-        }
-      ],
-      auditorMemo: 'This Statement of Applicability confirms that technical, operational, and organizational security controls are active, signed by Priya Sharma (Compliance & Audit Lead).',
-      source: 'Dynamic Context Engine'
-    });
+    // If provider call did not succeed, return an honest error
+    return NextResponse.json(
+      {
+        error: 'Statement of Applicability (SoA) generation service temporarily unavailable.',
+        details: 'Neither Groq nor Google Gemini could generate a structured ISO 27001 SoA assessment.',
+        groqStatus: groqResult.error || (groqResult.success ? 'Invalid structured output' : 'Provider call failed')
+      },
+      { status: 503 }
+    );
   } catch (error: any) {
     console.error('SoA API error:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });

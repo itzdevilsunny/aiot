@@ -55,7 +55,7 @@ describe('Quantitative Risk Scoring (5x5 Matrix)', () => {
   });
 });
 
-describe('EVM Blockchain Immutable Audit Ledger', () => {
+describe('Cryptographic Audit Ledger & Merkle Root Chain', () => {
   const sampleRisks: RiskItem[] = [
     {
       id: 'RSK-101',
