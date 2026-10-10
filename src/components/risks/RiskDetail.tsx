@@ -121,18 +121,66 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
     addToast('Action Item Added', 'New task appended to mitigation checklist.', 'success');
   };
 
+  const handleDeleteChecklistItem = (itemId: string) => {
+    const updatedChecklist = risk.checklist.filter(c => c.id !== itemId);
+    const completedCount = updatedChecklist.filter(c => c.completed).length;
+    const progress = updatedChecklist.length > 0 ? Math.round((completedCount / updatedChecklist.length) * 100) : 0;
+
+    updateRisk(risk.id, {
+      checklist: updatedChecklist,
+      mitigationProgress: progress
+    });
+    addToast('Task Removed', 'Task removed from mitigation checklist.', 'info');
+  };
+
   const handleAIGenerateChecklist = async () => {
     setIsGeneratingChecklist(true);
-    addToast('AI Synthesizing Execution Checklist', 'Generating tailored task items based on threat scope...', 'info');
+    addToast('Groq Qwen Synthesizing Action Items', `Generating tailored execution tasks for ${risk.title}...`, 'info');
 
-    setTimeout(() => {
-      const aiGeneratedItems = [
-        { id: `chk-${Date.now()}-1`, title: `Conduct security vulnerability audit for ${risk.title}`, completed: false },
-        { id: `chk-${Date.now()}-2`, title: `Formulate failover procedure & update runbook with ${risk.ownerName}`, completed: false },
-        { id: `chk-${Date.now()}-3`, title: `Establish real-time latency monitoring & alert threshold`, completed: false }
-      ];
+    try {
+      const res = await fetch('/api/generate-action-items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          riskId: risk.id,
+          title: risk.title,
+          category: risk.category,
+          description: risk.description,
+          mitigationPlan: risk.mitigationPlan,
+          ownerName: risk.ownerName,
+          existingChecklist: risk.checklist
+        })
+      });
 
-      const updatedChecklist = [...risk.checklist, ...aiGeneratedItems];
+      const data = await res.json();
+      const generatedTasks: string[] = data.tasks || [];
+
+      // Strict Deduplication against existing checklist titles
+      const existingTitlesLower = new Set(risk.checklist.map(c => c.title.trim().toLowerCase()));
+      const uniqueNewTasks = generatedTasks.filter(t => !existingTitlesLower.has(t.trim().toLowerCase()));
+
+      if (uniqueNewTasks.length === 0) {
+        addToast('Checklist Up-to-Date', 'All recommended operational tasks are already in checklist.', 'info');
+        setIsGeneratingChecklist(false);
+        return;
+      }
+
+      const newChecklistItems = uniqueNewTasks.map((taskText, idx) => ({
+        id: `chk-${Date.now()}-${idx}-${Math.floor(Math.random() * 1000)}`,
+        title: taskText,
+        completed: false
+      }));
+
+      // Also clean up any preexisting duplicate items in risk.checklist
+      const seenChecklist = new Set<string>();
+      const deduplicatedExisting = risk.checklist.filter(item => {
+        const key = item.title.trim().toLowerCase();
+        if (seenChecklist.has(key)) return false;
+        seenChecklist.add(key);
+        return true;
+      });
+
+      const updatedChecklist = [...deduplicatedExisting, ...newChecklistItems];
       const completedCount = updatedChecklist.filter(c => c.completed).length;
       const progress = Math.round((completedCount / updatedChecklist.length) * 100);
 
@@ -141,9 +189,12 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
         mitigationProgress: progress
       });
 
+      addToast('AI Execution Tasks Generated', `Added ${newChecklistItems.length} unique tasks via ${data.provider || 'Groq Qwen 27B'}.`, 'success');
+    } catch (err) {
+      addToast('Generation Warning', 'Could not contact AI generator. Please try again.', 'warning');
+    } finally {
       setIsGeneratingChecklist(false);
-      addToast('AI Execution Tasks Appended', 'Added 3 structured action items to checklist.', 'success');
-    }, 800);
+    }
   };
 
   const handleSaveEdits = () => {
@@ -819,7 +870,7 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
                     icon={<Sparkles className="w-3.5 h-3.5 text-indigo-200" />}
                     onClick={handleAIGenerateChecklist}
                   >
-                    {isGeneratingChecklist ? 'Synthesizing...' : 'AI Generate Action Items'}
+                    {isGeneratingChecklist ? 'Qwen Synthesizing...' : 'AI Generate Action Items'}
                   </Button>
                 </div>
 
@@ -842,19 +893,34 @@ export const RiskDetail: React.FC<RiskDetailProps> = ({ risk }) => {
                     <div
                       key={item.id}
                       onClick={() => toggleChecklistItem(risk.id, item.id)}
-                      className="flex items-start gap-3 p-3 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50/70 transition-colors cursor-pointer group"
+                      className="flex items-center justify-between gap-3 p-3 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50/70 transition-colors cursor-pointer group"
                     >
-                      <button className="mt-0.5 text-indigo-600 shrink-0">
-                        {item.completed ? <CheckSquare className="w-4 h-4 text-emerald-600" /> : <Square className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />}
-                      </button>
-                      <div className="flex-1 text-xs">
-                        <span className={`font-semibold text-slate-800 ${item.completed ? 'line-through text-slate-400' : ''}`}>
-                          {item.title}
-                        </span>
-                        {item.completedAt && (
-                          <span className="text-[10px] text-slate-400 ml-2">Completed {item.completedAt}</span>
-                        )}
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <button className="mt-0.5 text-indigo-600 shrink-0">
+                          {item.completed ? <CheckSquare className="w-4 h-4 text-emerald-600" /> : <Square className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />}
+                        </button>
+                        <div className="flex-1 text-xs min-w-0">
+                          <span className={`font-semibold text-slate-800 ${item.completed ? 'line-through text-slate-400' : ''}`}>
+                            {item.title}
+                          </span>
+                          {item.completedAt && (
+                            <span className="text-[10px] text-slate-400 ml-2">Completed {item.completedAt}</span>
+                          )}
+                        </div>
                       </div>
+
+                      {/* Delete Task Button */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteChecklistItem(item.id);
+                        }}
+                        className="p-1 rounded text-slate-300 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
+                        title="Delete task"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   ))}
                 </div>

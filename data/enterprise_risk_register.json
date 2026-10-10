@@ -325,36 +325,6 @@
           "title": "Establish real-time latency monitoring & alert threshold",
           "completed": true,
           "completedAt": "Just now"
-        },
-        {
-          "id": "chk-1791625939500-1",
-          "title": "Conduct security vulnerability audit for Legacy Payment Gateway Key Exhaustion",
-          "completed": false
-        },
-        {
-          "id": "chk-1791625939500-2",
-          "title": "Formulate failover procedure & update runbook with Sunny Prasad",
-          "completed": false
-        },
-        {
-          "id": "chk-1791625939500-3",
-          "title": "Establish real-time latency monitoring & alert threshold",
-          "completed": false
-        },
-        {
-          "id": "chk-1791625951827-1",
-          "title": "Conduct security vulnerability audit for Legacy Payment Gateway Key Exhaustion",
-          "completed": false
-        },
-        {
-          "id": "chk-1791625951827-2",
-          "title": "Formulate failover procedure & update runbook with Sunny Prasad",
-          "completed": false
-        },
-        {
-          "id": "chk-1791625951827-3",
-          "title": "Establish real-time latency monitoring & alert threshold",
-          "completed": false
         }
       ],
       "activityLogs": [],

@@ -14,7 +14,8 @@ export function middleware(request: NextRequest) {
     pathname === '/api/auth/login' ||
     pathname === '/api/auth/logout' ||
     pathname === '/api/auth/me' ||
-    pathname === '/api/live-monitoring'
+    pathname === '/api/live-monitoring' ||
+    pathname === '/api/generate-action-items'
   ) {
     return NextResponse.next();
   }
