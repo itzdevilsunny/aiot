@@ -19,8 +19,6 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
     if (!isAuthLoading) {
       if (!isAuthenticated && pathname !== '/login') {
         router.push('/login');
-      } else if (isAuthenticated && pathname === '/login') {
-        router.push('/dashboard');
       }
     }
   }, [isAuthenticated, isAuthLoading, pathname, router]);

@@ -300,6 +300,22 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
   const [isAuthLoading, setIsAuthLoading] = useState<boolean>(false);
 
+  // Restore authenticated session from localStorage if previously signed out or customized
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedAuth = localStorage.getItem('risk_is_authenticated');
+      if (savedAuth === 'false') {
+        setIsAuthenticated(false);
+      }
+      const savedUser = localStorage.getItem('risk_auth_user');
+      if (savedUser) {
+        try {
+          setCurrentUser(JSON.parse(savedUser));
+        } catch (e) {}
+      }
+    }
+  }, []);
+
   // Load initial persistent data from server APIs
   useEffect(() => {
     async function loadAllData() {
@@ -839,6 +855,10 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (data.user) {
           setCurrentUser(data.user);
           setIsAuthenticated(true);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('risk_is_authenticated', 'true');
+            localStorage.setItem('risk_auth_user', JSON.stringify(data.user));
+          }
           addToast('Signed In', `Welcome back, ${data.user.name}.`, 'success');
           return true;
         }
@@ -849,6 +869,10 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (found) {
       setCurrentUser(found);
       setIsAuthenticated(true);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('risk_is_authenticated', 'true');
+        localStorage.setItem('risk_auth_user', JSON.stringify(found));
+      }
       return true;
     }
     return false;
@@ -859,6 +883,10 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch (e) {}
     setIsAuthenticated(false);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('risk_is_authenticated', 'false');
+      localStorage.removeItem('risk_auth_user');
+    }
     addToast('Signed Out', 'You have been logged out of Risk Register Copilot.', 'info');
   };
 
