@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getRisks, createRisk } from '@/lib/server/db';
+import { getRisks, createRisk, syncFromSupabase, syncRiskToSupabase } from '@/lib/server/db';
 
 export async function GET(req: NextRequest) {
   try {
@@ -10,6 +10,9 @@ export async function GET(req: NextRequest) {
     const owner = searchParams.get('owner');
     const search = searchParams.get('search');
     const projectId = searchParams.get('projectId');
+
+    // Ensure authoritative synchronization from Supabase PostgreSQL
+    await syncFromSupabase();
 
     let risks = getRisks();
 
@@ -57,6 +60,9 @@ export async function POST(req: NextRequest) {
     }
 
     const created = createRisk(body);
+    // Explicitly persist to authoritative Supabase PostgreSQL
+    await syncRiskToSupabase(created);
+
     return NextResponse.json({
       success: true,
       risk: created

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getRiskById, updateRisk, deleteRisk } from '@/lib/server/db';
+import { getRiskById, updateRisk, deleteRisk, syncRiskToSupabase, deleteRiskFromSupabase } from '@/lib/server/db';
 
 export async function GET(
   req: NextRequest,
@@ -30,6 +30,10 @@ export async function PATCH(
     if (!updated) {
       return NextResponse.json({ success: false, error: 'Risk not found' }, { status: 404 });
     }
+
+    // Await authoritative persistence to Supabase
+    await syncRiskToSupabase(updated);
+
     return NextResponse.json({ success: true, risk: updated });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -46,6 +50,10 @@ export async function DELETE(
     if (!success) {
       return NextResponse.json({ success: false, error: 'Risk not found' }, { status: 404 });
     }
+
+    // Await authoritative deletion from Supabase
+    await deleteRiskFromSupabase(id);
+
     return NextResponse.json({ success: true, message: `Risk ${id} archived` });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

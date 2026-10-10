@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDashboardStats } from '@/lib/server/db';
+import { getDashboardStats, syncFromSupabase } from '@/lib/server/db';
 
 export async function GET(req: NextRequest) {
   try {
+    await syncFromSupabase();
     const stats = getDashboardStats();
     return NextResponse.json({
       success: true,

@@ -30,11 +30,11 @@ import {
 } from '../../data/mockData';
 import { getSupabaseServerClient } from '../supabase/server';
 
-async function syncRiskToSupabase(risk: RiskItem): Promise<void> {
+export async function syncRiskToSupabase(risk: RiskItem): Promise<boolean> {
   try {
     const supabase = getSupabaseServerClient();
-    if (!supabase) return;
-    await supabase.from('risks').upsert({
+    if (!supabase) return false;
+    const { error } = await supabase.from('risks').upsert({
       id: risk.id,
       title: risk.title,
       description: risk.description || risk.title,
@@ -53,21 +53,106 @@ async function syncRiskToSupabase(risk: RiskItem): Promise<void> {
       contingency_plan: risk.contingencyPlan || '',
       mitigation_progress: risk.mitigationProgress || 0,
       due_date: risk.dueDate || new Date().toISOString().split('T')[0],
-      estimated_impact_usd: risk.estimatedImpactUsd || 25000,
+      checklist: Array.isArray(risk.checklist) ? risk.checklist : [],
+      activity_logs: Array.isArray(risk.activityLogs) ? risk.activityLogs : [],
+      estimated_impact_usd: risk.estimatedImpactUsd || (risk.score * 2500),
       last_updated: risk.lastUpdated || 'Just now'
     });
-  } catch (err) {
-    // Non-blocking sync error
+    if (error) {
+      console.warn('[Supabase Sync Warning]:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err: any) {
+    console.warn('[Supabase Sync Exception]:', err?.message || err);
+    return false;
   }
 }
 
-async function deleteRiskFromSupabase(id: string): Promise<void> {
+export async function deleteRiskFromSupabase(id: string): Promise<boolean> {
   try {
     const supabase = getSupabaseServerClient();
-    if (!supabase) return;
-    await supabase.from('risks').delete().eq('id', id);
+    if (!supabase) return false;
+    const { error } = await supabase.from('risks').delete().eq('id', id);
+    if (error) {
+      console.warn('[Supabase Delete Warning]:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err: any) {
+    console.warn('[Supabase Delete Exception]:', err?.message || err);
+    return false;
+  }
+}
+
+export async function syncFromSupabase(): Promise<boolean> {
+  try {
+    const supabase = getSupabaseServerClient();
+    if (!supabase) return false;
+    const { data, error } = await supabase.from('risks').select('*');
+    if (error || !data || data.length === 0) return false;
+
+    const db = getDatabase();
+    const mappedRisks: RiskItem[] = data.map((row: any) => {
+      const prob = (row.probability || 3) as ProbabilityLevel;
+      const imp = (row.impact || 3) as ImpactLevel;
+      const score = (row.score || prob * imp);
+      const sev = (row.severity || calculateSeverity(score)) as SeverityLevel;
+      
+      const resProb = Math.max(1, prob - (row.mitigation_progress >= 50 ? 2 : row.mitigation_progress >= 20 ? 1 : 0)) as ProbabilityLevel;
+      const resImp = Math.max(1, imp - (row.mitigation_progress >= 70 ? 1 : 0)) as ImpactLevel;
+      const resScore = resProb * resImp;
+
+      return {
+        id: row.id,
+        title: row.title,
+        description: row.description || '',
+        category: row.category || 'Operational',
+        subcategory: row.subcategory || '',
+        department: row.department || 'MNB Research · Business Operations',
+        affectedProcess: row.affected_process || '',
+        probability: prob,
+        impact: imp,
+        score,
+        severity: sev,
+        inherentProbability: prob,
+        inherentImpact: imp,
+        inherentScore: score,
+        inherentSeverity: sev,
+        residualProbability: resProb,
+        residualImpact: resImp,
+        residualScore: resScore,
+        residualSeverity: calculateSeverity(resScore),
+        status: row.status || 'Open',
+        projectId: row.project_id || 'proj-1',
+        projectName: row.project_name || 'Enterprise Operations',
+        ownerId: row.owner_id || 'usr-1',
+        ownerName: row.owner_name || 'Sunny Prasad',
+        ownerRole: row.owner_role || 'Business Operations Intern & Risk Lead',
+        ownerAvatar: row.owner_avatar,
+        coOwnerName: row.co_owner_name,
+        coOwnerRole: row.co_owner_role,
+        mitigationPlan: row.mitigation_plan || '',
+        contingencyPlan: row.contingency_plan || '',
+        mitigationProgress: row.mitigation_progress || 0,
+        dueDate: row.due_date || new Date().toISOString().split('T')[0],
+        checklist: Array.isArray(row.checklist) ? row.checklist : [],
+        activityLogs: Array.isArray(row.activity_logs) ? row.activity_logs : [],
+        aiSuggested: !!row.ai_suggested,
+        aiConfidence: row.ai_confidence || 90,
+        estimatedImpactUsd: row.estimated_impact_usd || (score * 2500),
+        lastUpdated: row.last_updated || 'Just now',
+        createdAt: row.created_at ? row.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+        aboveAppetite: resScore > (db.settings.riskAppetiteThreshold || 15)
+      };
+    });
+
+    db.risks = mappedRisks;
+    saveDatabase(db);
+    return true;
   } catch (err) {
-    // Non-blocking sync error
+    console.warn('[Server DB] syncFromSupabase note:', err);
+    return false;
   }
 }
 
