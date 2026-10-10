@@ -8,13 +8,14 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await req.json();
-    const { status, decisionComments, approverName } = body;
+    const { status, approverName } = body;
+    const comments = body.decisionComments || body.comments || '';
 
     if (status !== 'Approved' && status !== 'Rejected') {
       return NextResponse.json({ success: false, error: 'Status must be Approved or Rejected' }, { status: 400 });
     }
 
-    const updated = updateApproval(id, status, decisionComments, approverName);
+    const updated = updateApproval(id, status, comments, approverName);
     if (!updated) {
       return NextResponse.json({ success: false, error: 'Approval request not found' }, { status: 404 });
     }
@@ -22,4 +23,11 @@ export async function PATCH(
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
+}
+
+export async function PUT(
+  req: NextRequest,
+  ctx: { params: Promise<{ id: string }> }
+) {
+  return PATCH(req, ctx);
 }

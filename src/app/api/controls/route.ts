@@ -13,10 +13,24 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    if (!body.name) {
+    const name = body.name || body.title;
+    if (!name) {
       return NextResponse.json({ success: false, error: 'Control name is required' }, { status: 400 });
     }
-    const created = createControl(body);
+    const created = createControl({
+      ...body,
+      name,
+      description: body.description || name,
+      category: body.category || 'Technical',
+      type: body.type || 'Preventive',
+      objective: body.objective || name,
+      ownerName: body.ownerName || 'Sunny Prasad',
+      ownerRole: body.ownerRole || 'Risk Owner',
+      implementationStatus: body.implementationStatus || 'Implemented',
+      effectiveness: body.effectiveness || (body.effectivenessRating > 70 ? 'Effective' : 'Partially Effective'),
+      testStatus: body.testStatus || 'Passed',
+      linkedRiskIds: body.linkedRiskIds || []
+    });
     return NextResponse.json({ success: true, control: created }, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

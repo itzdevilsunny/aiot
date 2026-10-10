@@ -307,9 +307,19 @@ export function saveDatabase(db: EnterpriseDatabase): void {
   try {
     const tempFile = `${DB_FILE}.tmp.${Date.now()}`;
     fs.writeFileSync(tempFile, JSON.stringify(db, null, 2), 'utf8');
-    fs.renameSync(tempFile, DB_FILE);
+    try {
+      fs.renameSync(tempFile, DB_FILE);
+    } catch {
+      // Fallback for Windows file locking
+      fs.copyFileSync(tempFile, DB_FILE);
+      try { fs.unlinkSync(tempFile); } catch {}
+    }
   } catch (err) {
-    console.error('[Server DB] Failed to save database to disk:', err);
+    try {
+      fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf8');
+    } catch (directErr) {
+      console.error('[Server DB] Failed to save database to disk:', directErr);
+    }
   }
 }
 

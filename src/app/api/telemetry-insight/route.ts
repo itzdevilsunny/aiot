@@ -20,6 +20,7 @@ Format: Keep it under 25 words, professional, data-driven.`;
 
     if (groqRes.success && groqRes.content) {
       return NextResponse.json({
+        success: true,
         insight: groqRes.content.trim(),
         provider: `Groq (${groqRes.model})`
       });
@@ -33,14 +34,20 @@ Format: Keep it under 25 words, professional, data-driven.`;
 
     if (geminiRes.success && geminiRes.content) {
       return NextResponse.json({
+        success: true,
         insight: geminiRes.content.trim(),
         provider: `Google Gemini (${geminiRes.model})`
       });
     }
 
-    return NextResponse.json({
-      insight: `Copilot Telemetry: ${criticalCount} critical and ${highCount} high risks active. Prioritize mitigation on ${topRiskTitle}.`
-    });
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Executive telemetry insight service temporarily unavailable.',
+        details: 'Neither Groq nor Google Gemini generated an executive telemetry insight.'
+      },
+      { status: 503 }
+    );
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

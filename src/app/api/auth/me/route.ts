@@ -1,23 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTeamMembers } from '@/lib/server/db';
+import { getAuthenticatedUser } from '@/lib/server/auth';
 
 export async function GET(req: NextRequest) {
   try {
-    const authCookie = req.cookies.get('mnb_auth_user')?.value;
-    const members = getTeamMembers();
+    const user = getAuthenticatedUser(req);
 
-    let user = members[0]; // Default Sunny Prasad
-    if (authCookie) {
-      const found = members.find(m => m.email.toLowerCase() === authCookie.toLowerCase());
-      if (found) {
-        user = found;
-      }
+    if (!user) {
+      return NextResponse.json({
+        success: false,
+        isAuthenticated: false,
+        user: null
+      }, { status: 401 });
     }
 
     return NextResponse.json({
       success: true,
-      user,
-      isAuthenticated: !!authCookie
+      isAuthenticated: true,
+      user
     });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

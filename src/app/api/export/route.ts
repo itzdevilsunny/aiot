@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
     // Generate CSV
     const headers = [
-      'ID',
+      'Risk ID',
       'Title',
       'Category',
       'Severity',

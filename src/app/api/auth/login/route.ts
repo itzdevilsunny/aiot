@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTeamMembers } from '@/lib/server/db';
+import { createSessionToken } from '@/lib/server/auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,14 +20,22 @@ export async function POST(req: NextRequest) {
       }, { status: 401 });
     }
 
-    // In enterprise SSO / demo mode, password verification
+    const token = createSessionToken(user);
+
     const response = NextResponse.json({
       success: true,
       user,
-      token: `sess_${Date.now()}_${Buffer.from(user.email).toString('base64')}`
+      token
     });
 
-    // Set secure auth cookie
+    // Set secure httpOnly session cookie
+    response.cookies.set('mnb_auth_token', token, {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7 // 7 days
+    });
+
     response.cookies.set('mnb_auth_user', user.email, {
       path: '/',
       httpOnly: false,

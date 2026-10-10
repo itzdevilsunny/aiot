@@ -40,6 +40,13 @@ export async function PATCH(
   }
 }
 
+export async function PUT(
+  req: NextRequest,
+  ctx: { params: Promise<{ id: string }> }
+) {
+  return PATCH(req, ctx);
+}
+
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
