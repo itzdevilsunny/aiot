@@ -172,10 +172,18 @@ export default function LoginPage() {
           </button>
         </div>
 
-        {/* Footer Security Badge */}
-        <div className="flex items-center justify-center gap-1.5 text-[11px] font-mono text-slate-400 pt-3 border-t border-slate-800/60">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-          <span>Validated by Supabase Auth Gateway</span>
+        {/* Footer Security & Engine Telemetry Badge */}
+        <div className="pt-3 border-t border-slate-800/60 space-y-1.5 text-center">
+          <div className="flex items-center justify-center gap-1.5 text-[11px] font-mono text-slate-400">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span>Validated by Supabase Auth Gateway</span>
+          </div>
+          <div className="flex items-center justify-center gap-2 text-[10px] font-mono text-slate-500">
+            <span className="inline-flex items-center gap-1 text-emerald-400 font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              risk-register-copilot-1.onrender.com
+            </span>
+          </div>
         </div>
       </div>
     </div>

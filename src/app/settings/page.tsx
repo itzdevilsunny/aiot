@@ -565,10 +565,10 @@ export default function SettingsPage() {
                     <Globe className="w-4 h-4 text-indigo-600" />
                     <div>
                       <span className="font-bold text-slate-900 block text-xs">Render API Server</span>
-                      <span className="text-[10px] text-slate-500">{renderBackendStatus}</span>
+                      <span className="text-[10px] text-slate-500 font-mono">https://risk-register-copilot-1.onrender.com</span>
                     </div>
                   </div>
-                  <Badge variant="status">Active</Badge>
+                  <Badge variant="status">Connected</Badge>
                 </div>
               </div>
             </div>

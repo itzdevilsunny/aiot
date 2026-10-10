@@ -184,7 +184,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile = false, onCloseM
         </div>
 
         {/* Bottom User Profile Section */}
-        <div className="p-3 border-t border-slate-100 dark:border-slate-800 relative bg-slate-50/50 dark:bg-slate-900/50">
+        <div className="p-3 border-t border-slate-100 dark:border-slate-800 relative bg-slate-50/50 dark:bg-slate-900/50 space-y-2">
+          {/* Active Cloud Engine Telemetry */}
+          <div className="px-2.5 py-1.5 bg-white dark:bg-slate-950/70 rounded-lg border border-slate-200/80 dark:border-slate-800 text-[10px] font-mono flex items-center justify-between shadow-2xs">
+            <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Render API
+            </span>
+            <span className="text-[9px] text-slate-500 truncate max-w-[95px]" title="risk-register-copilot-1.onrender.com">
+              copilot-1.onrender
+            </span>
+          </div>
+
           <div className="flex items-center justify-between">
             <button
               onClick={() => setShowUserDropdown(!showUserDropdown)}
