@@ -80,6 +80,14 @@ export const JiraExportModal: React.FC<JiraExportModalProps> = ({
     }
   };
 
+  const handleOpenGitHubIssue = () => {
+    const title = `[${risk.id}] ${risk.title}`;
+    const md = `## 🚨 [${risk.id}] ${risk.title}\n**Category:** \`${risk.category}\` | **Severity:** \`${risk.severity}\` (Score: ${risk.score}/25)\n**Assigned Owner:** ${risk.ownerName} (${risk.ownerRole})\n\n### 📝 Threat Description\n${risk.description}\n\n### 🛡️ Mitigation Strategy\n${risk.mitigationPlan}\n\n### ⚠️ Contingency Plan\n${risk.contingencyPlan}\n\n---\n*Created via MNB Research Risk Register Copilot*`;
+    const url = `https://github.com/itzdevilsunny/aiot/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(md)}`;
+    window.open(url, '_blank');
+    addToast('GitHub Issue Launcher', 'Opened pre-filled GitHub Issue in new tab.', 'info');
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in-50">
       <div className="bg-white rounded-2xl max-w-xl w-full border border-slate-200 shadow-2xl overflow-hidden space-y-4">
@@ -146,8 +154,16 @@ export const JiraExportModal: React.FC<JiraExportModalProps> = ({
           </span>
 
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={onClose}>
+            <Button variant="ghost" size="sm" onClick={onClose}>
               Close
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleOpenGitHubIssue}
+              icon={<ExternalLink className="w-3.5 h-3.5" />}
+            >
+              GitHub Issue
             </Button>
             <Button
               variant="primary"
