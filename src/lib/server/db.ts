@@ -95,7 +95,9 @@ export interface EnterpriseDatabase {
 }
 
 const DATA_DIR = path.join(process.cwd(), 'data');
-const DB_FILE = path.join(DATA_DIR, 'enterprise_risk_register.json');
+const DB_FILE = process.env.NODE_ENV === 'test'
+  ? path.join(DATA_DIR, 'enterprise_risk_register_test.json')
+  : path.join(DATA_DIR, 'enterprise_risk_register.json');
 
 function ensureDataDir(): void {
   if (!fs.existsSync(DATA_DIR)) {

@@ -431,6 +431,10 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const inhProb = input.inherentProbability || input.probability || 3;
     const inhImp = input.inherentImpact || input.impact || 3;
     const inhScore = inhProb * inhImp;
+    const resProb = (input.residualProbability || Math.max(1, inhProb - 1)) as ProbabilityLevel;
+    const resImp = (input.residualImpact || Math.max(1, inhImp - 1)) as ImpactLevel;
+    const resScore = (resProb as number) * (resImp as number);
+    const resSev = calculateSeverity(resScore);
     const localId = `RSK-${100 + risks.length + 1}`;
     const fallbackRisk: RiskItem = {
       ...input,
@@ -439,16 +443,16 @@ export const RiskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       inherentImpact: inhImp as ImpactLevel,
       inherentScore: inhScore,
       inherentSeverity: calculateSeverity(inhScore),
-      residualProbability: (input.residualProbability || Math.max(1, inhProb - 1)) as ProbabilityLevel,
-      residualImpact: (input.residualImpact || Math.max(1, inhImp - 1)) as ImpactLevel,
-      residualScore: ((input.residualProbability || Math.max(1, inhProb - 1)) as number) * ((input.residualImpact || Math.max(1, inhImp - 1)) as number),
-      residualSeverity: calculateSeverity(((input.residualProbability || Math.max(1, inhProb - 1)) as number) * ((input.residualImpact || Math.max(1, inhImp - 1)) as number)),
+      residualProbability: resProb,
+      residualImpact: resImp,
+      residualScore: resScore,
+      residualSeverity: resSev,
       probability: inhProb as ProbabilityLevel,
       impact: inhImp as ImpactLevel,
       score: inhScore,
       severity: calculateSeverity(inhScore),
       treatmentStrategy: input.treatmentStrategy || 'Mitigate',
-      aboveAppetite: inhScore > workspaceSettings.riskAppetiteThreshold,
+      aboveAppetite: resScore > workspaceSettings.riskAppetiteThreshold,
       createdAt: new Date().toISOString().split('T')[0],
       lastUpdated: 'Just now',
       activityLogs: []
